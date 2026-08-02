@@ -19,10 +19,10 @@ last_updated: 2026-08-02
 
 ## Tiêu chí nghiệm thu cho hệ thống Quantum–AI hỗ trợ quản trị tail risk danh mục cổ phiếu
 
-**Đội dự án:** NOVARIS  
-**Product Owner:** Nguyễn Thị Ánh Ngọc  
-**QA/Risk Owner:** Liêu Hoài Phúc  
-**Tài liệu nguồn:** `QSHIELD-PSS-001 v1.0`, `QSHIELD-PRS-001 v1.0`, `QSHIELD-US-001 v1.0`  
+**Đội dự án:** NOVARIS
+**Product Owner:** Nguyễn Thị Ánh Ngọc
+**QA/Risk Owner:** Liêu Hoài Phúc
+**Tài liệu nguồn:** `QSHIELD-PSS-001 v1.0`, `QSHIELD-PRS-001 v1.0`, `QSHIELD-US-001 v1.0`
 **Trạng thái:** Baseline Candidate
 
 ---
