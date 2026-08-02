@@ -111,6 +111,50 @@ cd frontend && npm run types
 
 `frontend/lib/types.ts` sinh tự động từ `/openapi.json`. **Không sửa tay, không commit sai lệch.**
 
+### Bước 8 — Bật pre-commit (làm một lần)
+
+```bash
+uv run pre-commit install
+```
+
+Từ lúc này, mỗi lần `git commit` sẽ tự động chạy các hook khai báo trong `.pre-commit-config.yaml`:
+
+| Hook | Làm gì |
+|---|---|
+| `ruff-check --fix` | Tự sửa lỗi lint sửa được |
+| `ruff-format` | Tự format lại code theo `line-length 100` |
+| `trailing-whitespace` | Xóa khoảng trắng cuối dòng |
+| `end-of-file-fixer` | Đảm bảo file kết thúc bằng đúng 1 dòng trống |
+| `check-yaml` / `check-toml` | Báo lỗi nếu `configs/*.yaml` hoặc `pyproject.toml` sai cú pháp |
+| `check-added-large-files` | Chặn commit file > 5MB (thường là lỡ add dữ liệu/artifact) |
+| `check-merge-conflict` | Chặn commit còn sót marker `<<<<<<<` |
+
+**Lệnh sửa — điều hay gây bối rối:** nếu một hook như `ruff-format`/`ruff-check --fix` **tự sửa**
+file của bạn, lần chạy đó sẽ báo **Failed** và commit **bị hủy**, dù bản chất là nó đã sửa xong rồi.
+Đây không phải lỗi thật — chỉ cần add lại phần vừa được tự sửa rồi commit lại lần hai:
+
+```bash
+git add -A
+git commit -m "..."   # lần 2 sẽ thấy toàn bộ hook "Passed" vì không còn gì để sửa nữa
+```
+
+Muốn chạy thử toàn bộ hook trên cả repo mà không cần commit (ví dụ sau khi mới cài `pre-commit`):
+
+```bash
+uv run pre-commit run --all-files
+```
+
+### CI — chạy tự động trên mỗi Pull Request vào `main`
+
+`.github/workflows/ci.yml` có 2 job, cả hai đều dùng `uv sync --all-packages` trước khi chạy:
+
+| Job | Lệnh | Ý nghĩa |
+|---|---|---|
+| `tests` | `uv run pytest -m "not slow"` | Toàn bộ test suite, trừ QAOA nhiều seed (chạy lâu) |
+| `verify-qubo` | `uv run pytest packages/quantum/tests/test_consistency.py -v` | Cổng chặn QAOA — xem Bước 6 |
+
+PR không merge được vào `main` nếu một trong hai job này fail.
+
 ---
 
 ## Cấu hình

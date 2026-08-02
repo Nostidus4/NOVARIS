@@ -24,7 +24,7 @@ class RegimeName(StrEnum):
 class ArtifactMode(StrEnum):
     """Chế độ ghi artifact — xem `configs/base.yaml` (`artifacts.mode`) và `paths.py` (ArtifactPaths)."""
 
-    DEV = "dev"    # artifacts/dev/... — đường dẫn cố định, lặp nhanh khi phát triển
+    DEV = "dev"  # artifacts/dev/... — đường dẫn cố định, lặp nhanh khi phát triển
     RUNS = "runs"  # artifacts/runs/run_YYYYMMDD_HHMM/... — có version, bắt buộc từ ngày 4 sprint
 
 

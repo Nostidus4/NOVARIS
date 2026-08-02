@@ -21,9 +21,9 @@ last_updated: 2026-08-02
 
 ## Tuyên bố phạm vi sản phẩm cho hệ thống Quantum–AI hỗ trợ quản trị tail risk danh mục cổ phiếu
 
-**Đội dự án:** NOVARIS  
-**Product Owner và Project Lead:** Nguyễn Thị Ánh Ngọc  
-**Trạng thái tài liệu:** Baseline Candidate — chỉ chuyển thành Approved Baseline sau khi toàn đội duyệt Decision Log và Config Registry.  
+**Đội dự án:** NOVARIS
+**Product Owner và Project Lead:** Nguyễn Thị Ánh Ngọc
+**Trạng thái tài liệu:** Baseline Candidate — chỉ chuyển thành Approved Baseline sau khi toàn đội duyệt Decision Log và Config Registry.
 **Mục đích sử dụng:** Làm nguồn sự thật thống nhất cho Product Requirements, User Stories, Data Contract, Financial Objective Specification, Quantum Design Specification, Test Plan, UAT và báo cáo kỹ thuật.
 
 ---
