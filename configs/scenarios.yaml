@@ -1,0 +1,13 @@
+# Nguyễn Anh Tú - S=500 kịch bản, H=20 ngày, block=5.
+
+num_scenarios: 500   # đã khóa — CLAUDE.md: "500 kịch bản × 20 ngày"
+horizon_days: 20      # đã khóa — CLAUDE.md
+block_length: 5       # đã khóa — docs/Structure.md: "moving-block bootstrap, block 5 → 20 ngày"
+
+cvae:
+  # TÙY CHỌN — chỉ bật khi bootstrap champion đã pass toàn bộ check phân phối.
+  # CLAUDE.md "Đóng băng phạm vi": CVAE không được thêm trừ khi bootstrap đã qua kiểm định.
+  enabled: false
+
+# TODO(Nguyễn Anh Tú): seed cho bootstrap — chưa có giá trị cụ thể được đăng ký ở tài liệu nguồn.
+seed: null

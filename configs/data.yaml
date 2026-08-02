@@ -1,0 +1,27 @@
+# Nguyễn Đỗ Minh Anh - nguồn dữ liệu, khoảng thời gian, train/val/test split.
+
+frequency: daily  # đã khóa — CLAUDE.md: "dữ liệu ngày"
+
+# TODO(Nguyễn Đỗ Minh Anh): nguồn dữ liệu chính thức, quyền sử dụng và fallback source.
+# docs/product/mvp_scope.md §8.5 cố ý không hard-code tên nhà cung cấp cho đến khi Source Registry
+# được xác nhận về quyền truy cập/bản quyền (TBD-009).
+source: null
+
+date_range:
+  # TODO(Nguyễn Đỗ Minh Anh): khoảng thời gian train/validation/test cho phạm vi 8-mã đã khóa.
+  # docs/product/mvp_scope.md §8.3 có đề xuất mốc thời gian (train 2016/2018–2022, validation 2023,
+  # test 2024–30/06/2026) nhưng đó là cho thiết kế 30-mã VN30 đầy đủ, chưa có xác nhận riêng áp
+  # dụng cho phạm vi 8-mã — không copy sang đây khi chưa được Data Owner duyệt.
+  train_start: null
+  train_end: null
+  validation_start: null
+  validation_end: null
+  test_start: null
+  test_end: null
+
+# TODO(Nguyễn Đỗ Minh Anh): quy tắc xử lý giá thiếu. CLAUDE.md chỉ cấm forward-fill trên cột return
+# ("Không forward-fill lợi suất"), chưa định nghĩa quy tắc thay thế cụ thể.
+missing_data_policy: null
+
+# TODO(Nguyễn Đỗ Minh Anh): lịch sử tối thiểu (số phiên) để một mã được coi là eligible.
+min_history_sessions: null

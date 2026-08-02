@@ -1,0 +1,13 @@
+# Nguyễn Đỗ Minh Anh - 8 mã và tỷ trọng danh mục mẫu — khóa theo TBD-001, duyệt: Nguyễn Thị Ánh Ngọc.
+
+# TODO(Nguyễn Đỗ Minh Anh): danh sách chính xác 8 mã.
+# README.md/CLAUDE.md chỉ khóa CON SỐ "8 mã", chưa nêu tên mã cụ thể ở bất kỳ tài liệu nguồn nào
+# (mvp_scope.md TBD-001 chỉ nói tới universe 30 mã VN30 của thiết kế đầy đủ, không phải 8 mã đã
+# thu hẹp — xem docs/limitations.md §1). Không tự chọn mã khi chưa có xác nhận từ Data Owner.
+tickers: null
+
+# TODO(Nguyễn Đỗ Minh Anh): tỷ trọng danh mục mẫu cho từng mã trong universe — phụ thuộc tickers ở trên.
+sample_portfolio_weights: null
+
+# TODO(Nguyễn Đỗ Minh Anh): ngày snapshot dùng để khóa danh sách 8 mã này.
+snapshot_date: null

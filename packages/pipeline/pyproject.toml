@@ -1,0 +1,26 @@
+[project]
+name = "qshield-pipeline"
+version = "0.1.0"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "qshield-contracts",
+    "qshield-data",
+    "qshield-ai",
+    "qshield-risk",
+    "qshield-quantum",
+    "typer>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+qshield-contracts = { workspace = true, editable = true }
+qshield-data = { workspace = true, editable = true }
+qshield-ai = { workspace = true, editable = true }
+qshield-risk = { workspace = true, editable = true }
+qshield-quantum = { workspace = true, editable = true }
+
+[project.scripts]
+qshield-pipeline = "qshield_pipeline.cli:app"

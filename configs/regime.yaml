@@ -1,0 +1,21 @@
+# Nguyễn Anh Tú - HMM: 3 trạng thái, 10 seed, danh sách feature.
+
+n_states: 3  # đã khóa — CLAUDE.md: "Phạm vi đã khóa: ... 3 trạng thái"
+n_iter: 500  # đã khóa — docs/Structure.md: "GaussianHMM 3 trạng thái, 10 seed, n_iter=500"
+
+# đã khóa — dùng khi HMM không hội tụ, xem docs/runbook/troubleshooting.md §4
+covariance_type: diag
+
+seeds:
+  count: 10  # đã khóa — CLAUDE.md/docs/Structure.md
+  # TODO(Nguyễn Anh Tú): danh sách 10 seed cụ thể phải được đăng ký (không tự chọn tùy run —
+  # CLAUDE.md quy tắc "Không cherry-pick seed" áp dụng chung cho mọi module dùng seed).
+  values: null
+
+# TODO(Nguyễn Anh Tú): ĐÚNG 5 feature cho HMM.
+# docs/Structure.md (regime/feature_set.py) chỉ ghi "ĐÚNG 5 feature, không nhồi thêm" và không
+# liệt kê tên cụ thể — đây là quyết định của AI/ML Owner, chưa có ở tài liệu nguồn nào.
+features: null
+
+# Nhãn trạng thái PHẢI được gán sau khi fit, theo đặc trưng thống kê (return/volatility/drawdown),
+# không theo state id — xem CLAUDE.md quy tắc 7. Không cấu hình bằng static mapping ở đây.

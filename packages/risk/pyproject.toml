@@ -1,0 +1,21 @@
+[project]
+name = "qshield-risk"
+version = "0.1.0"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "qshield-contracts",
+    "numpy>=1.26,<2.3",
+    "pandas>=2.2,<3",
+    "scipy>=1.14",
+    "typer>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+qshield-contracts = { workspace = true, editable = true }
+
+[project.scripts]
+qshield-risk = "qshield_risk.cli:app"

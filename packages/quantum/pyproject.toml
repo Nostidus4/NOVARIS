@@ -1,0 +1,27 @@
+[project]
+name = "qshield-quantum"
+version = "0.1.0"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "qshield-contracts",
+    "qshield-risk",
+    "numpy>=1.26,<2.3",
+    "qiskit>=2.0,<3",
+    "qiskit-aer>=0.15",
+    "qiskit-algorithms>=0.4",
+    "qiskit-optimization>=0.7",
+    "typer>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+qshield-contracts = { workspace = true, editable = true }
+# qshield-risk: import chéo DUY NHẤT được phép trong repo — exact solver cần gọi
+# qshield_risk.evaluate để chấm true CVaR cho từng bitstring (CLAUDE.md, chiều phụ thuộc).
+qshield-risk = { workspace = true, editable = true }
+
+[project.scripts]
+qshield-quantum = "qshield_quantum.cli:app"

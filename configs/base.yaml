@@ -1,0 +1,24 @@
+# Đỗ Ngọc Tân - seed, artifacts.mode (dev/runs), log; gộp các file config khác qua includes. Duyệt: Nguyễn Thị Ánh Ngọc.
+
+includes:
+  - universe.yaml
+  - data.yaml
+  - regime.yaml
+  - scenarios.yaml
+  - risk.yaml
+  - quantum.yaml
+
+# TODO(Đỗ Ngọc Tân): seed toàn cục mặc định — chưa được nêu ở bất kỳ tài liệu nguồn nào.
+# Seed riêng của từng module (regime, QAOA...) nằm trong file config của module đó.
+seed: null
+
+artifacts:
+  mode: dev  # dev | runs
+  # dev  -> artifacts/dev/... (đường dẫn cố định, lặp nhanh khi đang phát triển)
+  # runs -> artifacts/runs/run_YYYYMMDD_HHMM/... (có version — bắt buộc dùng từ ngày 4 sprint,
+  #         mọi số lên slide/demo phải truy được về một run_id, xem docs/architecture/pipeline.md §4)
+
+logging:
+  level: INFO
+  # TODO(Đỗ Ngọc Tân): đường dẫn log file nếu cần ghi ra ngoài logs.txt mặc định của RunContext
+  path: null

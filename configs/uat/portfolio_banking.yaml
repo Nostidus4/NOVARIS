@@ -1,0 +1,11 @@
+# Nguyễn Thị Ánh Ngọc - kịch bản UAT #2 — tập trung nhóm ngân hàng, minh họa rủi ro tương quan chéo cao trong một ngành.
+
+# TODO(Nguyễn Thị Ánh Ngọc): phụ thuộc configs/universe.yaml (tickers) — chưa thể điền cụ thể
+# cho đến khi Data Owner khóa danh sách 8 mã và xác nhận có đủ mã ngân hàng trong universe.
+evaluation_date: null
+
+# Danh sách {ticker, weight} — nghiêng tỷ trọng lớn vào các mã cùng nhóm ngành ngân hàng để bộc lộ
+# hiệu ứng tương quan chéo cao (ma trận C trong QUBO) khi stress.
+positions: null
+
+cash_weight: null

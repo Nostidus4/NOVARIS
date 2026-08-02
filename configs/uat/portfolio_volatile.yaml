@@ -1,0 +1,11 @@
+# Nguyễn Thị Ánh Ngọc - kịch bản UAT #3 — nghiêng về mã biến động cao, minh họa giá trị của hedge khi CVaR nền cao.
+
+# TODO(Nguyễn Thị Ánh Ngọc): phụ thuộc configs/universe.yaml (tickers) — chưa thể điền cụ thể
+# cho đến khi Data Owner khóa danh sách 8 mã.
+evaluation_date: null
+
+# Danh sách {ticker, weight} — nghiêng tỷ trọng vào các mã có volatility/drawdown lịch sử cao nhất
+# trong universe, để CVaR trước hedge đủ lớn cho thấy rõ tác dụng của phương án giảm vị thế.
+positions: null
+
+cash_weight: null

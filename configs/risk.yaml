@@ -1,0 +1,21 @@
+# Liêu Hoài Phúc - α=0.95 (CVaR confidence), phí giao dịch, spread, liquidity penalty — khóa theo TBD-002, duyệt: Nguyễn Thị Ánh Ngọc.
+
+cvar_alpha: 0.95  # đã khóa — CLAUDE.md quy tắc 2: "α = 0.95 (Rockafellar–Uryasev)"
+
+# đã khóa — CLAUDE.md: "Mỗi hành động = giảm 20% vị thế một mã, chuyển phần vốn sang tiền mặt."
+action_reduction_pct: 0.20
+
+# TODO(Liêu Hoài Phúc, duyệt: Nguyễn Thị Ánh Ngọc): TBD-002 trong docs/product/mvp_scope.md §23 —
+# chưa có con số nào cho phí/spread/liquidity penalty ở bất kỳ tài liệu nguồn nào. Không dùng cùng
+# một số giả định cho mọi thử nghiệm mà không sensitivity analysis (mvp_scope.md §10.4).
+transaction_cost:
+  fee: null
+  spread: null
+  liquidity_penalty: null
+
+# TODO(Liêu Hoài Phúc): epsilon tolerance cho tổng tỷ trọng (cổ phiếu + tiền mặt) phải bằng 1.0.
+weight_sum_tolerance: null
+
+# Robustness metrics — không thay thế cvar_alpha làm chỉ tiêu quyết định chính
+# (docs/product/mvp_scope.md §10.1).
+robustness_confidence_levels: [0.975, 0.99]
