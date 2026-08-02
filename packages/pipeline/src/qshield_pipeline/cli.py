@@ -7,8 +7,14 @@ app = typer.Typer(help="Q-SHIELD end-to-end pipeline CLI.")
 
 @app.command(name="all")
 def run_all(
-    config: str = typer.Option("configs/base.yaml", "--config", help="Đường dẫn config"),
-    mock: bool = typer.Option(False, "--mock", help="Chạy trên dữ liệu giả từ qshield_contracts.mocks — cho phép 5 người phát triển song song từ ngày 1"),
+    config: str = typer.Option(
+        "configs/base.yaml", "--config", help="Đường dẫn config"
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="Chạy trên dữ liệu giả từ qshield_contracts.mocks — cho phép 5 người phát triển song song từ ngày 1",
+    ),
 ) -> None:
     """Chạy tuần tự 6 chặng: data → regime → scenarios → risk → qubo → solve.
 
