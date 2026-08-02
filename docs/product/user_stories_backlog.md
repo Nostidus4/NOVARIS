@@ -17,10 +17,10 @@ last_updated: 2026-08-02
 
 ## Backlog nghiệp vụ cho hệ thống Quantum–AI hỗ trợ quản trị tail risk danh mục cổ phiếu
 
-**Đội dự án:** NOVARIS  
-**Product Owner:** Nguyễn Thị Ánh Ngọc  
-**Tài liệu nguồn:** `QSHIELD-PSS-001 v1.0`, `QSHIELD-PRS-001 v1.0`  
-**Trạng thái:** Baseline Candidate  
+**Đội dự án:** NOVARIS
+**Product Owner:** Nguyễn Thị Ánh Ngọc
+**Tài liệu nguồn:** `QSHIELD-PSS-001 v1.0`, `QSHIELD-PRS-001 v1.0`
+**Trạng thái:** Baseline Candidate
 **Mục đích:** Chuyển Product Scope và Product Requirements thành các lát cắt giá trị có thể ưu tiên, phát triển, kiểm thử và demo.
 
 ---
@@ -147,12 +147,12 @@ EPIC-09 Governance, Audit & Operations
 
 ## US-RUN-001 — Nhập danh mục cần phân tích
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn nhập ticker, giá trị hoặc tỷ trọng từng vị thế, tiền mặt và ngày đánh giá, để Q-SHIELD phân tích đúng danh mục của tôi.
 
-**Giá trị:** Tạo đầu vào chuẩn cho toàn bộ pipeline.  
-**Priority:** P0  
-**Owner:** NGOC/TÂN  
+**Giá trị:** Tạo đầu vào chuẩn cho toàn bộ pipeline.
+**Priority:** P0
+**Owner:** NGOC/TÂN
 **Requirement trace:** PR-RUN-001–004, PR-UI-001.
 
 **Điều kiện trước:** Universe Registry và schema portfolio input tồn tại.
@@ -171,12 +171,12 @@ Với tư cách là Portfolio User, tôi muốn nhập ticker, giá trị hoặc
 
 ## US-RUN-002 — Nhận phản hồi đầu vào không hợp lệ
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn biết chính xác trường nào sai và cách sửa, để không chạy mô hình trên một danh mục không hợp lệ.
 
-**Giá trị:** Ngăn lỗi lan truyền sang tài chính và Quantum.  
-**Priority:** P0  
-**Owner:** TÂN/MINHANH  
+**Giá trị:** Ngăn lỗi lan truyền sang tài chính và Quantum.
+**Priority:** P0
+**Owner:** TÂN/MINHANH
 **Requirement trace:** PR-RUN-005–006, PR-OPS-004.
 
 **Main flow:**
@@ -192,11 +192,11 @@ Với tư cách là Portfolio User, tôi muốn biết chính xác trường nà
 
 ## US-RUN-003 — Chọn chế độ development hoặc final
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User hoặc Model Validator, tôi muốn chọn chế độ development hoặc final, để cân bằng thời gian chạy và độ ổn định của kết quả.
 
-**Priority:** P1  
-**Owner:** TÂN/TÚ  
+**Priority:** P1
+**Owner:** TÂN/TÚ
 **Requirement trace:** PR-RUN-007, PR-SCN-002, PR-NFR-PERF-005.
 
 **Main flow:**
@@ -209,11 +209,11 @@ Với tư cách là Portfolio User hoặc Model Validator, tôi muốn chọn ch
 
 ## US-RUN-004 — Theo dõi trạng thái pipeline
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn biết hệ thống đang ở bước nào, để phân biệt đang xử lý, hoàn tất, fallback hay thất bại.
 
-**Priority:** P1  
-**Owner:** TÂN  
+**Priority:** P1
+**Owner:** TÂN
 **Requirement trace:** PR-RUN-008, PR-RUN-012, PR-OPS-004–006.
 
 **Main flow:** UI hiển thị state hiện tại theo run state machine, module đang chạy, elapsed time và warning nếu có.
@@ -224,11 +224,11 @@ Với tư cách là Portfolio User, tôi muốn biết hệ thống đang ở b�
 
 ## US-RUN-005 — Chạy lại một phân tích what-if
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn thay đổi danh mục hoặc cấu hình được phép rồi tạo một run mới, để so sánh các tình huống mà không làm mất kết quả cũ.
 
-**Priority:** P1  
-**Owner:** TÂN/NGOC  
+**Priority:** P1
+**Owner:** TÂN/NGOC
 **Requirement trace:** PR-RUN-009, PR-NFR-REL-004.
 
 **Main flow:**
@@ -242,11 +242,11 @@ Với tư cách là Portfolio User, tôi muốn thay đổi danh mục hoặc c�
 
 ## US-RUN-006 — Xử lý khi không đủ 10 ứng viên
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn vẫn nhận được risk analysis khi danh mục có ít hơn 10 vị thế hợp lệ, đồng thời được thông báo rằng Quantum 20-bit không thể chạy, để tránh kết quả bị padding hoặc diễn giải sai.
 
-**Priority:** P0  
-**Owner:** NGOC/TÂN  
+**Priority:** P0
+**Owner:** NGOC/TÂN
 **Requirement trace:** PR-RUN-010, PR-DAT-019.
 
 **Output:** baseline risk report và trạng thái `INSUFFICIENT_QUANTUM_CANDIDATES`; không có final Quantum recommendation.
@@ -257,11 +257,11 @@ Với tư cách là Portfolio User, tôi muốn vẫn nhận được risk analy
 
 ## US-DAT-001 — Sử dụng universe đã được phê duyệt
 
-**User Story**  
+**User Story**
 Với tư cách là Data Owner, tôi muốn quản lý danh sách 30 mã VN30 bằng Universe Registry có version và snapshot date, để mọi module dùng cùng một universe.
 
-**Priority:** P0  
-**Owner:** MINHANH  
+**Priority:** P0
+**Owner:** MINHANH
 **Requirement trace:** PR-DAT-001–004, PR-CFG-007.
 
 **Output:** approved Universe Registry, universe version và checksum.
@@ -270,22 +270,22 @@ Với tư cách là Data Owner, tôi muốn quản lý danh sách 30 mã VN30 b�
 
 ## US-DAT-002 — Kiểm tra chất lượng dữ liệu
 
-**User Story**  
+**User Story**
 Với tư cách là Data Owner, tôi muốn tự động kiểm tra schema, duplicate, missing values, giá và volume bất hợp lệ, để chỉ dữ liệu đạt quality gate được chuyển sang mô hình.
 
-**Priority:** P0  
-**Owner:** MINHANH  
+**Priority:** P0
+**Owner:** MINHANH
 **Requirement trace:** PR-DAT-005–010, GATE-02.
 
 **Output:** Data Quality Report, issue counts, pass/fail và affected tickers/dates.
 
 ## US-DAT-003 — Ngăn temporal leakage
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn xác nhận mọi feature tại ngày `t` chỉ sử dụng dữ liệu đến `t`, để backtest và recommendation không nhìn thấy tương lai.
 
-**Priority:** P0  
-**Owner:** MINHANH/TÚ  
+**Priority:** P0
+**Owner:** MINHANH/TÚ
 **Requirement trace:** PR-DAT-011–014.
 
 **Output:** temporal-integrity test evidence và data split manifest.
@@ -294,11 +294,11 @@ Với tư cách là Model Validator, tôi muốn xác nhận mọi feature tại
 
 ## US-DAT-004 — Xem eligibility tại ngày đánh giá
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn biết mã nào đủ điều kiện, mã nào bị loại và lý do, để hiểu phạm vi tài sản thực tế mà hệ thống đã phân tích.
 
-**Priority:** P1  
-**Owner:** MINHANH  
+**Priority:** P1
+**Owner:** MINHANH
 **Requirement trace:** PR-DAT-015–020.
 
 **Main flow:** Eligibility Engine kiểm tra minimum history, data coverage, listing status và liquidity tại evaluation date.
@@ -307,22 +307,22 @@ Với tư cách là Portfolio User, tôi muốn biết mã nào đủ điều ki
 
 ## US-DAT-005 — Không tạo dữ liệu trước niêm yết
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn hệ thống loại một mã chưa có lịch sử thay vì nội suy ngược về trước ngày niêm yết, để tránh tạo dữ liệu giả và survivorship distortion bổ sung.
 
-**Priority:** P0  
-**Owner:** MINHANH  
+**Priority:** P0
+**Owner:** MINHANH
 **Requirement trace:** PR-DAT-016–018.
 
 **Output:** exclusion reason `INSUFFICIENT_HISTORY` hoặc `NOT_LISTED_AT_DATE`.
 
 ## US-DAT-006 — Truy xuất nguồn và phiên bản dữ liệu
 
-**User Story**  
+**User Story**
 Với tư cách là Judge/Model Validator, tôi muốn biết nguồn, ngày cập nhật, phiên bản và phạm vi dữ liệu của từng run, để có thể kiểm chứng và tái lập kết quả.
 
-**Priority:** P1  
-**Owner:** MINHANH  
+**Priority:** P1
+**Owner:** MINHANH
 **Requirement trace:** PR-DAT-009–010, PR-AUD-002–005.
 
 ---
@@ -331,53 +331,53 @@ Với tư cách là Judge/Model Validator, tôi muốn biết nguồn, ngày c�
 
 ## US-REG-001 — Xem trạng thái thị trường hiện tại
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn biết thị trường đang bình thường, biến động hay stress, để hiểu bối cảnh của khuyến nghị giảm rủi ro.
 
-**Priority:** P1  
-**Owner:** TÚ  
+**Priority:** P1
+**Owner:** TÚ
 **Requirement trace:** PR-REG-008–013, PR-UI-002.
 
 **Output:** selected state, economic label, probabilities và evaluation date.
 
 ## US-REG-002 — Xem xác suất thay vì nhãn cứng
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem xác suất của từng trạng thái, để hiểu mức độ chắc chắn thay vì tin tuyệt đối vào một nhãn duy nhất.
 
-**Priority:** P0  
-**Owner:** TÚ  
+**Priority:** P0
+**Owner:** TÚ
 **Requirement trace:** PR-REG-010–013.
 
 **Quy tắc:** Tổng xác suất bằng 1 trong tolerance; `p_stress` là probability của stress state.
 
 ## US-REG-003 — So sánh HMM 2–5 trạng thái
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn xem báo cáo so sánh HMM từ 2 đến 5 trạng thái qua nhiều seed, để xác nhận số trạng thái được chọn có bằng chứng chứ không bị áp đặt.
 
-**Priority:** P0  
-**Owner:** TÚ  
+**Priority:** P0
+**Owner:** TÚ
 **Requirement trace:** PR-REG-001–007.
 
 **Output:** log-likelihood, AIC, BIC, convergence, occupancy, stability và decision rationale.
 
 ## US-REG-004 — Diễn giải ý nghĩa kinh tế của state
 
-**User Story**  
+**User Story**
 Với tư cách là Quant Risk Analyst, tôi muốn mỗi state có profile return, volatility và drawdown, để label normal/volatile/stress có cơ sở tài chính.
 
-**Priority:** P1  
-**Owner:** TÚ/PHÚC  
+**Priority:** P1
+**Owner:** TÚ/PHÚC
 **Requirement trace:** PR-REG-008–009, PR-NFR-EXP-001.
 
 ## US-REG-005 — Fallback khi HMM không hội tụ
 
-**User Story**  
+**User Story**
 Với tư cách là System Administrator, tôi muốn HMM failure kích hoạt fallback đã được phê duyệt hoặc dừng run rõ ràng, để không tạo state giả và tiếp tục pipeline âm thầm.
 
-**Priority:** P0  
-**Owner:** TÚ/TÂN  
+**Priority:** P0
+**Owner:** TÚ/TÂN
 **Requirement trace:** PR-REG-014–015, PR-OPS-007.
 
 ---
@@ -386,53 +386,53 @@ Với tư cách là System Administrator, tôi muốn HMM failure kích hoạt f
 
 ## US-SCN-001 — Sinh các kịch bản 20 ngày theo regime
 
-**User Story**  
+**User Story**
 Với tư cách là Quant Risk Analyst, tôi muốn sinh nhiều đường đi lợi suất 20 ngày có điều kiện theo regime, để đo tail risk trong bối cảnh thị trường hiện tại.
 
-**Priority:** P0  
-**Owner:** TÚ  
+**Priority:** P0
+**Owner:** TÚ
 **Requirement trace:** PR-SCN-001–008.
 
 **Output:** scenario cube `[scenario, 20, asset]`, ticker order và scenario manifest.
 
 ## US-SCN-002 — Chọn số kịch bản phù hợp mục đích
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn dùng 2.000 scenarios cho development và 5.000 cho final evaluation, để cân bằng tài nguyên với độ ổn định của tail metrics.
 
-**Priority:** P1  
-**Owner:** TÚ/PHÚC  
+**Priority:** P1
+**Owner:** TÚ/PHÚC
 **Requirement trace:** PR-SCN-002–003, PR-RSK-007–008.
 
 ## US-SCN-003 — Kiểm định scenario quality
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn kiểm tra moments, volatility, autocorrelation, cross-asset correlation và tail behavior, để biết scenarios có đủ tin cậy cho CVaR.
 
-**Priority:** P0  
-**Owner:** TÚ/PHÚC  
+**Priority:** P0
+**Owner:** TÚ/PHÚC
 **Requirement trace:** PR-SCN-009–013.
 
 **Output:** Scenario Validation Report và quality-gate status.
 
 ## US-SCN-004 — So sánh champion với CVAE challenger
 
-**User Story**  
+**User Story**
 Với tư cách là AI/ML Owner, tôi muốn so sánh moving-block bootstrap với Conditional VAE trên cùng validation protocol, để chỉ thay champion khi challenger thực sự cải thiện.
 
-**Priority:** P2  
-**Owner:** TÚ  
+**Priority:** P2
+**Owner:** TÚ
 **Requirement trace:** PR-SCN-014–015.
 
 **Quy tắc:** CVAE failure không chặn core release; thay champion cần Decision Log approval.
 
 ## US-SCN-005 — Truy xuất cấu hình scenario
 
-**User Story**  
+**User Story**
 Với tư cách là Judge/Model Validator, tôi muốn xem model version, block length, seed, conditioning regime và validation metrics, để tái lập đúng scenario set.
 
-**Priority:** P1  
-**Owner:** TÚ  
+**Priority:** P1
+**Owner:** TÚ
 **Requirement trace:** PR-SCN-004–008, PR-AUD-003–005.
 
 ---
@@ -441,71 +441,71 @@ Với tư cách là Judge/Model Validator, tôi muốn xem model version, block 
 
 ## US-RSK-001 — Xem tail risk trước phòng vệ
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem CVaR 95%, 97,5%, 99%, VaR và drawdown của danh mục hiện tại, để hiểu quy mô tổn thất trong phần đuôi trước khi hành động.
 
-**Priority:** P0  
-**Owner:** PHÚC  
+**Priority:** P0
+**Owner:** PHÚC
 **Requirement trace:** PR-RSK-001–008, PR-UI-003.
 
 **Output:** baseline risk report với units, confidence levels và scenario count.
 
 ## US-RSK-002 — Hiểu độ bất định của CVaR
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem confidence interval và số tail observations, để không hiểu CVaR 99% là một con số chính xác tuyệt đối.
 
-**Priority:** P1  
-**Owner:** PHÚC  
+**Priority:** P1
+**Owner:** PHÚC
 **Requirement trace:** PR-RSK-007–008.
 
 ## US-RSK-003 — Xem breakdown chi phí và turnover
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem phí, thuế, slippage, turnover và liquidity penalty, để đánh giá phương án có thực tế sau chi phí hay không.
 
-**Priority:** P0  
-**Owner:** PHÚC  
+**Priority:** P0
+**Owner:** PHÚC
 **Requirement trace:** PR-RSK-009–013.
 
 ## US-CAN-001 — Chọn động top 10 ứng viên
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn hệ thống chọn 10 vị thế có tiềm năng giảm tail risk tốt nhất tại ngày đánh giá, để Quantum tập trung vào phần quyết định có giá trị cao.
 
-**Priority:** P0  
-**Owner:** PHÚC  
+**Priority:** P0
+**Owner:** PHÚC
 **Requirement trace:** PR-CAN-001–008.
 
 **Output:** ordered candidate list và `candidate_order.json`.
 
 ## US-CAN-002 — Hiểu vì sao một mã được chọn
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem marginal CVaR reduction, cost và liquidity penalty của từng mã, để hiểu candidate score thay vì nhận một danh sách hộp đen.
 
-**Priority:** P1  
-**Owner:** PHÚC  
+**Priority:** P1
+**Owner:** PHÚC
 **Requirement trace:** PR-CAN-001–004, PR-NFR-EXP-002.
 
 ## US-CAN-003 — Kiểm tra top-10 risk coverage
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn đo top-10 risk coverage, để biết việc thu hẹp từ 30 xuống 10 mã có bỏ sót quá nhiều rủi ro hay không.
 
-**Priority:** P0  
-**Owner:** PHÚC  
+**Priority:** P0
+**Owner:** PHÚC
 **Requirement trace:** PR-CAN-009–011.
 
 **Ngoại lệ:** Coverage thấp tạo warning và sensitivity top 12/15; không âm thầm đổi QUBO baseline.
 
 ## US-CAN-004 — Chuyển xác suất stress thành ngân sách tiền mặt
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn target cash budget tăng theo xác suất stress đã được hiệu chỉnh, để mức phòng vệ phản ánh bối cảnh thị trường một cách nhất quán.
 
-**Priority:** P0  
-**Owner:** TÚ/PHÚC  
+**Priority:** P0
+**Owner:** TÚ/PHÚC
 **Requirement trace:** PR-CAN-012–015.
 
 **Quy tắc:** Mapping đơn điệu; chỉ calibration trên validation 2023; threshold và budget thuộc Config Registry.
@@ -516,88 +516,88 @@ Với tư cách là Portfolio User, tôi muốn target cash budget tăng theo x�
 
 ## US-QNT-001 — Nhận hành động 0/10/20/30% cho top 10
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn Quantum lựa chọn mức giữ nguyên hoặc giảm 10%, 20%, 30% cho từng cổ phiếu top 10, để nhận một tổ hợp active set và coarse sizing có xét tương tác giữa các quyết định.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-QUB-001–005, PR-SLV-005–011.
 
 **Output:** 20-bit solution, ticker mapping và decoded Quantum actions.
 
 ## US-QNT-002 — Xem và kiểm chứng bit mapping
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn xem candidate order và mapping `00/10/01/11`, để xác nhận bitstring được decode đúng ticker và đúng mức giảm.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-QUB-001–005.
 
 **Quy tắc:** Sort bảng trên UI không được làm đổi mapping.
 
 ## US-QNT-003 — Xây QUBO từ financial evaluations thật
 
-**User Story**  
+**User Story**
 Với tư cách là Quant Risk Analyst, tôi muốn QUBO surrogate được fit từ objective samples do Risk Engine tính, để Quantum tối ưu một xấp xỉ có liên hệ trực tiếp với bài toán tài chính.
 
-**Priority:** P0  
-**Owner:** PHÚC/TÂN  
+**Priority:** P0
+**Owner:** PHÚC/TÂN
 **Requirement trace:** PR-QUB-006–012.
 
 **Output:** 211+ structured samples, validation samples và versioned QUBO package.
 
 ## US-QNT-004 — Kiểm định QUBO surrogate trước khi chạy QAOA
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn xem prediction error, rank correlation, top-k recall và feasibility của surrogate, để không chạy QAOA trên một QUBO không phản ánh financial objective.
 
-**Priority:** P0  
-**Owner:** TÂN/PHÚC  
+**Priority:** P0
+**Owner:** TÂN/PHÚC
 **Requirement trace:** PR-QUB-013–017.
 
 **Ngoại lệ:** Surrogate fail phải dừng QAOA hợp lệ và phát hành `ERR_QUBO_SURROGATE_VALIDATION`.
 
 ## US-QNT-005 — Có nghiệm exact làm tham chiếu
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn exact solver tìm global optimum của QUBO 20-bit, để có mốc đánh giá chất lượng QAOA.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-SLV-001–004.
 
 **Output:** exact best bitstring, energy, feasibility, runtime và QUBO hash.
 
 ## US-QNT-006 — Đánh giá QAOA qua nhiều seed
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn QAOA chạy trên danh sách seed đã đăng ký và báo cáo toàn bộ phân phối kết quả, để tránh cherry-pick một seed đẹp.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-SLV-005–011.
 
 **Output:** per-seed metrics, aggregate distribution và sample probabilities.
 
 ## US-QNT-007 — So sánh Quantum, exact và classical công bằng
 
-**User Story**  
+**User Story**
 Với tư cách là Judge/Model Validator, tôi muốn các solver dùng cùng QUBO hash và cùng constraint interpretation, để benchmark có ý nghĩa.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-SLV-012–014.
 
 **Output:** best energy, optimality gap, feasible rate, optimum sampling probability, runtime và backend information.
 
 ## US-QNT-008 — Fallback khi QAOA không hoạt động
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn hệ thống vẫn hoàn tất bằng exact/classical fallback khi QAOA timeout hoặc không sinh nghiệm hợp lệ, đồng thời ghi rõ solver thực tế, để không bị mất toàn bộ phân tích hoặc hiểu nhầm kết quả fallback là Quantum.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-SLV-015, PR-OPS-006.
 
 ---
@@ -606,62 +606,62 @@ Với tư cách là Portfolio User, tôi muốn hệ thống vẫn hoàn tất b
 
 ## US-FIN-001 — Tính lại nghiệm Quantum bằng hàm tài chính thực
 
-**User Story**  
+**User Story**
 Với tư cách là Quant Risk Analyst, tôi muốn tính lại CVaR và financial objective thực cho các bitstring tốt nhất, để không chọn final recommendation chỉ dựa trên QUBO energy xấp xỉ.
 
-**Priority:** P0  
-**Owner:** PHÚC  
+**Priority:** P0
+**Owner:** PHÚC
 **Requirement trace:** PR-FIN-001–006.
 
 **Output:** true-objective ranking, surrogate-vs-true rank comparison và selected coarse candidate.
 
 ## US-FIN-002 — Tinh chỉnh cục bộ nhưng giữ vai trò Quantum
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn mức giảm Quantum được tinh chỉnh tối đa ±5 điểm phần trăm trên active set đã chọn, để cải thiện financial objective mà không biến polishing thành một optimizer thay thế Quantum.
 
-**Priority:** P0  
-**Owner:** PHÚC/TÂN  
+**Priority:** P0
+**Owner:** PHÚC/TÂN
 **Requirement trace:** PR-FIN-007–012.
 
 **Quy tắc:** Quantum 0% phải giữ 0%; final reduction không vượt 30%.
 
 ## US-FIN-003 — Xem mức phụ thuộc vào polishing
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn đo phần cải thiện do Quantum và phần cải thiện do polishing, để đánh giá vai trò thực chất của Quantum.
 
-**Priority:** P1  
-**Owner:** PHÚC/TÂN  
+**Priority:** P1
+**Owner:** PHÚC/TÂN
 **Requirement trace:** PR-FIN-011–012, PR-NFR-EXP-003.
 
 ## US-FIN-004 — Nhận danh mục sau giao dịch có accounting đúng
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn giá trị bán, chi phí, tiền mặt và tỷ trọng cuối được đối soát, để phương án không tạo tỷ trọng âm hoặc tổng tỷ trọng khác 100%.
 
-**Priority:** P0  
-**Owner:** PHÚC/TÂN  
+**Priority:** P0
+**Owner:** PHÚC/TÂN
 **Requirement trace:** PR-FIN-013–018.
 
 **Output:** final portfolio, cash before/after, transaction cost và constraint status.
 
 ## US-FIN-005 — Nhận cảnh báo khi phương án không cải thiện CVaR
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn hệ thống thông báo trung thực khi CVaR sau cao hơn hoặc không cải thiện đáng kể, để không hiểu một output hợp lệ về kỹ thuật là một khuyến nghị tốt về tài chính.
 
-**Priority:** P0  
-**Owner:** NGOC/PHÚC  
+**Priority:** P0
+**Owner:** NGOC/PHÚC
 **Requirement trace:** PR-UI-017, PR-NFR-EXP-004.
 
 ## US-FIN-006 — Hiểu toàn bộ đánh đổi trước–sau
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn so sánh CVaR, expected return, turnover, cost, cash và weights trước–sau, để quyết định liệu mức giảm rủi ro có xứng đáng với chi phí và phần lợi nhuận kỳ vọng bị hy sinh.
 
-**Priority:** P0  
-**Owner:** NGOC/PHÚC/TÂN  
+**Priority:** P0
+**Owner:** NGOC/PHÚC/TÂN
 **Requirement trace:** PR-UI-006–007, PR-UI-015.
 
 ---
@@ -670,56 +670,56 @@ Với tư cách là Portfolio User, tôi muốn so sánh CVaR, expected return, 
 
 ## US-UI-001 — Xem hành trình phân tích trên một dashboard thống nhất
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn xem dữ liệu đầu vào, regime, risk, top 10, Quantum và final recommendation theo một flow rõ ràng, để hiểu kết quả mà không phải mở nhiều file kỹ thuật.
 
-**Priority:** P1  
-**Owner:** TÂN/NGOC  
+**Priority:** P1
+**Owner:** TÂN/NGOC
 **Requirement trace:** PR-UI-001–008.
 
 ## US-UI-002 — Phân biệt kết quả Quantum thô và kết quả cuối
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn nhìn thấy riêng Quantum raw action và polished final action, để biết phần nào do Quantum quyết định và phần nào do hậu xử lý.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-UI-005–007, PR-NFR-UX-004.
 
 ## US-UI-003 — Truy xuất nguồn của mỗi số liệu
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn mỗi metric trên dashboard có run ID, unit và artifact source, để đối chiếu với backend và phát hiện số liệu viết tay.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-UI-009–013, PR-AUD-005.
 
 ## US-UI-004 — Xuất báo cáo đầy đủ
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User hoặc Judge, tôi muốn export báo cáo gồm assumptions, methodology, config, results, benchmark, warnings và limitations, để thẩm định hoặc trình bày kết quả ngoài dashboard.
 
-**Priority:** P1  
-**Owner:** NGOC/TÂN  
+**Priority:** P1
+**Owner:** NGOC/TÂN
 **Requirement trace:** PR-UI-014–018.
 
 ## US-UI-005 — Hiểu Q-SHIELD không tự đặt lệnh
 
-**User Story**  
+**User Story**
 Với tư cách là Portfolio User, tôi muốn được thông báo rõ Q-SHIELD chỉ hỗ trợ quyết định và không tự động giao dịch, để không nhầm Proposed Action Plan với lệnh đã gửi ra thị trường.
 
-**Priority:** P0  
-**Owner:** NGOC  
+**Priority:** P0
+**Owner:** NGOC
 **Requirement trace:** PR-UI-018, PR-OPS-009, PR-NFR-SEC-005.
 
 ## US-UI-006 — Sử dụng offline demo có nhãn rõ ràng
 
-**User Story**  
+**User Story**
 Với tư cách là Judge hoặc người demo, tôi muốn xem một validated cached run khi môi trường tính toán không ổn định, để demo vẫn liền mạch nhưng không bị hiểu nhầm là dữ liệu thời gian thực.
 
-**Priority:** P1  
-**Owner:** TÂN  
+**Priority:** P1
+**Owner:** TÂN
 **Requirement trace:** PR-OPS-001–003, PR-UI-013.
 
 ---
@@ -728,76 +728,76 @@ Với tư cách là Judge hoặc người demo, tôi muốn xem một validated 
 
 ## US-GOV-001 — Phê duyệt cấu hình trước baseline
 
-**User Story**  
+**User Story**
 Với tư cách là Product Owner, tôi muốn mọi tham số tài chính, dữ liệu, mô hình và Quantum được quản lý bằng Config Registry có version và người phê duyệt, để các module không tự dùng các giá trị khác nhau.
 
-**Priority:** P0  
-**Owner:** NGOC/TÂN  
+**Priority:** P0
+**Owner:** NGOC/TÂN
 **Requirement trace:** PR-CFG-001–006.
 
 **Output:** approved config version/hash; development override được gắn `NON_BASELINE_RUN`.
 
 ## US-GOV-002 — Quản lý Data/Model/Financial/Quantum Registries
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn truy xuất phiên bản dữ liệu, mô hình, policy tài chính và QUBO/solver, để biết chính xác một run đã sử dụng thành phần nào.
 
-**Priority:** P0  
-**Owner:** MINHANH/TÚ/PHÚC/TÂN  
+**Priority:** P0
+**Owner:** MINHANH/TÚ/PHÚC/TÂN
 **Requirement trace:** PR-CFG-007–010.
 
 ## US-GOV-003 — Thực hiện change control
 
-**User Story**  
+**User Story**
 Với tư cách là Product Owner, tôi muốn thay đổi lớn về universe, action grid, risk metric hoặc Quantum dimension phải qua Change Request, để tránh scope drift và incompatibility âm thầm.
 
-**Priority:** P0  
-**Owner:** NGOC  
+**Priority:** P0
+**Owner:** NGOC
 **Requirement trace:** PR-CFG-011–013.
 
 ## US-AUD-001 — Tái lập một run
 
-**User Story**  
+**User Story**
 Với tư cách là Model Validator, tôi muốn sử dụng run manifest, config, versions, seeds và environment để chạy lại một kết quả, nhằm xác nhận báo cáo có thể tái lập.
 
-**Priority:** P0  
-**Owner:** TÂN  
+**Priority:** P0
+**Owner:** TÂN
 **Requirement trace:** PR-AUD-001–010.
 
 ## US-AUD-002 — Truy xuất requirement đến evidence
 
-**User Story**  
+**User Story**
 Với tư cách là Product Owner, tôi muốn mỗi requirement và Acceptance Criteria liên kết với Test Case và artifact, để biết chính xác claim nào đã được kiểm chứng.
 
-**Priority:** P0  
-**Owner:** NGOC/PHÚC  
+**Priority:** P0
+**Owner:** NGOC/PHÚC
 **Requirement trace:** PR-AUD-011–012.
 
 ## US-OPS-001 — Nhận lỗi có cấu trúc và hướng xử lý
 
-**User Story**  
+**User Story**
 Với tư cách là System Administrator, tôi muốn lỗi có code, module, timestamp, retry rule và recommended action, để debug mà không phải suy đoán từ stack trace rời rạc.
 
-**Priority:** P1  
-**Owner:** TÂN  
+**Priority:** P1
+**Owner:** TÂN
 **Requirement trace:** PR-OPS-004–007, Section 20 PRS.
 
 ## US-OPS-002 — Triển khai và chạy offline bằng runbook
 
-**User Story**  
+**User Story**
 Với tư cách là thành viên ngoài module owner, tôi muốn cài đặt và chạy Q-SHIELD theo một runbook, để chứng minh sản phẩm không phụ thuộc duy nhất vào máy hoặc kiến thức cá nhân của một thành viên.
 
-**Priority:** P1  
-**Owner:** TÂN  
+**Priority:** P1
+**Owner:** TÂN
 **Requirement trace:** PR-OPS-001–003, PR-OPS-008–010, PR-AUD-010.
 
 ## US-GOV-004 — Phê duyệt UAT và nội dung công bố
 
-**User Story**  
+**User Story**
 Với tư cách là Product Owner, tôi muốn kiểm tra end-to-end flow, dashboard, report, disclaimer và limitations trước release, để bảo đảm sản phẩm giải đúng bài toán và không đưa ra claim vượt bằng chứng.
 
-**Priority:** P0  
-**Owner:** NGOC  
+**Priority:** P0
+**Owner:** NGOC
 **Requirement trace:** GATE-10, PR-UI-017–018, PR-NFR-EXP-004–005.
 
 ---

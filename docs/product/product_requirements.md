@@ -21,10 +21,10 @@ last_updated: 2026-08-02
 
 ## Đặc tả yêu cầu sản phẩm cho hệ thống Quantum–AI hỗ trợ quản trị tail risk danh mục cổ phiếu
 
-**Đội dự án:** NOVARIS  
-**Product Owner:** Nguyễn Thị Ánh Ngọc  
-**Tài liệu phạm vi cha:** `QSHIELD-PSS-001 v1.0`  
-**Trạng thái:** Baseline Candidate  
+**Đội dự án:** NOVARIS
+**Product Owner:** Nguyễn Thị Ánh Ngọc
+**Tài liệu phạm vi cha:** `QSHIELD-PSS-001 v1.0`
+**Trạng thái:** Baseline Candidate
 **Mục đích:** Chuyển Product Scope thành các yêu cầu có thể thiết kế, lập trình, tích hợp, kiểm thử và truy xuất bằng evidence.
 
 ---
