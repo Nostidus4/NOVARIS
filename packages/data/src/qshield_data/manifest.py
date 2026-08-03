@@ -48,7 +48,9 @@ def _file_info(path: Path, data_root: Path) -> dict[str, Any] | None:
         "path": rel_path,
         "sha256": _sha256_of_file(path),
         "size_bytes": path.stat().st_size,
-        "modified_at": datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
+        "modified_at": datetime.fromtimestamp(path.stat().st_mtime)
+        .astimezone()
+        .isoformat(),
     }
 
 
@@ -77,7 +79,7 @@ def build_manifest(
         "data_version": data_version,
         "universe_version": universe_version,
         "universe_as_of": universe_as_of,
-        "created_at": datetime.now().isoformat(),
+        "created_at": datetime.now().astimezone().isoformat(),
         "sources": ["YF_PRICES", "DNSE_PRICES", "VNSTOCK_PRICES", "VNSTOCK_INDEX"],
         "index_symbol_used": index_symbol_used,
         "index_source_used": index_source_used,
@@ -94,6 +96,7 @@ def write_manifest(manifest: dict[str, Any], out_path: Path) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False, default=str), encoding="utf-8"
+        json.dumps(manifest, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
     )
     return out_path

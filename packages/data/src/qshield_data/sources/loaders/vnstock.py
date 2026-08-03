@@ -41,14 +41,18 @@ def download_vnindex(start: str, end: str, max_retries: int = 3) -> pd.DataFrame
             df = df.rename(columns=_RENAME)
             df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
             return df.set_index("date")[["Open", "High", "Low", "Close", "Volume"]]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- vnstock SDK không có exception hierarchy công khai
             if attempt == max_retries - 1:
-                logger.warning("vnstock VNINDEX failed after %d attempts: %s", max_retries, e)
+                logger.warning(
+                    "vnstock VNINDEX failed after %d attempts: %s", max_retries, e
+                )
                 return None
     return None
 
 
-def download_ticker(ticker: str, start: str, end: str, max_retries: int = 3) -> pd.DataFrame | None:
+def download_ticker(
+    ticker: str, start: str, end: str, max_retries: int = 3
+) -> pd.DataFrame | None:
     """Tải giá 1 mã VN từ vnstock (source=VCI), có retry — alternative cho DNSE.
 
     Dùng cho các mã multi-exchange mà Yahoo `.VN` chỉ có data từ ngày lên HOSE. vnstock VCI cho
@@ -71,9 +75,11 @@ def download_ticker(ticker: str, start: str, end: str, max_retries: int = 3) -> 
             df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
             df.index.name = "date"
             return df
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- vnstock SDK không có exception hierarchy công khai
             if attempt == max_retries - 1:
-                logger.warning("vnstock %s failed after %d attempts: %s", ticker, max_retries, e)
+                logger.warning(
+                    "vnstock %s failed after %d attempts: %s", ticker, max_retries, e
+                )
                 return None
             time.sleep(1.0 * (attempt + 1))  # backoff nhẹ tránh throttle VCI
     return None

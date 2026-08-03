@@ -62,7 +62,9 @@ def build_market_features(
     market["market_simple_return"] = market["close"] / market["close"].shift(1) - 1
 
     # Rolling volatility 20 ngày (daily; nhân sqrt(252) để annualize thuộc về downstream, không ở đây).
-    market["realized_vol_20d"] = market["market_log_return"].rolling(20, min_periods=20).std()
+    market["realized_vol_20d"] = (
+        market["market_log_return"].rolling(20, min_periods=20).std()
+    )
 
     # Rolling drawdown so với đỉnh 252 ngày gần nhất.
     market["rolling_max_252"] = market["close"].rolling(252, min_periods=60).max()
@@ -86,4 +88,6 @@ def _assert_point_in_time(market: pd.DataFrame) -> None:
     original = market["market_log_return"].rolling(20, min_periods=20).std()
     shifted = market["market_log_return"].shift(-1).rolling(20, min_periods=20).std()
     if original.equals(shifted):
-        raise AssertionError("Rolling might be looking ahead! (point-in-time check failed)")
+        raise AssertionError(
+            "Rolling might be looking ahead! (point-in-time check failed)"
+        )
