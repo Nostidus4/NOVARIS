@@ -2,26 +2,43 @@
 
 frequency: daily  # đã khóa — CLAUDE.md: "dữ liệu ngày"
 
-# TODO(Nguyễn Đỗ Minh Anh): nguồn dữ liệu chính thức, quyền sử dụng và fallback source.
-# docs/product/mvp_scope.md §8.5 cố ý không hard-code tên nhà cung cấp cho đến khi Source Registry
-# được xác nhận về quyền truy cập/bản quyền (TBD-009).
-source: null
+# PROVISIONAL: nguồn thật đã dùng trong CLEAN.ipynb — 24/30 mã Yahoo Finance (yfinance), 6/30 mã
+# multi-exchange qua DNSE/Entrade (fallback Yahoo), VN-Index qua vnstock (source=VCI, fallback
+# Yahoo). Chưa phải Source Registry đã duyệt chính thức theo mvp_scope.md §8.5 — giữ tạm để chạy
+# pipeline lúc phát triển.
+source: yahoo_dnse_vnstock
 
 date_range:
-  # TODO(Nguyễn Đỗ Minh Anh): khoảng thời gian train/validation/test cho phạm vi 8-mã đã khóa.
-  # docs/product/mvp_scope.md §8.3 có đề xuất mốc thời gian (train 2016/2018–2022, validation 2023,
-  # test 2024–30/06/2026) nhưng đó là cho thiết kế 30-mã VN30 đầy đủ, chưa có xác nhận riêng áp
-  # dụng cho phạm vi 8-mã — không copy sang đây khi chưa được Data Owner duyệt.
-  train_start: null
-  train_end: null
-  validation_start: null
-  validation_end: null
-  test_start: null
-  test_end: null
+  # PROVISIONAL — dùng tạm cùng mốc thời gian đã áp dụng cho thiết kế 30-mã (mvp_scope.md §8.3) để
+  # có thể chạy pipeline end-to-end trong lúc phát triển phạm vi 8-mã. CHƯA được Data Owner duyệt
+  # riêng cho phạm vi 8-mã đã khóa — phải xác nhận lại trước khi dùng làm số liệu UAT/demo chính thức.
+  #
+  # "2 đồng hồ" (CLEAN.ipynb): market-level (HMM regime, packages/ai) train dài hơn asset-level
+  # (scenarios/CVaR/QUBO) vì asset-level cần coverage tốt hơn giữa các mã trong universe đã chốt.
+  # validation/test dùng CHUNG cho cả hai tầng.
+  market_train_start: "2016-01-01"
+  market_train_end: "2022-12-31"
+  asset_train_start: "2018-07-02"
+  asset_train_end: "2022-12-31"
+  validation_start: "2023-01-01"
+  validation_end: "2023-12-31"
+  test_start: "2024-01-01"
+  test_end: "2026-07-31"
 
-# TODO(Nguyễn Đỗ Minh Anh): quy tắc xử lý giá thiếu. CLAUDE.md chỉ cấm forward-fill trên cột return
-# ("Không forward-fill lợi suất"), chưa định nghĩa quy tắc thay thế cụ thể.
-missing_data_policy: null
+# Quy tắc xử lý giá thiếu (CLAUDE.md quy tắc 3: không forward-fill trên cột return).
+# no_forward_fill: ngày một mã không có phiên giao dịch thì đơn giản KHÔNG có row (không nội suy,
+# không .ffill()). compute_asset_returns() chỉ tính return giữa các row liên tiếp THỰC SỰ tồn tại
+# của từng mã (groupby + shift(1)) — ngày đầu tiên của mỗi mã luôn NaN, đúng ý, không fill.
+# Phantom day riêng của Yahoo (forward-fill ngày HOSE nghỉ lễ) được loại ở bước clean bằng cross-
+# check với lịch giao dịch VN-Index thật (xem clean/validate_prices.remove_yahoo_phantom_days).
+missing_data_policy: no_forward_fill
 
-# TODO(Nguyễn Đỗ Minh Anh): lịch sử tối thiểu (số phiên) để một mã được coi là eligible.
-min_history_sessions: null
+# Lịch sử tối thiểu (số phiên) để một mã được coi là eligible tại một ngày đánh giá.
+# PR-DAT-016 / mvp_scope.md DATA-011 đề xuất mặc định 252 phiên (~1 năm giao dịch).
+min_history_sessions: 252
+
+eligibility:
+  # ≥98% phiên có dữ liệu kể từ ngày bắt đầu có dữ liệu thực tế (first_data_date) — DATA-012.
+  min_coverage_pct: 0.98
+  # Ngưỡng thanh khoản 20 ngày — PROVISIONAL, cần Hoài Phúc phê duyệt (xem CLEAN.ipynb ghi chú gốc).
+  min_turnover_20d_vnd: 1000000000
