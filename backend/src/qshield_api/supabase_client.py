@@ -22,7 +22,9 @@ from supabase import Client, create_client
 class SupabaseSettings(BaseSettings):
     """Đọc cấu hình Supabase từ biến môi trường (`SUPABASE_*`) — không hard-code secret trong code."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="SUPABASE_", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_prefix="SUPABASE_", extra="ignore"
+    )
 
     url: str
     publishable_key: str

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  workflow_dispatch: {}
+  # Tạm tắt tự động chạy trên mỗi PR — packages/*/tests/ hầu hết còn là scaffold (chưa có hàm
+  # test thật), pytest exit code 5 = "no tests ran" làm CI luôn đỏ dù không có gì sai.
+  # Bật lại khi có test thật: bỏ comment 2 dòng dưới.
+  # pull_request:
+  #   branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv sync --all-packages
+      - run: uv run pytest -m "not slow"
+
+  verify-qubo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv sync --all-packages
+      - run: uv run pytest packages/quantum/tests/test_consistency.py -v

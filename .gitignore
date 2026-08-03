@@ -15,4 +15,4 @@ wheels/
 .env.local
 *.env
 !.env.example
-!**/.env.example 
+!**/.env.example
