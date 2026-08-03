@@ -19,7 +19,13 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
         ("ticker", "string", "-", "Mã cổ phiếu, upper-case", "HPG"),
         ("yahoo_symbol", "string", "-", "Symbol trên Yahoo Finance", "HPG.VN"),
         ("company_name", "string", "-", "Tên doanh nghiệp", "Hoà Phát"),
-        ("first_trading_date", "date", "YYYY-MM-DD", "Ngày giao dịch đầu tiên (best-effort)", "2007-11-15"),
+        (
+            "first_trading_date",
+            "date",
+            "YYYY-MM-DD",
+            "Ngày giao dịch đầu tiên (best-effort)",
+            "2007-11-15",
+        ),
         ("exchange_current", "string", "-", "Sàn hiện tại", "HOSE"),
         ("exchange_history", "string", "-", "Lịch sử chuyển sàn", "HNX→HOSE 2020"),
         ("data_source", "string", "enum", "Nguồn tải giá chính: yahoo | dnse", "dnse"),
@@ -28,18 +34,26 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
         ("date", "date", "YYYY-MM-DD", "Ngày giao dịch", "2024-06-28"),
         ("ticker", "string", "-", "Mã cổ phiếu", "HPG"),
         ("open, high, low, close", "float", "VND", "Giá không điều chỉnh", ""),
-        ("adjusted_close", "float", "VND", "Giá đã điều chỉnh cổ tức/chia tách", "27500.0"),
+        (
+            "adjusted_close",
+            "float",
+            "VND",
+            "Giá đã điều chỉnh cổ tức/chia tách",
+            "27500.0",
+        ),
         ("volume", "int", "shares", "Khối lượng khớp lệnh", "5230000"),
         ("turnover_value", "float", "VND", "close × volume", "1.4e11"),
         (
             "quality_flag",
             "string",
             "-",
-            "OK hoặc bitmask lỗi (pipe-separated: NONPOS_PRICE|NONPOS_CLOSE|NEG_VOLUME|"
-            "ZERO_VOLUME). Yahoo Finance đôi khi forward-fill giá cho ngày HOSE nghỉ (phantom "
-            "days, close = close ngày trước, volume = 0). Pipeline cross-check với lịch giao "
-            "dịch VN-Index (vnstock/VCI — feed thật từ broker VN) và loại các ngày phantom này "
-            "khỏi prices_adjusted trước khi lưu, nên không còn xuất hiện trong dữ liệu cuối.",
+            (
+                "OK hoặc bitmask lỗi (pipe-separated: NONPOS_PRICE|NONPOS_CLOSE|NEG_VOLUME|"
+                "ZERO_VOLUME). Yahoo Finance đôi khi forward-fill giá cho ngày HOSE nghỉ (phantom "
+                "days, close = close ngày trước, volume = 0). Pipeline cross-check với lịch giao "
+                "dịch VN-Index (vnstock/VCI — feed thật từ broker VN) và loại các ngày phantom này "
+                "khỏi prices_adjusted trước khi lưu, nên không còn xuất hiện trong dữ liệu cuối."
+            ),
             "OK",
         ),
         ("source_id", "string", "-", "Nguồn dữ liệu", "YF_PRICES"),
@@ -54,19 +68,61 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
         ("volume", "int", "shares", "Khối lượng", ""),
         ("turnover_value", "float", "VND", "close × volume", ""),
         ("quality_flag", "string", "-", "Cờ chất lượng", ""),
-        ("split", "string", "-", "train | validation | test | out_of_scope (asset-level clock)", "train"),
+        (
+            "split",
+            "string",
+            "-",
+            "train | validation | test | out_of_scope (asset-level clock)",
+            "train",
+        ),
     ],
     "market_features": [
         ("date", "date", "YYYY-MM-DD", "Ngày giao dịch", ""),
-        ("close", "float", "index points", "VN-Index đóng cửa hoặc composite", "1450.32"),
+        (
+            "close",
+            "float",
+            "index points",
+            "VN-Index đóng cửa hoặc composite",
+            "1450.32",
+        ),
         ("volume", "float", "shares", "Volume của index", ""),
         ("market_log_return", "float", "decimal", "ln(close_t/close_{t-1})", ""),
         ("market_simple_return", "float", "decimal", "close_t/close_{t-1}-1", ""),
-        ("realized_vol_20d", "float", "decimal", "Std của log return trên rolling 20 phiên (point-in-time)", "0.012"),
-        ("drawdown", "float", "decimal", "close/rolling_max_252 - 1 (âm hoặc 0)", "-0.08"),
-        ("liquidity_20d", "float", "log(shares)", "Rolling 20-day mean của log(volume)", ""),
-        ("split", "string", "-", "train | validation | test (market-level clock)", "train"),
-        ("source", "string", "-", "Nguồn (vnstock_VCI_VNINDEX / yahoo_^VNINDEX / custom_composite_ew)", ""),
+        (
+            "realized_vol_20d",
+            "float",
+            "decimal",
+            "Std của log return trên rolling 20 phiên (point-in-time)",
+            "0.012",
+        ),
+        (
+            "drawdown",
+            "float",
+            "decimal",
+            "close/rolling_max_252 - 1 (âm hoặc 0)",
+            "-0.08",
+        ),
+        (
+            "liquidity_20d",
+            "float",
+            "log(shares)",
+            "Rolling 20-day mean của log(volume)",
+            "",
+        ),
+        (
+            "split",
+            "string",
+            "-",
+            "train | validation | test (market-level clock)",
+            "train",
+        ),
+        (
+            "source",
+            "string",
+            "-",
+            "Nguồn (vnstock_VCI_VNINDEX / yahoo_^VNINDEX / custom_composite_ew)",
+            "",
+        ),
     ],
     "eligibility_daily": [
         ("date", "date", "YYYY-MM-DD", "Ngày đánh giá", ""),
@@ -76,13 +132,33 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
             "reason_code",
             "string",
             "enum",
-            "OK | NOT_LISTED_AT_DATE | INSUFFICIENT_HISTORY | LOW_COVERAGE | "
-            "SUSPENDED_OR_NO_DATA | LOW_LIQUIDITY",
+            (
+                "OK | NOT_LISTED_AT_DATE | INSUFFICIENT_HISTORY | LOW_COVERAGE | "
+                "SUSPENDED_OR_NO_DATA | LOW_LIQUIDITY"
+            ),
             "OK",
         ),
-        ("sessions_available", "int", "count", "Số phiên có dữ liệu tính đến ngày đánh giá", "1250"),
-        ("coverage_pct", "float", "[0,1]", "sessions_available / expected_sessions_since_listing", "0.99"),
-        ("avg_turnover_20d", "float", "VND", "Rolling 20-day mean turnover, point-in-time", "1.2e11"),
+        (
+            "sessions_available",
+            "int",
+            "count",
+            "Số phiên có dữ liệu tính đến ngày đánh giá",
+            "1250",
+        ),
+        (
+            "coverage_pct",
+            "float",
+            "[0,1]",
+            "sessions_available / expected_sessions_since_listing",
+            "0.99",
+        ),
+        (
+            "avg_turnover_20d",
+            "float",
+            "VND",
+            "Rolling 20-day mean turnover, point-in-time",
+            "1.2e11",
+        ),
     ],
 }
 

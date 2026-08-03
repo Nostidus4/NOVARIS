@@ -1,6 +1,5 @@
 # Nguyễn Đỗ Minh Anh - test 6 check của Data Quality Gate.
 import pandas as pd
-
 from qshield_data.quality.checks import (
     check_no_duplicates,
     check_no_negative_volume,
@@ -64,11 +63,19 @@ def test_check_universe_count() -> None:
 
 
 def test_check_split_no_overlap() -> None:
-    ok = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2023-01-01"]), "split": ["train", "validation"]})
+    ok = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2020-01-01", "2023-01-01"]),
+            "split": ["train", "validation"],
+        }
+    )
     assert check_split_no_overlap(ok)["status"] == "PASS"
 
     overlapping = pd.DataFrame(
-        {"date": pd.to_datetime(["2023-01-01", "2023-01-01"]), "split": ["train", "validation"]}
+        {
+            "date": pd.to_datetime(["2023-01-01", "2023-01-01"]),
+            "split": ["train", "validation"],
+        }
     )
     assert check_split_no_overlap(overlapping)["status"] == "FAIL"
 
@@ -76,7 +83,9 @@ def test_check_split_no_overlap() -> None:
 def test_run_all_checks_all_pass() -> None:
     prices = _prices()
     returns = pd.DataFrame({"date": prices["date"], "split": ["train", "train"]})
-    report_df, all_pass = run_all_checks(prices, _UNIVERSE, returns, expected_universe_count=2)
+    report_df, all_pass = run_all_checks(
+        prices, _UNIVERSE, returns, expected_universe_count=2
+    )
 
     assert all_pass is True
     assert len(report_df) == 6

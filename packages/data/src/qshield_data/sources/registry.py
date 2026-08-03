@@ -53,9 +53,13 @@ def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
     bad_source = ~df["data_source"].isin(["yahoo", "dnse"])
     if bad_source.any():
         bad = df.loc[bad_source, ["ticker", "data_source"]].to_dict("records")
-        raise ValueError(f"data_source phải là 'yahoo' hoặc 'dnse', gặp giá trị lạ: {bad}")
+        raise ValueError(
+            f"data_source phải là 'yahoo' hoặc 'dnse', gặp giá trị lạ: {bad}"
+        )
 
-    df["first_trading_date"] = pd.to_datetime(df["first_trading_date"]).dt.strftime("%Y-%m-%d")
+    df["first_trading_date"] = pd.to_datetime(df["first_trading_date"]).dt.strftime(
+        "%Y-%m-%d"
+    )
     return df.reset_index(drop=True)
 
 
