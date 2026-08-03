@@ -1,0 +1,9 @@
+﻿ticker,symbol,source,preferred,fallback_used,file,rows,start,end,sha256,status
+ACB,dnse:ACB,DNSE_PRICES,dnse,False,data/raw/prices/20260803_dnse_acb.csv,2637,2016-01-04,2026-07-30,786c40d1da996a602309feb00996d2bbaa4ab1fd41b75693ecde2befd284b410,OK
+CTG,CTG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_ctg.csv,2737,2016-01-04,2026-07-30,4578c467e60b389b17e7177dbaf3c8d32a0f5030beab4d13e4a1c4be8c36d860,OK
+VCB,VCB.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vcb.csv,2728,2016-01-04,2026-07-30,1941111db5da66c839c21385de21e299149a12bebac243d399ce599e086b540e,OK
+HPG,HPG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_hpg.csv,2737,2016-01-04,2026-07-30,1381fd1d9f1384729d82f94d08406e2e8d0bc62970bcaebb4f8071817f2a6c06,OK
+VIC,VIC.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vic.csv,2737,2016-01-04,2026-07-30,3ad23c5f8b7b4982f42c969af894884ad7f7f6daa78899258d13ad170d75ae83,OK
+MWG,MWG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_mwg.csv,2728,2016-01-04,2026-07-30,0dcb5d1efca3f0aa7f202631398faa1658d7ec2afc2bd7ed2139c85707d95e90,OK
+VNM,VNM.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vnm.csv,2728,2016-01-04,2026-07-30,4651882b2c23b8828ab24431e005ffbe6dd95f1626e85c19c17c4a400e7ea42c,OK
+FPT,FPT.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_fpt.csv,2737,2016-01-04,2026-07-30,40df7a86c539da9127b146bbfe40ac89a1cf9f2969eb200bb8bfed7277b1bf59,OK

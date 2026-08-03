@@ -10,6 +10,11 @@ dependencies = [
     "numpy>=1.26,<2.3",
     "scikit-learn>=1.5",
     "typer>=0.12",
+    "pyyaml>=6.0",
+    "requests>=2.32",
+    "yfinance>=0.2.60",
+    "vnstock>=3.2",
+    "openpyxl>=3.1",
 ]
 
 [build-system]
