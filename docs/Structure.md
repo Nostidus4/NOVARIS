@@ -294,6 +294,52 @@ Từ ngày 4, mọi số lên slide phải truy được về một `run_id`.
 
 ---
 
+### `notebooks/` — nơi chạy thử, không phải nơi sống của logic
+
+```
+notebooks/
+├── exploration/   # tò mò dữ liệu, thử ý tưởng trước khi viết thành hàm chính thức
+├── validation/     # chạy một hàm trong packages/ với input mẫu, xem output có hợp lý không
+└── benchmarks/      # so sánh QAOA vs exact vs classical, vẽ biểu đồ cho báo cáo/pitch
+```
+
+Cả ba thư mục hiện chỉ có `.gitkeep` — chưa có notebook nào. `jupyterlab` và `ipykernel` đã nằm sẵn
+trong `dev` dependency-group của `pyproject.toml` gốc, nên chỉ cần `uv run jupyter lab` là dùng
+được ngay, không cần cài thêm.
+
+**Dùng khi nào**
+
+| Thư mục | Câu hỏi nó trả lời | Ví dụ |
+|---|---|---|
+| `exploration/` | "Dữ liệu này trông như thế nào?" | Vẽ phân phối return của 8 mã, xem thử outlier |
+| `validation/` | "Hàm tôi vừa viết trong `packages/` chạy đúng không?" | Gọi `qshield_risk.metrics.cvar(...)` với vài mảng loss mẫu, so sánh bằng mắt với tính tay |
+| `benchmarks/` | "QAOA so với exact/classical thế nào?" | Đọc `qaoa_result.json` của nhiều run, vẽ optimality gap theo seed |
+
+**Ranh giới bắt buộc — không được vi phạm**
+
+`docs/product/product_requirements.md` (PR-NFR-MNT-004, PR-NFR-MNT-005) quy định rõ:
+
+> *"Core logic KHÔNG ĐƯỢC chỉ tồn tại trong notebook."* Notebook chỉ được **gọi lại hàm đã có sẵn
+> trong `packages/`** để xem/vẽ kết quả — không viết công thức tính CVaR, HMM, QUBO... mới trực
+> tiếp trong cell rồi để mãi ở đó. Nếu một phép tính trong notebook chứng minh là đúng và hữu ích,
+> nó phải được "tốt nghiệp" thành một hàm thật trong `packages/<tên>/`, có test đi kèm, rồi notebook
+> quay lại **import và gọi** hàm đó — không giữ hai bản logic song song (một trong notebook, một
+> trong package) vì chúng sẽ lệch nhau theo thời gian.
+
+**Notebook khác `pytest` chỗ nào**
+
+| | `notebooks/` | `packages/*/tests/`, `tests/` |
+|---|---|---|
+| Ai đọc kết quả | Người, tự mắt xem có hợp lý không | Máy, tự động qua `assert` |
+| Chạy khi nào | Thủ công, lúc đang code/khám phá | Mỗi lần trước khi commit/mở PR (`uv run pytest`) |
+| Có được commit không | Có, nhưng chỉ nên commit bản đã dọn (không chạy dở, không output rác) | Bắt buộc — là bằng chứng nghiệm thu |
+| Thay thế được test không | Không | — |
+
+Hai thứ bổ sung cho nhau: notebook giúp bạn *tìm ra* logic đúng nhanh hơn; test giữ cho logic đó
+*không bị hỏng* về sau. Xem thêm quy ước code chung ở `CLAUDE.md`.
+
+---
+
 ## 4. Phân công chi tiết
 
 ### Nguyễn Thị Ánh Ngọc — Product Owner / Project Lead / Finance Integration
