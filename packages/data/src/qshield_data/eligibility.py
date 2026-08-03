@@ -37,7 +37,9 @@ def build_eligibility(
     LOW_COVERAGE, SUSPENDED_OR_NO_DATA, LOW_LIQUIDITY}.
     """
     universe_lookup = (
-        universe.set_index("ticker")["first_trading_date"].apply(pd.to_datetime).to_dict()
+        universe.set_index("ticker")["first_trading_date"]
+        .apply(pd.to_datetime)
+        .to_dict()
     )
     all_dates = pd.Series(sorted(prices["date"].unique()), name="date")
 
@@ -52,11 +54,15 @@ def build_eligibility(
 
         first_data_idx = has_data[has_data].index
         first_data_date = (
-            pd.Timestamp(first_data_idx[0]) if len(first_data_idx) > 0 else pd.Timestamp("2999-12-31")
+            pd.Timestamp(first_data_idx[0])
+            if len(first_data_idx) > 0
+            else pd.Timestamp("2999-12-31")
         )
         effective_start = max(first_dt, first_data_date)
 
-        listed_flag = pd.Series(all_dates.values >= effective_start, index=all_dates.values)
+        listed_flag = pd.Series(
+            all_dates.values >= effective_start, index=all_dates.values
+        )
         expected_sessions = listed_flag.cumsum()
 
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -76,7 +82,10 @@ def build_eligibility(
                 reason, eligible = "LOW_COVERAGE", False
             elif not has_data.iloc[i]:
                 reason, eligible = "SUSPENDED_OR_NO_DATA", False
-            elif pd.isna(avg_turnover.iloc[i]) or avg_turnover.iloc[i] < min_turnover_20d_vnd:
+            elif (
+                pd.isna(avg_turnover.iloc[i])
+                or avg_turnover.iloc[i] < min_turnover_20d_vnd
+            ):
                 reason, eligible = "LOW_LIQUIDITY", False
 
             out.append(
@@ -88,7 +97,9 @@ def build_eligibility(
                     "sessions_available": int(sessions_avail.iloc[i]),
                     "coverage_pct": float(coverage[i]),
                     "avg_turnover_20d": (
-                        float(avg_turnover.iloc[i]) if pd.notna(avg_turnover.iloc[i]) else np.nan
+                        float(avg_turnover.iloc[i])
+                        if pd.notna(avg_turnover.iloc[i])
+                        else np.nan
                     ),
                 }
             )

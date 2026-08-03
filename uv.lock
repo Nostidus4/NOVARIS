@@ -2271,11 +2271,19 @@ name = "qshield-contracts"
 version = "0.1.0"
 source = { editable = "packages/contracts" }
 dependencies = [
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pandera" },
     { name = "pyyaml" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyyaml", specifier = ">=6.0" }]
+requires-dist = [
+    { name = "numpy", specifier = ">=1.26,<2.3" },
+    { name = "pandas", specifier = ">=2.2,<3" },
+    { name = "pandera", specifier = ">=0.20" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
 
 [[package]]
 name = "qshield-data"

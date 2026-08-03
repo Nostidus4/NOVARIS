@@ -26,7 +26,9 @@ def check_no_duplicates(prices: pd.DataFrame) -> dict:
 
 def check_positive_prices(prices: pd.DataFrame) -> dict:
     """DQ-002 — `adjusted_close` phải dương và không NaN (AC-DAT-005, PR-DAT-007)."""
-    n_neg = int((prices["adjusted_close"] <= 0).sum() + prices["adjusted_close"].isna().sum())
+    n_neg = int(
+        (prices["adjusted_close"] <= 0).sum() + prices["adjusted_close"].isna().sum()
+    )
     return {
         "check_id": "DQ-002",
         "check_name": "adjusted_close > 0 và không NaN",
@@ -88,8 +90,12 @@ def check_split_no_overlap(returns: pd.DataFrame) -> dict:
     `returns` phải có cột `split`.
     """
     splits_ok = True
-    splits_present = [s for s in ("train", "validation", "test") if (returns["split"] == s).any()]
-    date_sets = {s: set(returns.loc[returns["split"] == s, "date"]) for s in splits_present}
+    splits_present = [
+        s for s in ("train", "validation", "test") if (returns["split"] == s).any()
+    ]
+    date_sets = {
+        s: set(returns.loc[returns["split"] == s, "date"]) for s in splits_present
+    }
     for i, a in enumerate(splits_present):
         for b in splits_present[i + 1 :]:
             if date_sets[a] & date_sets[b]:
