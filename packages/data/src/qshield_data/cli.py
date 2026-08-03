@@ -2,7 +2,7 @@
 """CLI orchestration cho `qshield_data` — port từ `CLEAN.ipynb` (8 bước).
 
 Đây là nơi DUY NHẤT trong package được phép `print()`/`typer.echo()` (CLAUDE.md: "print chỉ trong
-cli.py") và gọi `_config_stub.load_config` (mọi hàm logic khác nhận tham số tường minh).
+cli.py") và gọi `qshield_contracts.config.Config.load` (mọi hàm logic khác nhận tham số tường minh).
 
 Lệnh chính là `build` — khớp với những gì `docs/architecture/pipeline.md`, `docs/runbook/setup.md`
 và scaffold gốc của file này đã ghi (`uv run qshield-data build`), CHỨ KHÔNG theo tên lệnh
@@ -25,8 +25,8 @@ from typing import Any
 import pandas as pd
 import typer
 import yfinance as yf
+from qshield_contracts.config import Config
 
-from qshield_data import _config_stub
 from qshield_data import eligibility as eligibility_mod
 from qshield_data import features as features_mod
 from qshield_data import returns as returns_mod
@@ -45,11 +45,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 _CONFIG_OPTION = typer.Option(
     "configs/base.yaml", "--config", help="Đường dẫn configs/base.yaml"
-)
-_MOCK_OPTION = typer.Option(
-    False,
-    "--mock",
-    help="Sinh dữ liệu giả từ qshield_contracts.mocks thay vì đọc nguồn thật",
 )
 
 
@@ -81,7 +76,7 @@ def _run_id() -> str:
 
 
 def _load_config(config: Path) -> dict[str, Any]:
-    cfg = _config_stub.load_config(config)
+    cfg = Config.load(config)
     level = ((cfg.get("logging") or {}).get("level")) or "INFO"
     logging.basicConfig(level=getattr(logging, str(level).upper(), logging.INFO))
     return cfg
@@ -457,15 +452,11 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
 # `build` — lệnh chính, khớp docs/architecture/pipeline.md + docs/runbook/setup.md
 # ---------------------------------------------------------------------------
 @app.command()
-def build(config: Path = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
+def build(config: Path = _CONFIG_OPTION) -> None:
     """Thu thập, làm sạch dữ liệu, tạo feature và ghi returns.parquet / features.parquet.
 
     Chạy tuần tự 7 bước: fetch → clean → features → eligibility → split → quality → manifest.
     """
-    if mock:
-        _build_mock(config)
-        return
-
     fetch(config)
     clean(config)
     features(config)
@@ -481,37 +472,6 @@ def build(config: Path = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
             err=True,
         )
         raise typer.Exit(code=1)
-
-
-def _build_mock(config: Path) -> None:
-    """`--mock`: sinh `returns.parquet`/`features.parquet` giả đúng schema từ
-    `qshield_contracts.mocks` thay vì gọi API thật — cho phép Tú/Phúc phát triển song song trong
-    lúc chờ dữ liệu thật (xem CLAUDE.md "Phát triển song song").
-
-    `qshield_contracts.mocks.returns`/`.features` hiện vẫn là scaffold (chưa có hàm) — hàm này chỉ
-    wiring sẵn, sẽ chạy được ngay khi các module đó implement hàm `generate(...)`.
-    """
-    cfg = _load_config(config)
-    paths = _Paths(cfg)
-    paths.ensure()
-
-    try:
-        from qshield_contracts.mocks import features as mock_features
-        from qshield_contracts.mocks import returns as mock_returns
-
-        returns = mock_returns.generate()
-        features_df = mock_features.generate()
-    except (ImportError, AttributeError) as e:
-        typer.echo(
-            f"✗ --mock cần qshield_contracts.mocks.returns/.features implement hàm generate() "
-            f"— chưa sẵn sàng ({e}). Bỏ --mock để chạy với dữ liệu thật.",
-            err=True,
-        )
-        raise typer.Exit(code=1) from e
-
-    returns.to_parquet(paths.processed_dir / "returns.parquet", index=False)
-    features_df.to_parquet(paths.processed_dir / "market_features.parquet", index=False)
-    typer.echo("✓ Mock returns/features written (qshield_contracts.mocks)")
 
 
 if __name__ == "__main__":

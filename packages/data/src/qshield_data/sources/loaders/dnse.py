@@ -48,7 +48,9 @@ def download_ticker(
     for attempt in range(max_retries):
         try:
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore", urllib3.exceptions.InsecureRequestWarning)
+                warnings.simplefilter(
+                    "ignore", urllib3.exceptions.InsecureRequestWarning
+                )
                 r = requests.get(url, headers=_HEADERS, timeout=30, verify=False)
             r.raise_for_status()
             data = r.json()
@@ -59,7 +61,9 @@ def download_ticker(
 
             df = pd.DataFrame(
                 {
-                    "date": pd.to_datetime(data["t"], unit="s").tz_localize(None).normalize(),
+                    "date": pd.to_datetime(data["t"], unit="s")
+                    .tz_localize(None)
+                    .normalize(),
                     "Open": [x * 1000 for x in data["o"]],
                     "High": [x * 1000 for x in data["h"]],
                     "Low": [x * 1000 for x in data["l"]],
@@ -72,7 +76,7 @@ def download_ticker(
             df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
             return df, "dnse_entrade"
 
-        except Exception as e:
+        except (requests.exceptions.RequestException, ValueError, KeyError) as e:
             if attempt == max_retries - 1:
                 logger.warning(
                     "DNSE %s failed after %d attempts: %s: %s",

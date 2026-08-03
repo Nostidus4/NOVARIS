@@ -58,7 +58,9 @@ def load_data(
             ) from None
         path = data_root / "processed" / fname
         if not path.exists():
-            raise FileNotFoundError(f"{path} chưa tồn tại — đã chạy đủ bước qshield-data chưa?")
+            raise FileNotFoundError(
+                f"{path} chưa tồn tại — đã chạy đủ bước qshield-data chưa?"
+            )
         df = pd.read_parquet(path)
 
     if split is not None and "split" in df.columns:
@@ -77,5 +79,7 @@ def get_manifest(data_root: Path | None = None) -> dict[str, Any]:
     data_root = Path(data_root) if data_root is not None else Path("data")
     path = data_root / "metadata" / "data_manifest.json"
     if not path.exists():
-        raise FileNotFoundError(f"{path} chưa tồn tại — đã chạy `qshield-data manifest` chưa?")
+        raise FileNotFoundError(
+            f"{path} chưa tồn tại — đã chạy `qshield-data manifest` chưa?"
+        )
     return json.loads(path.read_text(encoding="utf-8"))

@@ -47,7 +47,7 @@ def download_ticker(
             df.index = pd.to_datetime(df.index).tz_localize(None)
             df.index.name = "date"
             return df
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- yfinance không có exception hierarchy công khai
             if attempt == max_retries - 1:
                 logger.warning(
                     "Yahoo %s failed after %d attempts: %s", symbol, max_retries, e
