@@ -1,9 +1,9 @@
 ﻿ticker,symbol,source,preferred,fallback_used,file,rows,start,end,sha256,status
 ACB,dnse:ACB,DNSE_PRICES,dnse,False,data/raw/prices/20260803_dnse_acb.csv,2637,2016-01-04,2026-07-30,786c40d1da996a602309feb00996d2bbaa4ab1fd41b75693ecde2befd284b410,OK
-CTG,CTG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_ctg.csv,2737,2016-01-04,2026-07-30,4578c467e60b389b17e7177dbaf3c8d32a0f5030beab4d13e4a1c4be8c36d860,OK
-VCB,VCB.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vcb.csv,2728,2016-01-04,2026-07-30,1941111db5da66c839c21385de21e299149a12bebac243d399ce599e086b540e,OK
-HPG,HPG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_hpg.csv,2737,2016-01-04,2026-07-30,1381fd1d9f1384729d82f94d08406e2e8d0bc62970bcaebb4f8071817f2a6c06,OK
+CTG,CTG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_ctg.csv,2737,2016-01-04,2026-07-30,3f74da685a1c160a166a6c62ad3ce729534254ee4694114c99266140a1268a33,OK
+VCB,VCB.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vcb.csv,2728,2016-01-04,2026-07-30,610018a8477c45edd1c9107fb46b80819624001ff85a5adf8ac5632cfb79e963,OK
+HPG,HPG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_hpg.csv,2737,2016-01-04,2026-07-30,d008e26a86c48af53f0bc30e95ff9e102d258e85d63c81d7cdb206754247d764,OK
 VIC,VIC.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vic.csv,2737,2016-01-04,2026-07-30,3ad23c5f8b7b4982f42c969af894884ad7f7f6daa78899258d13ad170d75ae83,OK
-MWG,MWG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_mwg.csv,2728,2016-01-04,2026-07-30,0dcb5d1efca3f0aa7f202631398faa1658d7ec2afc2bd7ed2139c85707d95e90,OK
-VNM,VNM.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vnm.csv,2728,2016-01-04,2026-07-30,4651882b2c23b8828ab24431e005ffbe6dd95f1626e85c19c17c4a400e7ea42c,OK
-FPT,FPT.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_fpt.csv,2737,2016-01-04,2026-07-30,40df7a86c539da9127b146bbfe40ac89a1cf9f2969eb200bb8bfed7277b1bf59,OK
+MWG,MWG.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_mwg.csv,2728,2016-01-04,2026-07-30,8b9bf6f776884c1c202c8e7adbd235f609d17cd0d5fe7096f809e91ab8576428,OK
+VNM,VNM.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_vnm.csv,2728,2016-01-04,2026-07-30,dc0d1b14878cb4ae140835d52666650e60bdbeda8885cf8d159daea40d8388a6,OK
+FPT,FPT.VN,YF_PRICES,yahoo,False,data/raw/prices/20260803_yfinance_fpt.csv,2737,2016-01-04,2026-07-30,79d997a6b494def10eec8cbcbcfe254d2f0d30e2d5393e9f8aaae1d9814f5ca2,OK
