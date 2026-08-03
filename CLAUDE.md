@@ -15,14 +15,14 @@ Pipeline một chiều:
 Data → Regime → Scenarios → Risk → QUBO → Exact/QAOA → CVaR after hedge
 ```
 
-Phạm vi đã khóa: **8 mã, dữ liệu ngày, 500 kịch bản × 20 ngày, chọn đúng K=3 hành động.**
+Phạm vi đã khóa: **8 mã, dữ liệu ngày, 5000 kịch bản × 20 ngày, chọn đúng K=3 hành động.**
 Mỗi hành động = giảm 20% vị thế một mã, chuyển phần vốn sang tiền mặt.
 
 **Stack:** uv workspace (7 member), Python 3.14, FastAPI, Next.js 15 + Tailwind, qiskit 2.x.
 
 ---
 
-## Quy tắc bất biến
+## Quy tắc bất **biến**
 
 Vi phạm những điều dưới đây làm sai kết quả, không chỉ làm xấu code. Nếu một yêu cầu buộc phải
 vi phạm, hãy dừng và nói ra thay vì âm thầm làm.
@@ -182,7 +182,7 @@ liệu. Cần biết artifact có cột gì thì đọc schema, đừng suy đo�
 | `data/processed/returns.parquet` | `schemas/returns.py` | long format (date, ticker) |
 | `data/processed/features.parquet` | `schemas/features.py` | 1 dòng / ngày |
 | `.../regime/regime_daily.parquet` | `schemas/regime.py` | 1 dòng / ngày + 3 xác suất |
-| `.../scenarios/stress_scenarios.npz` | `schemas/scenarios.py` | **tensor (500, 20, 8)** |
+| `.../scenarios/stress_scenarios.npz` | `schemas/scenarios.py` | **tensor (5000, 20, 8)** |
 | `.../risk/action_effects.csv` | `schemas/risk.py` | 1 dòng / action |
 | `.../optimization/qaoa_result.json` | `schemas/optimization.py` | bitstring + metrics |
 

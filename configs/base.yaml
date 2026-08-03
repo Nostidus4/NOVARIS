@@ -22,3 +22,18 @@ logging:
   level: INFO
   # TODO(Đỗ Ngọc Tân): đường dẫn log file nếu cần ghi ra ngoài logs.txt mặc định của RunContext
   path: null
+
+# Version/identifier dùng bởi packages/data (qshield_data.manifest, sources.registry) — thêm khi
+# refactor CLEAN.ipynb → qshield_data (xem plan.md §3.4). Không phải tham số tài chính, chỉ là
+# nhãn version cho manifest/data dictionary/source register.
+data:
+  data_version: "v1.0.0"
+  universe_version: "v1.0"
+  universe_as_of: "2026-08-03"
+
+# Đường dẫn gốc cho data/ và reports/ (khác với artifacts/ — nơi đó do
+# qshield_contracts.paths.ArtifactPaths quản lý theo run_id, xem CLAUDE.md quy tắc 8). data/ và
+# reports/ không version theo run, chỉ có một bộ processed/metadata "chính thức" tại một thời điểm.
+paths:
+  data_root: "data"
+  reports_root: "reports"
