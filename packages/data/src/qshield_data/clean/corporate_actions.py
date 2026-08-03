@@ -22,14 +22,17 @@ def remove_pre_listing(prices: pd.DataFrame, universe: pd.DataFrame) -> pd.DataF
     """Loại các row có `date < first_trading_date` của ticker tương ứng (PR-DAT-017, BR-002:
     không nội suy dữ liệu trước ngày niêm yết).
     """
-    merged = prices.merge(universe[["ticker", "first_trading_date"]], on="ticker", how="left")
+    merged = prices.merge(
+        universe[["ticker", "first_trading_date"]], on="ticker", how="left"
+    )
     merged["first_trading_date"] = pd.to_datetime(merged["first_trading_date"])
 
     pre_listing = merged["date"] < merged["first_trading_date"]
     n_removed = int(pre_listing.sum())
     if n_removed:
         logger.warning(
-            "Loại %d row có date < first_trading_date (theo quy tắc PR-DAT-017)", n_removed
+            "Loại %d row có date < first_trading_date (theo quy tắc PR-DAT-017)",
+            n_removed,
         )
 
     cleaned = merged[~pre_listing].drop(columns=["first_trading_date"])

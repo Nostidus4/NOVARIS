@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-
 from qshield_data.returns import compute_asset_returns
 
 
