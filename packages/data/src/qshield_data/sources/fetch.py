@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 _VNINDEX_YAHOO_CANDIDATES = ["^VNINDEX", "^VNI", "VNINDEX.VN"]
 
 
-def _download_one(row: pd.Series, start: str, end: str, raw_dir: Path, today_tag: str) -> dict:
+def _download_one(
+    row: pd.Series, start: str, end: str, raw_dir: Path, today_tag: str
+) -> dict:
     """Tải giá 1 mã theo routing `row['data_source']` (dnse/yahoo), trả về manifest dict.
 
     Nếu `data_source == "dnse"`: thử DNSE/Entrade trước (nguồn chính, có full HNX/UPCOM history);
@@ -52,13 +54,17 @@ def _download_one(row: pd.Series, start: str, end: str, raw_dir: Path, today_tag
             file_tag = "dnse"
         else:
             logger.warning("DNSE failed for %s — fallback về Yahoo (HOSE-only)", ticker)
-            df = yahoo_loader.download_ticker(row["yahoo_symbol"], start=effective_start, end=end)
+            df = yahoo_loader.download_ticker(
+                row["yahoo_symbol"], start=effective_start, end=end
+            )
             actual_source = "YF_PRICES_FALLBACK"
             symbol_used = row["yahoo_symbol"]
             file_tag = "yfinance"
             fallback_used = True
     else:
-        df = yahoo_loader.download_ticker(row["yahoo_symbol"], start=effective_start, end=end)
+        df = yahoo_loader.download_ticker(
+            row["yahoo_symbol"], start=effective_start, end=end
+        )
         actual_source = "YF_PRICES"
         symbol_used = row["yahoo_symbol"]
         file_tag = "yfinance"
@@ -97,7 +103,9 @@ def _download_one(row: pd.Series, start: str, end: str, raw_dir: Path, today_tag
     }
 
 
-def fetch_all_prices(universe: pd.DataFrame, start: str, end: str, raw_dir: Path) -> pd.DataFrame:
+def fetch_all_prices(
+    universe: pd.DataFrame, start: str, end: str, raw_dir: Path
+) -> pd.DataFrame:
     """Tải giá toàn bộ universe, route theo `universe['data_source']`.
 
     24 mã (giá trị `"yahoo"`) → Yahoo Finance. Mã `"dnse"` (multi-exchange) → DNSE/Entrade, fallback
@@ -108,7 +116,7 @@ def fetch_all_prices(universe: pd.DataFrame, start: str, end: str, raw_dir: Path
     rows, start, end, sha256, status.
     """
     raw_dir = Path(raw_dir)
-    today_tag = datetime.now().strftime("%Y%m%d")
+    today_tag = datetime.now().astimezone().strftime("%Y%m%d")
 
     logger.info(
         "Downloading %d tickers from %s to %s (route: yahoo/dnse theo universe['data_source'])",
@@ -118,12 +126,15 @@ def fetch_all_prices(universe: pd.DataFrame, start: str, end: str, raw_dir: Path
     )
 
     raw_manifest = [
-        _download_one(row, start, end, raw_dir, today_tag) for _, row in universe.iterrows()
+        _download_one(row, start, end, raw_dir, today_tag)
+        for _, row in universe.iterrows()
     ]
 
     failed_tickers = [m["ticker"] for m in raw_manifest if m["status"] == "FAILED"]
     if failed_tickers:
-        logger.warning("Retry pass cho %d mã fail: %s", len(failed_tickers), failed_tickers)
+        logger.warning(
+            "Retry pass cho %d mã fail: %s", len(failed_tickers), failed_tickers
+        )
         time.sleep(5)
         for i, m in enumerate(raw_manifest):
             if m["status"] != "FAILED":
@@ -147,7 +158,7 @@ def fetch_vn_index(
     này.
     """
     raw_dir = Path(raw_dir)
-    today_tag = datetime.now().strftime("%Y%m%d")
+    today_tag = datetime.now().astimezone().strftime("%Y%m%d")
 
     logger.info("Trying VN-Index from vnstock (source=VCI)...")
     df = vnstock_loader.download_vnindex(start=start, end=end)

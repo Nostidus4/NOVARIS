@@ -45,7 +45,9 @@ def load_and_normalize(raw_manifest: pd.DataFrame, data_version: str) -> pd.Data
     """
     ok_rows = raw_manifest[raw_manifest["status"] == "OK"]
     if ok_rows.empty:
-        raise ValueError("raw_manifest không có ticker nào status='OK' — không thể normalize.")
+        raise ValueError(
+            "raw_manifest không có ticker nào status='OK' — không thể normalize."
+        )
 
     frames = []
     for _, m in ok_rows.iterrows():

@@ -115,7 +115,7 @@ contracts/src/qshield_contracts/
 ├── runs.py            # RunContext: run_id, log, metrics.json, config.json
 ├── validate.py        # validate_or_raise() dùng ở mọi ranh giới module
 ├── schemas/           # định nghĩa hình dạng mọi artifact
-│   ├── returns.py     ├── scenarios.py     (tensor 500×20×8)
+│   ├── returns.py     ├── scenarios.py     (tensor 5000×20×8)
 │   ├── features.py    ├── risk.py          (g, C, c, action_effects)
 │   ├── regime.py      └── optimization.py  (qubo, exact, qaoa result)
 └── mocks/             # sinh dữ liệu giả ĐÚNG SCHEMA cho ngày 1-3
