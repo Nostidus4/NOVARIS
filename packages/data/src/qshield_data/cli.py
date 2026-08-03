@@ -43,9 +43,13 @@ logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-_CONFIG_OPTION = typer.Option("configs/base.yaml", "--config", help="Đường dẫn configs/base.yaml")
+_CONFIG_OPTION = typer.Option(
+    "configs/base.yaml", "--config", help="Đường dẫn configs/base.yaml"
+)
 _MOCK_OPTION = typer.Option(
-    False, "--mock", help="Sinh dữ liệu giả từ qshield_contracts.mocks thay vì đọc nguồn thật"
+    False,
+    "--mock",
+    help="Sinh dữ liệu giả từ qshield_contracts.mocks thay vì đọc nguồn thật",
 )
 
 
@@ -73,7 +77,7 @@ class _Paths:
 
 
 def _run_id() -> str:
-    return f"data_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    return f"data_run_{datetime.now().astimezone().strftime('%Y%m%d_%H%M%S')}"
 
 
 def _load_config(config: Path) -> dict[str, Any]:
@@ -132,11 +136,15 @@ def fetch(config: Path = _CONFIG_OPTION) -> None:
 
     universe = registry.load_universe(cfg)
     date_range = cfg["date_range"]
-    start = date_range["market_train_start"]  # sớm nhất trong 2 đồng hồ — dùng chung cho fetch
+    start = date_range[
+        "market_train_start"
+    ]  # sớm nhất trong 2 đồng hồ — dùng chung cho fetch
     end = date_range["test_end"]
 
     typer.echo(f"Downloading {len(universe)} tickers from {start} to {end}...")
-    raw_manifest = fetch_mod.fetch_all_prices(universe, start=start, end=end, raw_dir=paths.raw_dir)
+    raw_manifest = fetch_mod.fetch_all_prices(
+        universe, start=start, end=end, raw_dir=paths.raw_dir
+    )
     typer.echo(raw_manifest["status"].value_counts().to_string())
     raw_manifest.to_csv(_raw_manifest_path(paths), index=False, encoding="utf-8-sig")
 
@@ -144,21 +152,28 @@ def fetch(config: Path = _CONFIG_OPTION) -> None:
         start=start, end=end, raw_dir=paths.raw_dir
     )
     _vn_index_meta_path(paths).write_text(
-        json.dumps({"symbol_used": symbol_used, "source_used": source_used}, ensure_ascii=False),
+        json.dumps(
+            {"symbol_used": symbol_used, "source_used": source_used}, ensure_ascii=False
+        ),
         encoding="utf-8",
     )
     if index_df is None:
-        typer.echo("⚠ VN-Index unavailable — features step sẽ tự tính custom composite.")
+        typer.echo(
+            "⚠ VN-Index unavailable — features step sẽ tự tính custom composite."
+        )
 
     data_cfg = cfg.get("data", {})
     sources_df = registry.build_source_register(
-        access_date=datetime.now().strftime("%Y-%m-%d"),
+        access_date=datetime.now().astimezone().strftime("%Y-%m-%d"),
         yfinance_version=yf.__version__,
         vnstock_version=_vnstock_version(),
         test_end=end,
     )
     universe_path, sources_path = registry.save_universe_and_sources(
-        universe, sources_df, paths.metadata_dir, universe_as_of=data_cfg.get("universe_as_of", "")
+        universe,
+        sources_df,
+        paths.metadata_dir,
+        universe_as_of=data_cfg.get("universe_as_of", ""),
     )
     typer.echo(f"✓ Saved universe: {universe_path}")
     typer.echo(f"✓ Saved source register: {sources_path}")
@@ -176,7 +191,10 @@ def clean(config: Path = _CONFIG_OPTION) -> None:
 
     raw_manifest_path = _raw_manifest_path(paths)
     if not raw_manifest_path.exists():
-        typer.echo(f"✗ Chưa có {raw_manifest_path} — chạy `qshield-data fetch` trước.", err=True)
+        typer.echo(
+            f"✗ Chưa có {raw_manifest_path} — chạy `qshield-data fetch` trước.",
+            err=True,
+        )
         raise typer.Exit(code=1)
     raw_manifest = pd.read_csv(raw_manifest_path)
 
@@ -184,7 +202,9 @@ def clean(config: Path = _CONFIG_OPTION) -> None:
     data_version = cfg.get("data", {}).get("data_version", "v0.0.0")
 
     prices = normalize.load_and_normalize(raw_manifest, data_version=data_version)
-    typer.echo(f"Loaded raw: {len(prices):,} rows, {prices['ticker'].nunique()} tickers")
+    typer.echo(
+        f"Loaded raw: {len(prices):,} rows, {prices['ticker'].nunique()} tickers"
+    )
 
     prices, n_dup = validate_prices.dedup_prices(prices)
     typer.echo(f"Duplicates removed: {n_dup}")
@@ -219,7 +239,9 @@ def features(config: Path = _CONFIG_OPTION) -> None:
 
     prices_path = paths.processed_dir / "prices_adjusted.parquet"
     if not prices_path.exists():
-        typer.echo(f"✗ Chưa có {prices_path} — chạy `qshield-data clean` trước.", err=True)
+        typer.echo(
+            f"✗ Chưa có {prices_path} — chạy `qshield-data clean` trước.", err=True
+        )
         raise typer.Exit(code=1)
     prices = pd.read_parquet(prices_path)
 
@@ -249,7 +271,9 @@ def eligibility(config: Path = _CONFIG_OPTION) -> None:
 
     prices_path = paths.processed_dir / "prices_adjusted.parquet"
     if not prices_path.exists():
-        typer.echo(f"✗ Chưa có {prices_path} — chạy `qshield-data clean` trước.", err=True)
+        typer.echo(
+            f"✗ Chưa có {prices_path} — chạy `qshield-data clean` trước.", err=True
+        )
         raise typer.Exit(code=1)
     prices = pd.read_parquet(prices_path)
     universe = registry.load_universe(cfg)
@@ -323,9 +347,13 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
     universe = registry.load_universe(cfg)
     expected_count = cfg.get("expected_ticker_count", len(universe))
 
-    report_df, all_pass = checks_mod.run_all_checks(prices, universe, returns, expected_count)
+    report_df, all_pass = checks_mod.run_all_checks(
+        prices, universe, returns, expected_count
+    )
     typer.echo(report_df.to_string(index=False))
-    typer.echo("✅ DATA QUALITY GATE: PASS" if all_pass else "❌ DATA QUALITY GATE: FAIL")
+    typer.echo(
+        "✅ DATA QUALITY GATE: PASS" if all_pass else "❌ DATA QUALITY GATE: FAIL"
+    )
 
     out_path = paths.reports_root / "data_quality_report.csv"
     report_mod.write_quality_report(report_df, out_path)
@@ -351,7 +379,9 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
 
     universe_files = sorted(paths.metadata_dir.glob("universe_asof_*.csv"))
     universe_register_path = (
-        universe_files[-1] if universe_files else paths.metadata_dir / "universe_asof_MISSING.csv"
+        universe_files[-1]
+        if universe_files
+        else paths.metadata_dir / "universe_asof_MISSING.csv"
     )
     files = {
         "universe_register": universe_register_path,
@@ -387,13 +417,25 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
         row_counts=row_counts,
         splits_config={
             "market": {
-                "train": [date_range["market_train_start"], date_range["market_train_end"]],
-                "validation": [date_range["validation_start"], date_range["validation_end"]],
+                "train": [
+                    date_range["market_train_start"],
+                    date_range["market_train_end"],
+                ],
+                "validation": [
+                    date_range["validation_start"],
+                    date_range["validation_end"],
+                ],
                 "test": [date_range["test_start"], date_range["test_end"]],
             },
             "asset": {
-                "train": [date_range["asset_train_start"], date_range["asset_train_end"]],
-                "validation": [date_range["validation_start"], date_range["validation_end"]],
+                "train": [
+                    date_range["asset_train_start"],
+                    date_range["asset_train_end"],
+                ],
+                "validation": [
+                    date_range["validation_start"],
+                    date_range["validation_end"],
+                ],
                 "test": [date_range["test_start"], date_range["test_end"]],
             },
         },

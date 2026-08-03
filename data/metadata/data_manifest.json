@@ -1,0 +1,108 @@
+{
+  "run_id": "data_run_20260803_203613",
+  "data_version": "v1.0.0",
+  "universe_version": "v1.0",
+  "universe_as_of": "2026-08-03",
+  "created_at": "2026-08-03T20:36:13.377820",
+  "sources": [
+    "YF_PRICES",
+    "DNSE_PRICES",
+    "VNSTOCK_PRICES",
+    "VNSTOCK_INDEX"
+  ],
+  "index_symbol_used": "VNINDEX",
+  "index_source_used": "vnstock_VCI",
+  "splits_config": {
+    "market": {
+      "train": [
+        "2016-01-01",
+        "2022-12-31"
+      ],
+      "validation": [
+        "2023-01-01",
+        "2023-12-31"
+      ],
+      "test": [
+        "2024-01-01",
+        "2026-07-31"
+      ]
+    },
+    "asset": {
+      "train": [
+        "2018-07-02",
+        "2022-12-31"
+      ],
+      "validation": [
+        "2023-01-01",
+        "2023-12-31"
+      ],
+      "test": [
+        "2024-01-01",
+        "2026-07-31"
+      ]
+    }
+  },
+  "eligibility_config": {
+    "min_history_sessions": 252,
+    "min_coverage_pct": 0.98,
+    "min_turnover_20d_vnd": 1000000000
+  },
+  "quality_gate_status": "PASS",
+  "files": {
+    "universe_register": {
+      "path": "data/metadata/universe_asof_20260803.csv",
+      "sha256": "bdc638c668ef20dd7ba0b93583e163bbae0f49f1b9c30193597874ced2f3dd59",
+      "size_bytes": 524,
+      "modified_at": "2026-08-03T20:35:52.716862"
+    },
+    "source_register": {
+      "path": "data/metadata/source_register.csv",
+      "sha256": "c023a01dbe22f6b60af713f40004b72b904ce14e6d45bff263a283942104bdf0",
+      "size_bytes": 2480,
+      "modified_at": "2026-08-03T20:35:52.717199"
+    },
+    "prices_adjusted": {
+      "path": "data/processed/prices_adjusted.parquet",
+      "sha256": "68752ce2d9d8e9aa8d7c3485a189f8d8bafd7b46da20a1c24220345839c0d2be",
+      "size_bytes": 805535,
+      "modified_at": "2026-08-03T20:35:52.881324"
+    },
+    "returns": {
+      "path": "data/processed/returns.parquet",
+      "sha256": "9c78d81d3d00ab89613059e4952cfb44adec8a597c481f40f4ffbe59ef84a668",
+      "size_bytes": 1264833,
+      "modified_at": "2026-08-03T20:36:10.859096"
+    },
+    "market_features": {
+      "path": "data/processed/market_features.parquet",
+      "sha256": "aba78936302e18fe84e6134758b2d68d82c393c5876cd3dd885f1d4e24338951",
+      "size_bytes": 248836,
+      "modified_at": "2026-08-03T20:36:13.258499"
+    },
+    "eligibility_daily": {
+      "path": "data/processed/eligibility_daily.parquet",
+      "sha256": "e7f6135c4f62ae144f16a4ce935807dae905ec7e10714c5f8cc81c7e211b46e3",
+      "size_bytes": 304536,
+      "modified_at": "2026-08-03T20:35:53.460281"
+    },
+    "data_dictionary": {
+      "path": "data/metadata/data_dictionary.xlsx",
+      "sha256": "b14a9ea650ccb91c7703cafc620ba8f13f5cbb2b9607778f1d5a032ad83880ac",
+      "size_bytes": 9839,
+      "modified_at": "2026-08-03T20:36:13.355474"
+    },
+    "data_quality_report": {
+      "path": "reports/data_quality_report.csv",
+      "sha256": "78f86075e105cb9ae41c0abbc52658d29c577cfc19fc577d43a38e8969e707d1",
+      "size_bytes": 510,
+      "modified_at": "2026-08-03T20:36:13.339882"
+    }
+  },
+  "row_counts": {
+    "prices_adjusted": 21088,
+    "returns": 21088,
+    "market_features": 2762,
+    "eligibility_daily": 21128,
+    "universe": 8
+  }
+}

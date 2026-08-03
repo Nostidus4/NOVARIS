@@ -42,7 +42,9 @@ def assign_split(dt: pd.Timestamp, level: Level, splits_config: dict[str, Any]) 
     return "out_of_scope"
 
 
-def apply_splits(df: pd.DataFrame, level: Level, splits_config: dict[str, Any]) -> pd.DataFrame:
+def apply_splits(
+    df: pd.DataFrame, level: Level, splits_config: dict[str, Any]
+) -> pd.DataFrame:
     """Thêm cột `split` cho `df` (cần cột `date`) dựa trên `assign_split`.
 
     Raise `ValueError` nếu train/validation/test overlap nhau (không nên xảy ra với mốc thời gian
@@ -51,11 +53,28 @@ def apply_splits(df: pd.DataFrame, level: Level, splits_config: dict[str, Any]) 
     out = df.copy()
     out["split"] = out["date"].apply(lambda d: assign_split(d, level, splits_config))
 
-    splits_present = [s for s in ("train", "validation", "test") if (out["split"] == s).any()]
-    date_sets = {s: set(out.loc[out["split"] == s, "date"]) for s in splits_present}
-    for i, a in enumerate(splits_present):
-        for b in splits_present[i + 1 :]:
-            overlap = date_sets[a] & date_sets[b]
-            if overlap:
-                raise ValueError(f"Split '{a}' và '{b}' overlap tại {len(overlap)} ngày")
+    ranges = {
+        "train": (
+            pd.to_datetime(splits_config[f"{level}_train_start"]),
+            pd.to_datetime(splits_config[f"{level}_train_end"]),
+        ),
+        "validation": (
+            pd.to_datetime(splits_config["validation_start"]),
+            pd.to_datetime(splits_config["validation_end"]),
+        ),
+        "test": (
+            pd.to_datetime(splits_config["test_start"]),
+            pd.to_datetime(splits_config["test_end"]),
+        ),
+    }
+    names = list(ranges)
+    for i, a in enumerate(names):
+        for b in names[i + 1 :]:
+            a_start, a_end = ranges[a]
+            b_start, b_end = ranges[b]
+            if a_start <= b_end and b_start <= a_end:
+                raise ValueError(
+                    f"Split '{a}' ({a_start.date()}–{a_end.date()}) và '{b}' "
+                    f"({b_start.date()}–{b_end.date()}) overlap"
+                )
     return out
