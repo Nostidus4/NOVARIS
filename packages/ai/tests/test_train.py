@@ -136,7 +136,9 @@ def test_emission_log_prob_rejects_nan_and_names_location(fitted) -> None:
 
 def test_emission_log_prob_rejects_wrong_width(fitted) -> None:
     model, matrix = fitted
-    with pytest.raises(ValueError, match="shape"):
+    # Khớp cả tiền tố hàm: scipy cũng raise ValueError chứa "shape" khi lệch cột, nên
+    # match="shape" đơn thuần vẫn pass dù chốt chặn bị xóa — không bảo vệ được gì.
+    with pytest.raises(ValueError, match=r"emission_log_prob: x phải có shape"):
         emission_log_prob(model, matrix[:, :3])
 
 

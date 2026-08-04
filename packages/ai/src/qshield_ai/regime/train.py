@@ -98,10 +98,14 @@ def aic_bic(
 def emission_log_prob(model: GaussianHMM, x: np.ndarray) -> np.ndarray:
     """`log p(x_t | state=k)` cho mọi `t`, `k` → `(T, K)`.
 
-    Chốt chặn đầu vào cho CẢ BA đường suy diễn (filtered/smoothed/viterbi đều đi qua đây
-    hoặc qua hmmlearn với cùng ma trận `x`). Một `NaN` duy nhất trong `x` sẽ lan qua
+    Chốt chặn đầu vào cho đường suy diễn NHÂN QUẢ: `filtered_probabilities` →
+    `_forward_log_alpha` → hàm này. Một `NaN` duy nhất trong `x` sẽ lan qua
     `log_alpha[step-1]` và đầu độc toàn bộ phần còn lại của chuỗi — artifact regime sẽ hỏng
     im lặng thay vì báo lỗi. CLAUDE.md quy tắc 12: fail fast tại chỗ.
+
+    LƯU Ý: `smoothed_probabilities` và `viterbi_states` gọi thẳng hmmlearn nên KHÔNG đi qua
+    chốt chặn này; hmmlearn không báo lỗi tương đương. Chấp nhận được vì cả hai chỉ dùng để
+    chẩn đoán, không bao giờ chảy vào artifact.
     """
     if x.ndim != 2 or x.shape[1] != model.n_features:
         raise ValueError(
