@@ -42,16 +42,26 @@ def test_low_volatility_is_normal_even_with_deep_drawdown() -> None:
 
 
 def test_threshold_comes_from_train_rows_only() -> None:
-    """Thêm một ngày TEST volatility cực lớn không được làm đổi ngưỡng (quy tắc 4)."""
+    """Thêm ngày TEST volatility cực lớn không được làm đổi ngưỡng (quy tắc 4).
+
+    Phải thêm BA outlier, không phải một. Với một outlier, phân vị 0.8 trên toàn khung là
+    đúng 5.0, mà `5.0 >= 5.0` vẫn True — nhãn không đổi kể cả khi bỏ lọc train, nên test
+    không phân biệt được đúng/sai. Với ba outlier, ngưỡng toàn khung nhảy lên 1000.0 và hai
+    dòng vol=5.0 sẽ tụt từ stress/volatile xuống normal. Chỉ khi đó test mới thật sự chứng
+    minh được ngưỡng học từ train:
+        train  [1,2,3,4,5]                      → phân vị 0.8 = 4.2   (vol 5.0 là cao)
+        toàn   [1,2,3,4,5,5,5,3,1000,1000,1000] → phân vị 0.8 = 1000  (vol 5.0 KHÔNG cao)
+    """
     frame = _frame()
     baseline = _labels()["regime"].tolist()
 
-    frame.loc[len(frame)] = {
-        "date": pd.Timestamp("2024-01-15"),
-        "split": "test",
-        "realized_vol_20d": 1000.0,
-        "drawdown": -0.5,
-    }
+    for day in ("2024-01-15", "2024-01-16", "2024-01-17"):
+        frame.loc[len(frame)] = {
+            "date": pd.Timestamp(day),
+            "split": "test",
+            "realized_vol_20d": 1000.0,
+            "drawdown": -0.5,
+        }
     shifted = rule_based_labels(
         frame,
         volatility_column="realized_vol_20d",
