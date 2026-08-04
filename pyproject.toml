@@ -61,3 +61,8 @@ qshield-risk = { workspace = true, editable = true }
 qshield-quantum = { workspace = true, editable = true }
 qshield-pipeline = { workspace = true, editable = true }
 qshield-api = { workspace = true, editable = true }
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: chạy nhiều seed/nhiều candidate — bỏ qua bằng -m 'not slow'",
+]
