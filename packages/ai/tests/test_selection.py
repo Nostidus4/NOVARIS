@@ -267,7 +267,8 @@ def test_single_eligible_seed_reports_nan_agreement_and_fails_the_gate(
 ) -> None:
     """Chỉ 1 seed hợp lệ ⇒ không có cặp nào để so ⇒ mean agreement phải là NaN (Change 2), và
     NaN >= ngưỡng luôn sai ⇒ cổng đóng (Change 1). Đây là scenario mặc định của fixture `prepared`
-    sau khi fix rò rỉ dữ liệu — xem docstring `configs/regime.yaml` `gate.min_mean_label_agreement`.
+    sau khi fix rò rỉ dữ liệu — xem comment `gate.min_mean_label_agreement` trong
+    `configs/regime.yaml`.
     """
     outcome = _run(
         prepared,
