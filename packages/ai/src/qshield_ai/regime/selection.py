@@ -70,10 +70,18 @@ def _candidate_labels(
     matrix: np.ndarray,
     raw_frame: pd.DataFrame,
     feature_columns: Mapping[str, str],
+    stability_mask: np.ndarray,
 ) -> tuple[np.ndarray, dict[int, str], tuple[StateProfile, ...], list[str]]:
-    """Suy luận filtered → hồ sơ state → nhãn → vi phạm nghĩa kinh tế."""
+    """Suy luận filtered trên TOÀN chuỗi, nhưng hồ sơ/nhãn/vi phạm chỉ học trên train+validation.
+
+    CLAUDE.md quy tắc 4: quyết định chọn model không được nhìn test. Nhãn từng ngày thì vẫn
+    phải phủ cả test vì artifact cần nhãn cho mọi ngày — `filtered_probabilities` là nhân quả
+    nên điều đó không rò rỉ tương lai.
+    """
     states = filtered_probabilities(model, matrix).argmax(axis=1)
-    profiles = state_profiles(raw_frame, states, **feature_columns)
+    profiles = state_profiles(
+        raw_frame.loc[stability_mask], states[stability_mask], **feature_columns
+    )
     label_map = label_states(profiles)
     violations = economic_consistency_violations(profiles, label_map)
     labels = np.array([label_map[int(state)] for state in states])
@@ -149,7 +157,10 @@ def run_selection(
                     log_likelihood_train, row["n_parameters"], len(x_train)
                 )
                 states = filtered_probabilities(model, matrix).argmax(axis=1)
-                occupancy = np.bincount(states, minlength=int(n_states)) / len(states)
+                gated_states = states[stability_mask]
+                occupancy = np.bincount(gated_states, minlength=int(n_states)) / len(
+                    gated_states
+                )
 
                 row.update(
                     converged=bool(model.monitor_.converged),
@@ -179,7 +190,7 @@ def run_selection(
                 )
                 if is_champion_family:
                     labels, label_map, profiles, violations = _candidate_labels(
-                        model, matrix, raw_frame, feature_columns
+                        model, matrix, raw_frame, feature_columns, stability_mask
                     )
                     row["economic_consistent"] = not violations
                     row["violations"] = "; ".join(violations)
@@ -210,17 +221,25 @@ def run_selection(
         else 1.0
         for seed in eligible
     }
-    best_seed = min(
-        eligible,
-        key=lambda seed: (
+
+    def _ranking_key(seed: int) -> tuple[float, float, int]:
+        """NaN val-log-likelihood phải xếp CUỐI, nếu không tie-break theo seed không chạy được."""
+        validation = eligible[seed][0].log_likelihood_validation
+        return (
             -mean_agreement[seed],
-            -eligible[seed][0].log_likelihood_validation,
+            -validation if np.isfinite(validation) else float("inf"),
             seed,
-        ),
-    )
+        )
+
+    best_seed = min(eligible, key=_ranking_key)
     fit, _, label_map, profiles = eligible[best_seed]
 
-    report["mean_label_agreement"] = report["seed"].map(mean_agreement).astype(float)
+    champion_family_rows = (report["n_states"] == champion_states) & (
+        report["covariance_type"] == champion_covariance
+    )
+    report.loc[champion_family_rows, "mean_label_agreement"] = (
+        report.loc[champion_family_rows, "seed"].map(mean_agreement).astype(float)
+    )
     report.loc[
         (report["seed"] == best_seed)
         & (report["n_states"] == champion_states)
@@ -256,14 +275,27 @@ def _failure_reasons(
         (report["n_states"] == champion_states)
         & (report["covariance_type"] == champion_covariance)
     ]
+    if family.empty:
+        return [
+            (
+                f"Họ champion ({champion_states} state/{champion_covariance}) không có trong "
+                f"lưới candidates — không có fit nào để chấm."
+            )
+        ]
     reasons = [
         (
             f"Không fit nào trong họ champion ({champion_states} state/{champion_covariance}) "
             f"vượt qua cổng trên {len(family)} seed đã đăng ký."
         )
     ]
-    if not family["converged"].any():
+    ran = family.loc[~family["error"].astype(bool)]
+    if not ran.empty and not ran["converged"].any():
         reasons.append("Không seed nào hội tụ.")
+    failed = family.loc[family["error"].astype(bool), "error"]
+    if not failed.empty:
+        reasons.append(
+            f"{len(failed)}/{len(family)} fit ném exception, đầu tiên: {failed.iloc[0]}"
+        )
     if (family["min_state_occupancy"] < min_state_occupancy).any():
         reasons.append(
             f"Có seed vi phạm min_state_occupancy={min_state_occupancy}: "
