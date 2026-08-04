@@ -66,6 +66,11 @@ def test_label_agreement_rejects_length_mismatch() -> None:
         label_agreement(np.array(["a"]), np.array(["a", "b"]))
 
 
+def test_label_agreement_rejects_empty_input() -> None:
+    with pytest.raises(ValueError, match="Không có ngày"):
+        label_agreement(np.array([]), np.array([]))
+
+
 def test_report_has_one_row_per_candidate_and_seed(prepared) -> None:
     """Mọi seed đã đăng ký đều phải xuất hiện — không cherry-pick seed đẹp nhất (DR §5)."""
     outcome = _run(
@@ -102,7 +107,10 @@ def test_champion_choice_is_deterministic(prepared) -> None:
         candidates={"n_states": [3], "covariance_type": ["diag"]},
         seeds=[101, 202, 303],
     )
+    assert first.gate_status == GATE_OK, f"cổng fail: {first.gate_reasons}"
+    assert second.gate_status == GATE_OK, f"cổng fail: {second.gate_reasons}"
     assert first.champion.seed == second.champion.seed
+    assert first.label_map == second.label_map
 
 
 def test_agreement_matrix_is_symmetric_with_unit_diagonal(prepared) -> None:
@@ -139,6 +147,65 @@ def test_impossible_occupancy_threshold_fails_the_gate(prepared) -> None:
     assert outcome.champion is None
     assert outcome.gate_reasons, "fail phải kèm lý do đọc được"
     assert len(outcome.report) == 2, "fit vẫn phải được báo cáo dù bị loại"
+
+
+def test_mean_label_agreement_matches_hand_calculation(prepared) -> None:
+    """Với đúng 2 seed hợp lệ, trung bình đồng thuận của một seed suy giảm còn đúng điểm đồng
+    thuận với seed còn lại (không có đường chéo 1.0 nào để pha vào mean). Nếu diagonal lọt vào
+    công thức mean, giá trị báo cáo sẽ lệch khỏi con số tính tay này — bắt được bug đó."""
+    outcome = _run(
+        prepared,
+        candidates={"n_states": [3], "covariance_type": ["diag"]},
+        seeds=[101, 505],
+    )
+    assert outcome.gate_status == GATE_OK, f"cổng fail: {outcome.gate_reasons}"
+    pairwise = float(outcome.agreement.loc[101, 505])
+    champion_rows = outcome.report.loc[
+        (outcome.report["n_states"] == 3)
+        & (outcome.report["covariance_type"] == "diag")
+    ]
+    for seed in (101, 505):
+        actual = champion_rows.loc[
+            champion_rows["seed"] == seed, "mean_label_agreement"
+        ]
+        assert actual.iloc[0] == pytest.approx(pairwise)
+
+
+def test_mean_label_agreement_is_nan_outside_champion_family(prepared) -> None:
+    """Fix 1 regression: hàng n_states=2 không được mượn điểm đồng thuận của họ champion
+    (3/diag) chỉ vì trùng seed — nó chưa từng được chấm đồng thuận, phải giữ NaN."""
+    outcome = _run(
+        prepared,
+        candidates={"n_states": [2, 3], "covariance_type": ["diag"]},
+        seeds=[101, 202, 303],
+    )
+    assert outcome.gate_status == GATE_OK, f"cổng fail: {outcome.gate_reasons}"
+    non_champion_rows = outcome.report.loc[outcome.report["n_states"] == 2]
+    assert not non_champion_rows.empty
+    assert non_champion_rows["mean_label_agreement"].isna().all()
+
+
+def test_crashed_champion_family_reports_exception_not_convergence(prepared) -> None:
+    """Fix 2 regression: ghim champion ở 4 state khiến `label_states` raise cho MỌI fit trong họ
+    (chỉ nhận đúng 3 profile). Lý do fail phải nêu tên exception, KHÔNG được nói 'Không seed nào
+    hội tụ.' — đó là chẩn đoán sai vì các fit chết trước khi kịp thất bại hội tụ."""
+    matrix, frame, raw_frame = prepared
+    outcome = run_selection(
+        matrix,
+        frame,
+        raw_frame,
+        candidates={"n_states": [4], "covariance_type": ["diag"]},
+        champion={"n_states": 4, "covariance_type": "diag"},
+        seeds=[101, 202],
+        n_iter=50,
+        min_state_occupancy=0.02,
+        feature_columns=FEATURE_COLUMNS,
+    )
+    assert outcome.gate_status == GATE_FAILED
+    assert outcome.champion is None
+    reasons_text = " ".join(outcome.gate_reasons)
+    assert "ValueError" in reasons_text
+    assert "Không seed nào hội tụ." not in outcome.gate_reasons
 
 
 def test_report_columns_cover_the_acceptance_criteria(prepared) -> None:
