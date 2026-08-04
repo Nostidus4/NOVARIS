@@ -63,12 +63,17 @@ def test_regime_command_writes_all_artifacts(tmp_path: Path) -> None:
 
 
 def test_written_parquet_passes_the_contract_schema(tmp_path: Path) -> None:
-    _run(tmp_path)
+    result = _run(tmp_path)
+    assert result.exit_code == 0, result.output
     daily = pd.read_parquet(
         tmp_path / "artifacts" / "dev" / "regime" / "regime_daily.parquet"
     )
     validate_or_raise(daily, RegimeDailySchema, context="test")
     assert not daily.isna().to_numpy().any()
+    assert not daily["prob_normal"].equals(daily["prob_normal_smoothed"]), (
+        "prob_normal phải là xác suất FILTERED (nhân quả); trùng khít với bản smoothed "
+        "nghĩa là hai đối số bị hoán vị hoặc smoothed_probabilities đã thoái hóa."
+    )
 
 
 def test_summary_records_provenance_and_open_decisions(tmp_path: Path) -> None:
@@ -88,14 +93,16 @@ def test_summary_records_provenance_and_open_decisions(tmp_path: Path) -> None:
 
 def test_run_context_metadata_is_written(tmp_path: Path) -> None:
     """Quy tắc 13: 4 file metadata do RunContext ghi, không phải module tính toán."""
-    _run(tmp_path)
+    result = _run(tmp_path)
+    assert result.exit_code == 0, result.output
     run_root = tmp_path / "artifacts" / "dev"
     for name in ("config.json", "data_version.json", "metrics.json", "logs.txt"):
         assert (run_root / name).exists(), name
 
 
 def test_selection_report_lists_every_seed(tmp_path: Path) -> None:
-    _run(tmp_path)
+    result = _run(tmp_path)
+    assert result.exit_code == 0, result.output
     report = pd.read_csv(
         tmp_path / "artifacts" / "dev" / "regime" / "regime_selection.csv"
     )
@@ -103,13 +110,15 @@ def test_selection_report_lists_every_seed(tmp_path: Path) -> None:
     assert report["is_champion"].sum() == 1
 
 
-def test_rerun_is_byte_identical(tmp_path: Path) -> None:
+def test_rerun_produces_identical_frames(tmp_path: Path) -> None:
     """Cùng config + cùng seed ⇒ cùng nhãn. Khác nhau là dấu hiệu còn nguồn ngẫu nhiên chưa ghim."""
-    _run(tmp_path)
+    first_result = _run(tmp_path)
+    assert first_result.exit_code == 0, first_result.output
     first = pd.read_parquet(
         tmp_path / "artifacts" / "dev" / "regime" / "regime_daily.parquet"
     )
-    _run(tmp_path)
+    second_result = _run(tmp_path)
+    assert second_result.exit_code == 0, second_result.output
     second = pd.read_parquet(
         tmp_path / "artifacts" / "dev" / "regime" / "regime_daily.parquet"
     )
@@ -138,3 +147,47 @@ def test_failed_gate_writes_fallback_and_exits_nonzero(tmp_path: Path) -> None:
     summary = json.loads((stage / "regime_summary.json").read_text(encoding="utf-8"))
     assert summary["gate_status"] == "HMM_FAILED"
     assert summary["gate_reasons"]
+
+
+def test_gate_failure_removes_stale_champion_from_prior_run(tmp_path: Path) -> None:
+    """Ngày 1 cổng OK ghi champion; ngày 2 (cùng thư mục dev) cổng FAIL không được để champion
+    ngày 1 sống sót — `qshield_risk`/backend đọc thẳng `regime_daily.parquet`, không đọc
+    `regime_summary.json`, nên file cũ còn nằm đó là champion "ma" của một run đã fail cổng.
+    """
+    stage = tmp_path / "artifacts" / "dev" / "regime"
+
+    ok_result = _run(tmp_path)
+    assert ok_result.exit_code == 0, ok_result.output
+    assert (stage / "regime_daily.parquet").exists()
+    assert not (stage / "regime_daily_rule_based.parquet").exists()
+
+    fail_result = _run(
+        tmp_path, gate={"min_state_occupancy": 0.99, "min_mean_label_agreement": 0.60}
+    )
+    assert fail_result.exit_code != 0
+
+    assert not (stage / "regime_daily.parquet").exists(), (
+        "champion của run OK trước đó phải bị xóa khi run sau FAIL cổng"
+    )
+    assert (stage / "regime_daily_rule_based.parquet").exists()
+
+
+def test_gate_success_removes_stale_fallback_from_prior_run(tmp_path: Path) -> None:
+    """Chiều ngược lại: ngày 1 cổng FAIL để lại fallback; ngày 2 cổng OK phải dọn fallback cũ,
+    không để một artifact rule-based lạc hậu nằm cạnh champion mới.
+    """
+    stage = tmp_path / "artifacts" / "dev" / "regime"
+
+    fail_result = _run(
+        tmp_path, gate={"min_state_occupancy": 0.99, "min_mean_label_agreement": 0.60}
+    )
+    assert fail_result.exit_code != 0
+    assert (stage / "regime_daily_rule_based.parquet").exists()
+
+    ok_result = _run(tmp_path)
+    assert ok_result.exit_code == 0, ok_result.output
+
+    assert (stage / "regime_daily.parquet").exists()
+    assert not (stage / "regime_daily_rule_based.parquet").exists(), (
+        "fallback của run FAIL trước đó phải bị xóa khi run sau OK cổng"
+    )
