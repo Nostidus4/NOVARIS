@@ -70,14 +70,35 @@ def test_written_parquet_passes_the_contract_schema(tmp_path: Path) -> None:
     )
     validate_or_raise(daily, RegimeDailySchema, context="test")
     assert not daily.isna().to_numpy().any()
+    # Chỉ bắt được trường hợp `smoothed_probabilities` thoái hóa thành filtered (hai cột
+    # trùng khít). KHÔNG bắt được việc hoán vị hai đối số `filtered=`/`smoothed=` ở cli.py:
+    # hoán vị vẫn cho hai cột khác nhau và artifact vẫn NHẤT QUÁN nội bộ (`state_id` cũng
+    # đổi theo, vì nó là argmax của cùng mảng). Việc đó được chặn ở tầng lắp ráp thay vì ở
+    # đây: `test_regime_output.py` dùng fixture có filtered=0.7 vs smoothed=0.6 cùng ô nên
+    # hoán vị làm test đó đỏ ngay.
     assert not daily["prob_normal"].equals(daily["prob_normal_smoothed"]), (
-        "prob_normal phải là xác suất FILTERED (nhân quả); trùng khít với bản smoothed "
-        "nghĩa là hai đối số bị hoán vị hoặc smoothed_probabilities đã thoái hóa."
+        "prob_normal trùng khít prob_normal_smoothed — smoothed_probabilities đã thoái hóa."
     )
+    diagnostic = {
+        "method",
+        "inference_status",
+        "viterbi_state_id",
+        "viterbi_label",
+        "prob_normal_smoothed",
+        "prob_volatile_smoothed",
+        "prob_stress_smoothed",
+        "feature_version",
+        "split",
+        "run_mode",
+    }
+    # RegimeDailySchema là `strict=False`; cột chẩn đoán phải sống sót qua validate_or_raise
+    # (CLI ghi frame ĐÃ validate, nên nếu schema siết lại thì chúng biến mất im lặng).
+    assert diagnostic <= set(daily.columns), sorted(diagnostic - set(daily.columns))
 
 
 def test_summary_records_provenance_and_open_decisions(tmp_path: Path) -> None:
-    _run(tmp_path)
+    result = _run(tmp_path)
+    assert result.exit_code == 0, result.output
     summary = json.loads(
         (tmp_path / "artifacts" / "dev" / "regime" / "regime_summary.json").read_text(
             encoding="utf-8"
