@@ -45,7 +45,10 @@ class BlockPool:
     eligible_block_count: int
     rejected: dict[str, int]
     anchor_split_counts: dict[str, int]
-    n_dates: int
+    # Danh tính panel, không chỉ hình dạng: hai panel cùng số ngày và cùng thứ tự ticker vẫn
+    # có thể phủ những phiên KHÁC nhau (cửa sổ lệch, mock sinh bằng seed khác). Khi đó
+    # `block_starts` trỏ vào đúng chỉ số nhưng sai phiên — hỏng im lặng. So sánh chính dãy ngày.
+    panel_dates: tuple[pd.Timestamp, ...]
     ticker_order: tuple[str, ...]
 
 
@@ -163,7 +166,7 @@ def build_block_pool(
         eligible_block_count=len(starts),
         rejected=rejected,
         anchor_split_counts=split_counts,
-        n_dates=len(panel.dates),
+        panel_dates=panel.dates,
         ticker_order=panel.tickers,
     )
 
@@ -178,11 +181,21 @@ def generate_cube(
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """`(cube_simple, cube_log, metadata)` — mỗi kịch bản là `horizon/block` block nối lại."""
-    if pool.n_dates != len(panel.dates) or pool.ticker_order != panel.tickers:
+    if pool.panel_dates != panel.dates or pool.ticker_order != panel.tickers:
+        mismatch = next(
+            (
+                f"ngày đầu lệch tại vị trí {i}: pool={a.date()} vs panel={b.date()}"
+                for i, (a, b) in enumerate(
+                    zip(pool.panel_dates, panel.dates, strict=False)
+                )
+                if a != b
+            ),
+            f"độ dài lệch: pool {len(pool.panel_dates)} vs panel {len(panel.dates)}",
+        )
         raise ValueError(
-            f"generate_cube: pool được dựng từ panel {pool.n_dates} ngày x ticker "
-            f"{pool.ticker_order}, nhưng panel truyền vào có {len(panel.dates)} ngày x ticker "
-            f"{panel.tickers} — pool và panel lệch nhau."
+            f"generate_cube: pool dựng từ panel khác với panel truyền vào — {mismatch}; "
+            f"ticker pool={pool.ticker_order} vs panel={panel.tickers}. "
+            f"`block_starts` là chỉ số vào panel gốc nên dùng nhầm panel sẽ cắt sai phiên."
         )
     if horizon_days % block_length != 0:
         raise ValueError(
