@@ -105,6 +105,10 @@ def test_summary_records_provenance_and_open_decisions(tmp_path: Path) -> None:
         )
     )
     assert summary["run_mode"] == "NON_BASELINE_RUN"
+    # `--mock` và run thật ghi vào CÙNG đường dẫn `artifacts/dev/regime/`, nên đây là dấu vết DUY
+    # NHẤT phân biệt được hai loại artifact. `run_mode` không thay được vai này: nó nói về trạng
+    # thái baseline, không nói đầu vào là thật hay giả.
+    assert summary["input_source"] == "mock"
     assert summary["gate_status"] == "OK"
     assert summary["seeds_reported"] == [101, 202, 303]
     assert summary["champion"]["n_states"] == 3

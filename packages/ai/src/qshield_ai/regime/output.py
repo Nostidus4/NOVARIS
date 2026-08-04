@@ -32,6 +32,14 @@ HMM_METHOD = "hmm"
 STATUS_OK = "ok"
 RUN_MODE_NON_BASELINE = "NON_BASELINE_RUN"
 
+# Nguồn dữ liệu đầu vào của một run. `--mock` và run thật ghi vào CÙNG `artifacts/dev/`, nên nếu
+# artifact không tự khai mình sinh từ fixture thì chặng sau đọc phải nhãn giả mà không có cách nào
+# biết: đã xảy ra thật (chi tiết ở docs/perf/2026-08-04-pipeline-timing.md §7 — scenarios chạy
+# thật đọc nhãn mock rồi báo gate PASS, không exception nào). `run_mode` KHÔNG thay được vai này:
+# nó nói về trạng thái baseline/UAT, không nói về việc đầu vào là thật hay giả.
+INPUT_SOURCE_MOCK = "mock"
+INPUT_SOURCE_REAL = "real"
+
 _LABEL_ORDER = (
     RegimeName.NORMAL.value,
     RegimeName.VOLATILE.value,
@@ -109,11 +117,22 @@ def build_regime_summary(
     feature_version: str,
     run_mode: str,
     data_version: str,
+    input_source: str,
     unresolved_decisions: Sequence[str] = UNRESOLVED_DECISIONS,
 ) -> dict[str, Any]:
-    """Provenance của chặng regime. `RunContext`/CLI ghi ra đĩa; module này chỉ TRẢ VỀ dict."""
+    """Provenance của chặng regime. `RunContext`/CLI ghi ra đĩa; module này chỉ TRẢ VỀ dict.
+
+    `input_source` bắt buộc (keyword, không có mặc định): một mặc định "real" sẽ khiến đúng cái
+    lỗi cần chặn — artifact sinh từ fixture tự khai là thật — quay lại ngay khi ai đó quên truyền.
+    """
+    if input_source not in (INPUT_SOURCE_MOCK, INPUT_SOURCE_REAL):
+        raise ValueError(
+            f"input_source phải là {INPUT_SOURCE_MOCK!r} hoặc {INPUT_SOURCE_REAL!r}, "
+            f"nhận {input_source!r}."
+        )
     summary: dict[str, Any] = {
         "run_mode": run_mode,
+        "input_source": input_source,
         "gate_status": outcome.gate_status,
         "gate_reasons": list(outcome.gate_reasons),
         "feature_version": feature_version,

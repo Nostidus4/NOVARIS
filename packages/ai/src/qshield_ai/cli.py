@@ -40,6 +40,8 @@ from qshield_ai.regime.feature_set import (
     to_matrix,
 )
 from qshield_ai.regime.output import (
+    INPUT_SOURCE_MOCK,
+    INPUT_SOURCE_REAL,
     RUN_MODE_NON_BASELINE,
     UNRESOLVED_DECISIONS,
     build_regime_daily,
@@ -261,6 +263,7 @@ def regime(
         feature_version=str(cfg["feature_contract_version"]),
         run_mode=RUN_MODE_NON_BASELINE,
         data_version=str(cfg["data"]["data_version"]),
+        input_source=INPUT_SOURCE_MOCK if mock else INPUT_SOURCE_REAL,
     )
     _write_json(stage_dir / "regime_summary.json", summary)
 
@@ -291,27 +294,78 @@ def regime(
     print(f"[regime] OK — {len(daily)} dòng → {stage_dir}")
 
 
+_INPUT_SOURCE_UNKNOWN = "unknown"
+
+
+def _regime_input_source(paths: ArtifactPaths) -> str:
+    """Đọc `input_source` từ `regime_summary.json` — sidecar provenance của chặng regime.
+
+    Trả `"unknown"` khi thiếu file hoặc thiếu khóa: đó là artifact do bản CLI cũ ghi (trước khi
+    có dấu vết mock/thật), và "không biết" phải được xử lý như "có thể là mock" chứ không phải
+    "chắc là thật" — chính giả định lạc quan đó tạo ra lỗi này.
+    """
+    summary_path = paths.for_stage(Stage.REGIME, "regime_summary.json")
+    if not summary_path.exists():
+        return _INPUT_SOURCE_UNKNOWN
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            f"Không đọc được {summary_path} để xác định nguồn dữ liệu của chặng regime: {exc}"
+        ) from exc
+    source = summary.get("input_source", _INPUT_SOURCE_UNKNOWN)
+    return str(source)
+
+
 def _load_regime_daily(
-    paths: ArtifactPaths, *, force: bool, logger: Any
-) -> tuple[pd.DataFrame, str]:
+    paths: ArtifactPaths, *, force: bool, logger: Any, mock: bool
+) -> tuple[pd.DataFrame, str, str]:
     """Đọc `regime_daily.parquet` (champion HMM); nếu cổng HMM đã FAIL thì chỉ còn
     `regime_daily_rule_based.parquet` — PR-REG-015 chặn chặng scenarios trên nhãn đó trừ khi
     `--force`. Fallback KHÔNG có `state_id`/`prob_*`/`model_version`/`seed` theo thiết kế
     (`qshield_ai.baseline.rule_based_regime`), nên không validate được bằng `RegimeDailySchema`
     — chỉ kiểm tra tối thiểu hai cột `build_block_pool`/`resolve_evaluation_date` thực sự cần.
 
-    Trả về `(regime_daily, source)` với `source` ∈ {"hmm_champion", "rule_based_fallback"} để ghi
-    vào manifest — công cụ downstream cần biết run này có posterior HMM hay không.
+    Trả về `(regime_daily, source, regime_input_source)` với `source` ∈ {"hmm_champion",
+    "rule_based_fallback"} để ghi vào manifest — công cụ downstream cần biết run này có posterior
+    HMM hay không — và `regime_input_source` ∈ {"mock", "real", "unknown"} là nguồn dữ liệu mà
+    chặng regime đã dùng.
     """
     champion_path = paths.for_stage(Stage.REGIME, "regime_daily.parquet")
     fallback_path = paths.for_stage(Stage.REGIME, "regime_daily_rule_based.parquet")
+
+    # Kiểm tra TRƯỚC khi đọc parquet, và cho cả hai nhánh champion/fallback: `--mock` ghi đè đúng
+    # những đường dẫn này nên nhãn giả và nhãn thật không phân biệt được bằng tên file. Đối xứng
+    # hai chiều — chạy `--mock` trên nhãn thật cũng sai như chiều ngược lại, chỉ khác là vô hại
+    # hơn; cả hai đều là trộn nguồn dữ liệu trong một pipeline.
+    wanted = INPUT_SOURCE_MOCK if mock else INPUT_SOURCE_REAL
+    found = _regime_input_source(paths)
+    if found != wanted and (champion_path.exists() or fallback_path.exists()):
+        detail = (
+            f"artifact regime tại {paths.stage_dir(Stage.REGIME)} có input_source={found!r} "
+            f"nhưng chặng scenarios đang chạy với input_source={wanted!r}"
+        )
+        if found == _INPUT_SOURCE_UNKNOWN:
+            detail += (
+                " (artifact do bản CLI cũ ghi, không có dấu vết nguồn — chạy lại "
+                "`qshield-ai regime` để đóng dấu)"
+            )
+        if not force:
+            raise typer.BadParameter(
+                f"{detail}. Trộn nguồn dữ liệu giữa hai chặng cho ra cube trông hợp lệ nhưng "
+                f"vô nghĩa. Chạy lại `qshield-ai regime`"
+                f"{' --mock' if mock else ''} trước, hoặc dùng --force để chạy có chủ ý."
+            )
+        logger.warning(
+            "%s — tiếp tục vì --force. Kết quả KHÔNG dùng làm bằng chứng.", detail
+        )
 
     if champion_path.exists():
         regime_daily = pd.read_parquet(champion_path)
         regime_daily = validate_or_raise(
             regime_daily, RegimeDailySchema, context="qshield_ai.scenarios:input.regime"
         )
-        return regime_daily, "hmm_champion"
+        return regime_daily, "hmm_champion", found
 
     if fallback_path.exists():
         if not force:
@@ -330,7 +384,7 @@ def _load_regime_daily(
             raise ValueError(
                 f"{fallback_path} thiếu cột {sorted(missing)} — không đủ để điều kiện hóa."
             )
-        return regime_daily, "rule_based_fallback"
+        return regime_daily, "rule_based_fallback", found
 
     raise typer.BadParameter(
         f"Chưa có {champion_path} lẫn {fallback_path} — chạy `qshield-ai regime` trước "
@@ -377,7 +431,9 @@ def scenarios(
     ):
         (stage_dir / stale).unlink(missing_ok=True)
 
-    regime_daily, regime_source = _load_regime_daily(paths, force=force, logger=logger)
+    regime_daily, regime_source, regime_input_source = _load_regime_daily(
+        paths, force=force, logger=logger, mock=mock
+    )
 
     returns, market = _load_inputs(cfg, mock=mock)
     validate_or_raise(
@@ -507,6 +563,11 @@ def scenarios(
         "run_id": context.run_id,
         "gate_status": status,
         "forced": bool(force),
+        # Hai trường tách nhau vì `--force` cho phép chúng lệch: `input_source` là nguồn của
+        # chính run scenarios này, `regime_input_source` là nguồn của nhãn regime nó đã tiêu thụ.
+        # Gộp thành một trường sẽ giấu mất đúng trường hợp cần điều tra.
+        "input_source": INPUT_SOURCE_MOCK if mock else INPUT_SOURCE_REAL,
+        "regime_input_source": regime_input_source,
         "regime_source": regime_source,
         "structural_violations": structural,
         "evaluation_date": str(evaluation_date.date()),
