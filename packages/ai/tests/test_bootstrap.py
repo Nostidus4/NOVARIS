@@ -263,3 +263,79 @@ def test_resolve_evaluation_date_rejects_a_date_without_a_label() -> None:
     panel, regime_daily, _ = _setup()
     with pytest.raises(ValueError, match="không có nhãn"):
         resolve_evaluation_date(regime_daily, panel, configured="1999-01-04")
+
+
+def test_build_return_panel_rejects_unsorted_calendar() -> None:
+    """Vị trí panel = thứ tự phiên. Calendar lộn xộn phải fail fast, không âm thầm nối sai."""
+    returns, _ = synthetic_dataset(tickers=TICKERS, n_days=50, seed=1)
+    calendar = sorted(returns["date"].unique())
+    unsorted_calendar = [calendar[1], calendar[0], *calendar[2:]]
+    with pytest.raises(ValueError, match="tăng dần"):
+        build_return_panel(returns, unsorted_calendar, tickers=TICKERS)
+
+
+def test_build_return_panel_rejects_duplicated_calendar() -> None:
+    """Reindex trên calendar trùng nhân bản dòng, position_of chỉ giữ vị trí cuối — phải fail."""
+    returns, _ = synthetic_dataset(tickers=TICKERS, n_days=50, seed=1)
+    calendar = sorted(returns["date"].unique())
+    duplicated_calendar = [*calendar[:10], calendar[9], *calendar[10:]]
+    with pytest.raises(ValueError, match="trùng"):
+        build_return_panel(returns, duplicated_calendar, tickers=TICKERS)
+
+
+def test_ticker_order_survives_into_panel_and_cube_metadata() -> None:
+    """Cột panel phải đúng THỨ TỰ ticker yêu cầu, không phải alphabet mặc định của `pivot`. Dùng
+    thứ tự không-alphabet để một hoán vị cột làm test này fail."""
+    requested_order = ["DDD", "AAA", "CCC", "BBB"]
+    returns, _ = synthetic_dataset(tickers=TICKERS, n_days=400, seed=9)
+    calendar = sorted(returns["date"].unique())
+    panel = build_return_panel(returns, calendar, tickers=requested_order)
+    assert panel.tickers == tuple(requested_order)
+
+    wide = returns.pivot(index="date", columns="ticker", values="log_return")
+    index = pd.DatetimeIndex(calendar)
+    for position, ticker in enumerate(requested_order):
+        expected = wide[ticker].reindex(index).to_numpy(dtype=float)
+        np.testing.assert_array_equal(panel.log_returns[:, position], expected)
+
+    regime_daily = pd.DataFrame(
+        {
+            "date": calendar,
+            "regime": ["normal"] * (len(calendar) // 2)
+            + ["stress"] * (len(calendar) - len(calendar) // 2),
+        }
+    )
+    pool = build_block_pool(
+        panel,
+        regime_daily,
+        target_regime="stress",
+        block_length=BLOCK,
+        evaluation_date=calendar[-1],
+    )
+    _, _, metadata = generate_cube(
+        panel, pool, num_scenarios=10, horizon_days=HORIZON, block_length=BLOCK, seed=7
+    )
+    assert metadata["ticker_order"] == requested_order
+
+
+def test_generate_cube_rejects_pool_built_from_a_different_panel() -> None:
+    """Pool mang vị trí trên panel gốc. Panel khác (số ngày khác) phải bị chặn, không IndexError
+    hoặc index sai âm thầm."""
+    panel_a, regime_daily_a, calendar_a = _setup(n_days=400, seed=9)
+    pool_a = build_block_pool(
+        panel_a,
+        regime_daily_a,
+        target_regime="stress",
+        block_length=BLOCK,
+        evaluation_date=calendar_a[-1],
+    )
+    panel_b, _, _ = _setup(n_days=300, seed=9)
+    with pytest.raises(ValueError, match="lệch nhau"):
+        generate_cube(
+            panel_b,
+            pool_a,
+            num_scenarios=10,
+            horizon_days=HORIZON,
+            block_length=BLOCK,
+            seed=7,
+        )
