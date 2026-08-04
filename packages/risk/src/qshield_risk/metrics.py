@@ -27,6 +27,7 @@ def _validated_losses(losses: npt.ArrayLike) -> FloatArray:
 
 
 def validate_alpha(alpha: float) -> float:
+    """Return a finite confidence level strictly inside the open interval ``(0, 1)``."""
     value = float(alpha)
     if not np.isfinite(value) or not 0.0 < value < 1.0:
         raise ValueError(f"[risk.metrics] alpha must be finite and in (0, 1), got {alpha!r}.")
@@ -59,6 +60,12 @@ def alpha_key(alpha: float) -> str:
 
 @dataclass(frozen=True)
 class RiskMetrics:
+    """Scenario-distribution risk summary in decimal pre-trade NAV units.
+
+    VaR, CVaR and tail counts are keyed by stable confidence-level strings such as ``"0.95"``.
+    ``worst_scenario_max_drawdown`` is the most negative running-peak drawdown across every path,
+    and ``expected_horizon_return`` is the mean terminal simple return across scenarios.
+    """
     expected_horizon_return: float
     worst_scenario_max_drawdown: float
     var: dict[str, float]
@@ -77,7 +84,12 @@ def risk_metrics_from_wealth(
     *,
     initial_nav: float = 1.0,
 ) -> RiskMetrics:
-    """Compute horizon return, drawdown and loss-tail metrics from scenario wealth paths."""
+    """Compute horizon return, drawdown and loss-tail metrics from scenario wealth paths.
+
+    Terminal simple return is ``terminal_wealth / initial_nav - 1`` and loss is its negative.
+    Drawdown is calculated on wealth relative to a running peak that includes ``initial_nav``;
+    it is never calculated directly from a return series.
+    """
     from qshield_risk.drawdown import worst_scenario_max_drawdown
 
     wealth = np.asarray(wealth_paths, dtype=float)

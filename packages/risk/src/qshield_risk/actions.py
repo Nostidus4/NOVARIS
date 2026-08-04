@@ -11,6 +11,13 @@ from qshield_risk.costs import CostBreakdown, CostRates, transaction_costs
 
 
 def validate_bitstring(bitstring: npt.ArrayLike, *, n_assets: int) -> npt.NDArray[np.int64]:
+    """Return a binary action vector with exactly one entry per scenario asset.
+
+    Position ``i`` always refers to position ``i`` in ``scenario_manifest.ticker_order``. This
+    function validates representation only; the separate ``K=3`` cardinality rule is reported by
+    :func:`qshield_risk.evaluate.evaluate` so infeasible Quantum candidates can still receive a
+    true before/after risk score.
+    """
     bits = np.asarray(bitstring)
     if bits.ndim != 1 or bits.shape[0] != n_assets:
         raise ValueError(
@@ -22,12 +29,19 @@ def validate_bitstring(bitstring: npt.ArrayLike, *, n_assets: int) -> npt.NDArra
 
 
 def selected_action_ids(bitstring: npt.ArrayLike, *, n_assets: int) -> tuple[int, ...]:
+    """Return selected zero-based action ids in deterministic ticker-order sequence."""
     bits = validate_bitstring(bitstring, n_assets=n_assets)
     return tuple(int(index) for index in np.flatnonzero(bits))
 
 
 @dataclass(frozen=True)
 class TradeState:
+    """Post-trade portfolio accounting in both amount and normalized-weight form.
+
+    ``stock_amounts`` and ``cash_amount`` remain in pre-trade decimal-NAV units and therefore sum
+    to ``nav_after``. ``stock_weights`` and ``cash_weight`` are normalized by ``nav_after`` and
+    therefore sum to one. ``turnover`` is gross stock notional sold on pre-trade NAV=1.
+    """
     stock_amounts: npt.NDArray[np.float64]
     cash_amount: float
     nav_after: float
@@ -46,7 +60,12 @@ def apply_actions(
     rates: CostRates,
     tolerance: float,
 ) -> TradeState:
-    """Execute selected sales on pre-trade NAV=1 and return post-cost accounting."""
+    """Execute selected sales once, before the scenario horizon, on pre-trade NAV=1.
+
+    For each selected asset ``i``, gross sale is ``reduction_pct * current_weight_i``. Proceeds
+    move to cash and fee, spread and liquidity penalty are deducted exactly once. The function
+    does not rebalance again during the scenario horizon and never auto-normalizes invalid input.
+    """
     stocks = np.asarray(stock_weights, dtype=float)
     if stocks.ndim != 1 or not np.isfinite(stocks).all() or np.any(stocks < 0.0):
         raise ValueError("[risk.actions] stock_weights must be a finite non-negative 1D array.")

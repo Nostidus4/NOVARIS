@@ -9,6 +9,7 @@ import numpy.typing as npt
 
 
 def validate_ticker_order(ticker_order: Sequence[str], *, expected_assets: int = 8) -> tuple[str, ...]:
+    """Require the locked number of unique non-empty scenario ticker symbols."""
     tickers = tuple(str(ticker) for ticker in ticker_order)
     if len(tickers) != expected_assets:
         raise ValueError(
@@ -26,7 +27,11 @@ def align_portfolio_weights(
     *,
     tolerance: float,
 ) -> npt.NDArray[np.float64]:
-    """Align a ticker-keyed portfolio to the cube order without normalizing it."""
+    """Align ticker-keyed stock weights to the cube order without normalizing them.
+
+    Missing or extra tickers are rejected. Stock and cash weights must be finite, non-negative and
+    sum to one within ``tolerance`` before any action is applied.
+    """
     tickers = tuple(str(ticker) for ticker in ticker_order)
     if not np.isfinite(tolerance) or tolerance < 0.0:
         raise ValueError(

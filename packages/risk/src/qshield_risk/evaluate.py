@@ -17,6 +17,7 @@ from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_orde
 
 
 def required_float(config: Mapping[str, Any], key: str) -> float:
+    """Read one mandatory finite numeric config value without inventing a default."""
     value = config.get(key)
     if value is None:
         raise ValueError(f"[risk.config] {key}=null; an approved explicit value is required.")
@@ -27,6 +28,7 @@ def required_float(config: Mapping[str, Any], key: str) -> float:
 
 
 def confidence_levels(config: Mapping[str, Any]) -> tuple[float, ...]:
+    """Return primary CVaR alpha followed by unique robustness confidence levels."""
     primary = required_float(config, "cvar_alpha")
     robustness = config.get("robustness_confidence_levels", ()) or ()
     return tuple(dict.fromkeys((primary, *(float(level) for level in robustness))))
@@ -34,6 +36,13 @@ def confidence_levels(config: Mapping[str, Any]) -> tuple[float, ...]:
 
 @dataclass(frozen=True)
 class RiskEvaluation:
+    """True net-risk result for one hedge bitstring.
+
+    Before/after metrics use decimal pre-trade NAV units. Post-trade normalized weights sum to one,
+    while ``nav_after`` records the NAV reduction caused by costs. Constraint violations are
+    reported independently from financial metrics, allowing Quantum to inspect infeasible
+    candidates without treating a penalty score as true risk.
+    """
     before: RiskMetrics
     after: RiskMetrics
     selected_action_ids: tuple[int, ...]
@@ -74,7 +83,32 @@ def evaluate(
     cash_weight: float,
     config: Mapping[str, Any],
 ) -> RiskEvaluation:
-    """Evaluate true before/after risk; report K mismatch without suppressing metrics."""
+    """Evaluate true before/after portfolio risk for a length-eight hedge bitstring.
+
+    Parameters
+    ----------
+    bitstring:
+        One binary decision per ticker in ``ticker_order``. A selected bit sells
+        ``action_reduction_pct`` of that asset's current position.
+    scenarios:
+        Simple daily return cube with shape ``(scenario, horizon, 8)``. Returns must be finite and
+        greater than ``-1``. Asset axis order must match ``ticker_order``.
+    ticker_order:
+        Eight unique ticker symbols copied from the Scenario manifest.
+    weights, cash_weight:
+        Pre-trade portfolio in decimal NAV units. Stock plus cash weights must already sum to one;
+        invalid portfolios are rejected rather than normalized.
+    config:
+        Merged Config containing horizon, CVaR levels, 20% action size, transaction-cost rates,
+        weight tolerance and ``k_actions``.
+
+    Notes
+    -----
+    The hedge is executed once before the scenario horizon, then held without daily rebalancing.
+    Costs reduce cash and NAV exactly once. Loss is ``1 - terminal_wealth`` (equivalently negative
+    horizon portfolio return). A cardinality mismatch is returned in ``constraint_violations``;
+    invalid bitstring shape or values still raise ``ValueError``.
+    """
     tickers = validate_ticker_order(ticker_order)
     cube = validate_scenario_cube(
         scenarios,

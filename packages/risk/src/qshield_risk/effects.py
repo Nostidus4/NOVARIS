@@ -21,6 +21,11 @@ from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_orde
 
 @dataclass(frozen=True)
 class EffectsResult:
+    """Pure Risk-stage result before artifact serialization.
+
+    ``actions`` contains canonical columns ``action_id,ticker,g,c`` and ``pairs`` contains one
+    ``action_i,action_j,C_ij`` row for each ``i < j``. Values are raw decimal-NAV units.
+    """
     baseline: RiskMetrics
     actions: pd.DataFrame
     pairs: pd.DataFrame
@@ -33,7 +38,15 @@ def build_effects(
     cash_weight: float,
     config: Mapping[str, Any],
 ) -> EffectsResult:
-    """Compute raw decimal-NAV ``g_i``, ``C_ij`` and separate transaction costs ``c_i``."""
+    """Compute the baseline and raw ``g_i``, ``C_ij``, ``c_i`` QUBO handoff.
+
+    ``g_i = CVaR_0 - CVaR_i_gross`` and ``R_ij = CVaR_0 - CVaR_ij_gross`` are calculated after
+    moving sale proceeds to cash but before deducting transaction costs. Pair interaction is
+    ``C_ij = g_i + g_j - R_ij``. Cost ``c_i`` is emitted separately so Quantum can weight it once;
+    the final candidate must still be re-evaluated by :func:`qshield_risk.evaluate.evaluate`.
+
+    No component scaling or composite financial objective is applied in Risk v1.
+    """
     tickers = validate_ticker_order(ticker_order)
     cube = validate_scenario_cube(
         scenarios,
