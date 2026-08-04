@@ -11,7 +11,9 @@ cvae:
 
 # TODO(Nguyễn Anh Tú): seed cho bootstrap — chưa có giá trị cụ thể được đăng ký ở tài liệu nguồn.
 # PROVISIONAL (IN-CTR-09): seed bootstrap do AI đề xuất, chờ Ngọc duyệt.
-seed: 20260804
+# Tên khóa KHÔNG được là `seed`: `Config.load` gộp phẳng và `merged.update(config)` khiến key
+# top-level của base.yaml luôn đè include, nên `seed` ở đây sẽ vĩnh viễn không đọc được.
+scenario_seed: 20260804
 
 # AD-09 (IN-RISK-02/DR-R-05): ngày đánh giá t. null ⇒ ngày cuối vừa có nhãn regime vừa đủ N mã.
 evaluation_date: null
