@@ -318,6 +318,52 @@ def test_gate_fail_removes_a_previously_passed_cube(tmp_path: Path) -> None:
     assert manifest["gate_status"] == "FAIL"
 
 
+def test_missing_regime_artifact_removes_a_previously_passed_cube(
+    tmp_path: Path,
+) -> None:
+    """The `regime`-load abort path must not leave yesterday's cube looking like today's result.
+
+    `_load_regime_daily` raises `BadParameter` before anything in the scenarios stage is rewritten.
+    Without a purge at the top of the command, `stress_scenarios.npz` — plus the
+    `scenario_manifest.json` claiming `gate_status: PASS` beside it — survives from the earlier
+    PASSing run, and Risk downstream reads a cube that looks current but was never produced by this
+    run. A fresh `tmp_path` per test cannot catch this: the stale artifact only exists because the
+    same directory was written by a previous run, so reusing one `tmp_path` across two invocations
+    is the entire point.
+    """
+    config_path = _write_config(tmp_path)
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
+
+    passing = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+    assert passing.exit_code == 0, passing.output
+    cube_path = _scenario_dir(tmp_path) / "stress_scenarios.npz"
+    assert cube_path.exists()
+
+    # Cổng regime FAIL ⇒ champion bị xóa, chỉ còn fallback rule-based; scenarios từ chối chạy trên
+    # nhãn đó khi không có --force và raise NGAY trong `_load_regime_daily`.
+    failing_config = _write_config(
+        tmp_path, gate={"min_state_occupancy": 0.99, "min_mean_label_agreement": 0.60}
+    )
+    failed_regime = runner.invoke(
+        app, ["regime", "--config", str(failing_config), "--mock"]
+    )
+    assert failed_regime.exit_code != 0
+    assert not (_regime_dir(tmp_path) / "regime_daily.parquet").exists()
+
+    aborted = runner.invoke(
+        app, ["scenarios", "--config", str(failing_config), "--mock"]
+    )
+    assert aborted.exit_code != 0
+    assert "--force" in aborted.output
+
+    assert not cube_path.exists(), (
+        "cube from the earlier PASS must not survive an aborted run"
+    )
+
+
 def test_force_allows_rule_based_fallback_regime(tmp_path: Path) -> None:
     """Chiều ngược lại của test trên: `--force` cho phép chạy scenarios trên fallback rule-based.
 
