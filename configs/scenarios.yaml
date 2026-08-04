@@ -23,6 +23,11 @@ evaluation_date: null
 # Reference = realized forward 20-day windows sau mỗi anchor cùng regime, cắt tại t.
 validation:
   reference: regime_matched_forward_windows
+  # PROVISIONAL (IN-RISK-03): số cửa sổ tham chiếu tối thiểu để một verdict PASS được coi là
+  # đủ tin cậy. Dưới ngưỡng này, PASS bị hạ xuống WARN (mẫu quá mỏng để chứng nhận) — nhưng
+  # một metric VI PHẠM ngưỡng vẫn FAIL, mẫu nhỏ không làm vi phạm biến mất. AI đề xuất, chờ
+  # Phúc duyệt.
+  min_reference_windows: 30
   thresholds:
     mean_abs_diff_max: 0.0010
     std_ratio_min: 0.80
