@@ -39,6 +39,11 @@ champion:
 # AD-04/AD-05: điều kiện để một fit hợp lệ trước vòng chọn medoid. PROVISIONAL.
 gate:
   min_state_occupancy: 0.02  # mỗi state phải chiếm >= 2% số ngày
+  # PROVISIONAL (AD-04): ngưỡng đồng thuận nhãn giữa các seed, do AI đề xuất, chờ Ngọc duyệt.
+  # Với 3 nhãn, đồng thuận ngẫu nhiên ~0.33; 0.60 là mức tối thiểu để coi là fit ổn định.
+  # Champion chỉ có 1 seed hợp lệ ⇒ mean agreement là NaN ⇒ NaN >= 0.60 sai ⇒ cổng đóng.
+  # Đó là hành vi mong muốn: đồng thuận đo từ một seed không phải bằng chứng.
+  min_mean_label_agreement: 0.60
 
 # AD-07: fallback rule-based. PROVISIONAL — chờ Ngọc (IN-PO-02) và Phúc.
 fallback:
