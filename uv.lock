@@ -2223,6 +2223,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "qshield-contracts" },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "typer" },
 ]
 
@@ -2234,6 +2235,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=17.0" },
     { name = "qshield-contracts", editable = "packages/contracts" },
     { name = "scikit-learn", specifier = ">=1.5" },
+    { name = "scipy", specifier = ">=1.14" },
     { name = "typer", specifier = ">=0.12" },
 ]
 

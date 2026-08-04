@@ -10,7 +10,8 @@ includes:
 
 # TODO(Đỗ Ngọc Tân): seed toàn cục mặc định — chưa được nêu ở bất kỳ tài liệu nguồn nào.
 # Seed riêng của từng module (regime, QAOA...) nằm trong file config của module đó.
-seed: null
+# PROVISIONAL (NON_BASELINE_RUN, IN-CTR-09): giá trị do AI đề xuất, chờ Nguyễn Thị Ánh Ngọc duyệt.
+seed: 20260804
 
 artifacts:
   mode: dev  # dev | runs

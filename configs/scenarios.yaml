@@ -10,4 +10,25 @@ cvae:
   enabled: false
 
 # TODO(Nguyễn Anh Tú): seed cho bootstrap — chưa có giá trị cụ thể được đăng ký ở tài liệu nguồn.
-seed: null
+# PROVISIONAL (IN-CTR-09): seed bootstrap do AI đề xuất, chờ Ngọc duyệt.
+seed: 20260804
+
+# AD-09 (IN-RISK-02/DR-R-05): ngày đánh giá t. null ⇒ ngày cuối vừa có nhãn regime vừa đủ N mã.
+evaluation_date: null
+
+# AD-13 (IN-RISK-03): Phúc sở hữu Scenario Validation Gate. Toàn bộ ngưỡng dưới đây là
+# PROVISIONAL do AI đề xuất — run vẫn NON_BASELINE_RUN cho tới khi Phúc ký.
+# Reference = realized forward 20-day windows sau mỗi anchor cùng regime, cắt tại t.
+validation:
+  reference: regime_matched_forward_windows
+  thresholds:
+    mean_abs_diff_max: 0.0010
+    std_ratio_min: 0.80
+    std_ratio_max: 1.25
+    skew_abs_diff_max: 1.0
+    kurtosis_abs_diff_max: 5.0
+    quantile_rel_error_max: 0.25
+    autocorr_abs_diff_max: 0.10
+    corr_mean_abs_diff_max: 0.10
+    tail_coverage_ratio_min: 0.5
+    tail_coverage_ratio_max: 2.0
