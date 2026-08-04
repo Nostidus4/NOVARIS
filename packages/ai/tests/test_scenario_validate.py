@@ -6,6 +6,7 @@ from qshield_ai.scenarios.bootstrap import BlockPool, ReturnPanel
 from qshield_ai.scenarios.validate import (
     GATE_FAIL,
     GATE_PASS,
+    GATE_WARN,
     build_validation_report,
     distribution_metrics,
     gate_status,
@@ -15,6 +16,7 @@ from qshield_ai.scenarios.validate import (
 
 TICKERS = ["AAA", "BBB", "CCC"]
 SHAPE = (40, 20, 3)
+MIN_REFERENCE_WINDOWS = 30
 THRESHOLDS = {
     "mean_abs_diff_max": 0.0010,
     "std_ratio_min": 0.80,
@@ -55,6 +57,16 @@ def test_structural_check_catches_nan_and_reports_position() -> None:
     assert any("3" in violation for violation in violations), "phải chỉ ra vị trí lỗi"
 
 
+def test_structural_check_reports_nan_on_malformed_non_3d_cube_without_crashing() -> (
+    None
+):
+    """Cube 2D chứa NaN vẫn phải sinh vi phạm, không được ném IndexError khi định dạng vị trí —
+    hàm này tồn tại để MÔ TẢ cube hỏng, không phải để nổ trên chính nó."""
+    cube = np.array([[1.0, np.nan], [2.0, 3.0]])
+    violations = structural_violations(cube, expected_shape=SHAPE, tickers=TICKERS)
+    assert any("NaN" in violation or "Inf" in violation for violation in violations)
+
+
 def test_structural_check_catches_duplicate_tickers() -> None:
     violations = structural_violations(
         _cube(1), expected_shape=SHAPE, tickers=["AAA", "AAA", "CCC"]
@@ -88,7 +100,11 @@ def test_metrics_match_hand_calculation_on_a_constant_cube() -> None:
 
 def test_matching_distributions_pass_every_metric() -> None:
     report = build_validation_report(
-        _cube(1), _cube(2), thresholds=THRESHOLDS, target_regime="stress"
+        _cube(1),
+        _cube(2),
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
     assert set(report["verdict"]) == {"PASS"}
     assert gate_status(report) == GATE_PASS
@@ -97,7 +113,11 @@ def test_matching_distributions_pass_every_metric() -> None:
 def test_inflated_volatility_fails_the_std_ratio() -> None:
     """Cube rộng gấp 3 lần tham chiếu ⇒ std_ratio phải FAIL, không được lọt."""
     report = build_validation_report(
-        _cube(1, scale=3.0), _cube(2), thresholds=THRESHOLDS, target_regime="stress"
+        _cube(1, scale=3.0),
+        _cube(2),
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
     failed = report.loc[report["verdict"] == "FAIL", "metric"].tolist()
     assert "std_ratio" in failed
@@ -106,7 +126,11 @@ def test_inflated_volatility_fails_the_std_ratio() -> None:
 
 def test_report_has_the_columns_the_csv_contract_needs() -> None:
     report = build_validation_report(
-        _cube(1), _cube(2), thresholds=THRESHOLDS, target_regime="stress"
+        _cube(1),
+        _cube(2),
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
     assert {
         "target_regime",
@@ -118,19 +142,48 @@ def test_report_has_the_columns_the_csv_contract_needs() -> None:
         "threshold_high",
         "verdict",
         "note",
+        "reference_windows",
+        "small_sample",
     } <= set(report.columns)
     assert set(report["target_regime"]) == {"stress"}
 
 
-def test_small_reference_sample_warns_rather_than_silently_passing() -> None:
+def test_matching_cube_with_small_reference_warns_not_passes() -> None:
+    """Mẫu tham chiếu chỉ 5 cửa sổ (< 30): cube khớp phân phối vẫn phải hạ PASS -> WARN, vì mẫu
+    quá mỏng để CHỨNG NHẬN, không phải vì có vi phạm."""
     report = build_validation_report(
         _cube(1),
         _cube(2, shape=(5, 20, 3)),
         thresholds=THRESHOLDS,
         target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
+    assert "PASS" not in set(report["verdict"])
     assert "WARN" in set(report["verdict"])
-    assert gate_status(report) in {"PASS_WITH_WARNINGS", GATE_FAIL}
+    assert gate_status(report) == GATE_WARN
+    assert report["statistic"].apply(np.isfinite).all(), (
+        "mẫu nhỏ không được xoá bằng chứng — statistic phải là số thật, không phải NaN"
+    )
+
+
+def test_violating_cube_with_small_reference_still_fails() -> None:
+    """Cube rộng gấp 3 lần tham chiếu, nhưng tham chiếu chỉ có 5 cửa sổ (< 30): vi phạm ngưỡng
+    std_ratio KHÔNG được mẫu nhỏ che đi — verdict vẫn phải là FAIL, không phải WARN."""
+    report = build_validation_report(
+        _cube(1, scale=3.0),
+        _cube(2, shape=(5, 20, 3)),
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
+    )
+    failed = report.loc[report["verdict"] == "FAIL", "metric"].tolist()
+    assert "std_ratio" in failed, (
+        "mẫu tham chiếu nhỏ không được biến một vi phạm ngưỡng thật thành WARN"
+    )
+    assert gate_status(report) == GATE_FAIL
+    assert report["statistic"].apply(np.isfinite).all(), (
+        "mẫu nhỏ không được xoá bằng chứng — statistic phải là số thật, không phải NaN"
+    )
 
 
 def test_gate_status_prefers_fail_over_warn() -> None:
@@ -220,7 +273,11 @@ def test_shifted_mean_fails_the_mean_abs_diff_metric() -> None:
     reference = rng.normal(0.0, 0.01, size=SHAPE)
     scenario = reference.copy() + 0.01
     report = build_validation_report(
-        scenario, reference, thresholds=THRESHOLDS, target_regime="stress"
+        scenario,
+        reference,
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
     failed = report.loc[report["verdict"] == "FAIL", "metric"].tolist()
     assert "mean_abs_diff" in failed
@@ -235,7 +292,11 @@ def test_decorrelated_scenario_fails_corr_mean_abs_diff() -> None:
     reference = np.concatenate([base, base], axis=2)  # tương quan = 1.0 tuyệt đối
     scenario = rng.normal(0.0, 0.01, size=(200, 20, 2))  # hai tài sản độc lập
     report = build_validation_report(
-        scenario, reference, thresholds=THRESHOLDS, target_regime="stress"
+        scenario,
+        reference,
+        thresholds=THRESHOLDS,
+        target_regime="stress",
+        min_reference_windows=MIN_REFERENCE_WINDOWS,
     )
     failed = report.loc[report["verdict"] == "FAIL", "metric"].tolist()
     assert "corr_mean_abs_diff" in failed
@@ -254,7 +315,9 @@ def _panel(values: np.ndarray, complete: np.ndarray) -> ReturnPanel:
     )
 
 
-def _pool(starts: list[int]) -> BlockPool:
+def _pool(starts: list[int], panel: ReturnPanel) -> BlockPool:
+    """Pool nhất quán với `panel` — `panel_dates`/`ticker_order` phải khớp panel dùng chung,
+    đúng như `build_block_pool` thật sự làm, để test không tự vô hiệu hoá guard đồng nhất."""
     return BlockPool(
         target_regime="stress",
         block_starts=np.asarray(starts, dtype=int),
@@ -264,8 +327,8 @@ def _pool(starts: list[int]) -> BlockPool:
         eligible_block_count=len(starts),
         rejected={},
         anchor_split_counts={},
-        panel_dates=(),
-        ticker_order=(),
+        panel_dates=panel.dates,
+        ticker_order=panel.tickers,
     )
 
 
@@ -282,7 +345,7 @@ def test_reference_windows_excludes_future_and_incomplete_windows() -> None:
     complete = np.ones(12, dtype=bool)
     complete[7] = False
     panel = _panel(values, complete)
-    pool = _pool([0, 2, 5, 9])
+    pool = _pool([0, 2, 5, 9], panel)
 
     windows = reference_windows(panel, pool, horizon_days=3, last_position=10)
 
@@ -296,8 +359,31 @@ def test_reference_windows_empty_when_nothing_qualifies() -> None:
     values = np.arange(6, dtype=float).reshape(6, 1)
     complete = np.ones(6, dtype=bool)
     panel = _panel(values, complete)
-    pool = _pool([4, 5])
+    pool = _pool([4, 5], panel)
 
     windows = reference_windows(panel, pool, horizon_days=3, last_position=5)
 
     assert windows.shape == (0, 3, 1)
+
+
+def test_reference_windows_raises_on_panel_pool_identity_mismatch() -> None:
+    """`pool.block_starts` là chỉ số vào panel DÙNG ĐỂ DỰNG pool. Truyền một panel khác (dù cùng
+    hình dạng) phải bị chặn cứng, giống hệt guard trong `generate_cube` — nếu không, cửa sổ tham
+    chiếu sẽ lấy nhầm phiên và mọi verdict trong report tính trên nền sai."""
+    values = np.arange(6, dtype=float).reshape(6, 1)
+    complete = np.ones(6, dtype=bool)
+    panel = _panel(values, complete)
+
+    other_values = np.arange(6, dtype=float).reshape(6, 1) * 100.0
+    other_panel = ReturnPanel(
+        dates=tuple(
+            pd.Timestamp("2030-01-01") + pd.Timedelta(days=i) for i in range(6)
+        ),
+        log_returns=other_values,
+        complete=complete,
+        tickers=("AAA",),
+    )
+    pool = _pool([0, 2], other_panel)  # pool dựng từ other_panel, không phải panel
+
+    with pytest.raises(ValueError, match="panel"):
+        reference_windows(panel, pool, horizon_days=3, last_position=5)

@@ -86,3 +86,6 @@ def test_scenario_keys(config: Config) -> None:
     thresholds = config["validation"]["thresholds"]
     assert thresholds["std_ratio_min"] < thresholds["std_ratio_max"]
     assert thresholds["tail_coverage_ratio_min"] < thresholds["tail_coverage_ratio_max"]
+    min_reference_windows = config["validation"]["min_reference_windows"]
+    assert isinstance(min_reference_windows, int)
+    assert min_reference_windows > 0
