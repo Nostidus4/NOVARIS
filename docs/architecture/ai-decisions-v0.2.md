@@ -44,3 +44,68 @@ thật. Quan trọng nhất: `schemas/features.py` — nơi Feature Contract v0.
 | Giá trị đã điền vào `configs/*.yaml` | Ngọc | Chờ (IN-PO-04) |
 
 Owner chốt khác default ⇒ sinh **run ID mới** cho scenario/risk/optimization, không sửa số run cũ.
+
+---
+
+## 4. Kết quả run tham chiếu (NON_BASELINE_RUN)
+
+Chạy trên dữ liệu thật, `configs/base.yaml`, `artifacts.mode: dev`, ngày 2026-08-04. Số dưới đây
+KHÔNG được dùng làm bằng chứng cuối/UAT/slide cho tới khi các owner ở §3 phê duyệt.
+
+### Regime — cổng ĐẠT
+
+| Chỉ số | Giá trị |
+|---|---|
+| Số dòng `regime_daily.parquet` | 2571 (2016-04-04 → 2026-07-30) |
+| Champion | seed 303, 3 state, `diag`, converged=true |
+| Log-likelihood train / validation | −7650.6476 / −1668.1255 |
+| AIC / BIC | 15377.2951 / 15583.5492 (38 tham số) |
+| Đồng thuận nhãn giữa seed (mean/min/max) | 0.8093 / 0.5495 / 1.0000 trên 10 seed hợp lệ |
+| Occupancy normal/volatile/stress | 0.2369 / 0.3399 / 0.4232 |
+| Độ dài trung bình mỗi lượt (phiên) | 203.00 / 109.25 / 98.91 |
+| Cổng | **OK** |
+
+Đồng thuận trung bình 0.8093 vượt xa ngưỡng PROVISIONAL `min_mean_label_agreement = 0.60`
+(ngẫu nhiên với 3 nhãn ≈ 0.33). Cả 10 seed đăng ký đều hợp lệ.
+
+### Scenarios — cổng KHÔNG ĐẠT
+
+| Chỉ số | Giá trị |
+|---|---|
+| Ngày đánh giá `t` | 2026-07-30 |
+| Regime mục tiêu tại `t` | `volatile` |
+| Nguồn nhãn | `hmm_champion`, `conditioning_method = hard_filtered_label` |
+| Số block hợp lệ | 864 |
+| Block bị loại | `beyond_evaluation_date` 5, `incomplete_panel` 5, `anchor_off_calendar` 0 |
+| Tỷ lệ tái sử dụng block | 0.6175 (765 block khác nhau trên 2000 lượt rút) |
+| Thành phần split của anchor | train 284 / validation 85 / test 495 |
+| Khoảng anchor | 2020-10-23 → 2026-07-23 |
+| Shape cube | (500, 20, 8) |
+| Cổng validation | **FAIL** |
+| Metric FAIL | `kurtosis_abs_diff` = 16.2451 (ngưỡng 5.0), regime `volatile` |
+
+`stress_scenarios.npz` **không được ghi** — đúng thiết kế. `scenarios_by_regime.npz`,
+`scenario_validation.csv`, `scenario_manifest.json` vẫn được ghi để bằng chứng của lần fail này
+không mất đi.
+
+### Ghi chú trung thực
+
+**1. Cổng scenario FAIL trên dữ liệu thật.** Regime `volatile` — chính là regime tại `t` — trượt
+`kurtosis_abs_diff` ở 16.2451 so với ngưỡng 5.0. Tám metric còn lại đều PASS
+(`mean_abs_diff` 0.000016, `std_ratio` 0.9640, `skew_abs_diff` 0.6825, `q05/q95_rel_error`
+0.0484/0.0477, `autocorr_abs_diff` 0.0168, `corr_mean_abs_diff` 0.0585,
+`tail_coverage_ratio` 0.9897). Hai regime còn lại PASS toàn bộ 9/9.
+
+**Đây KHÔNG phải lỗi mẫu mỏng:** tập tham chiếu có 834 cửa sổ cho `volatile` (569 cho `normal`,
+1068 cho `stress`), `small_sample = False` ở cả ba. Vi phạm đứng trên bằng chứng đầy đủ.
+
+Cách đọc: moving-block bootstrap ghép các block 5 phiên rời rạc, nên đuôi phân phối 20 ngày do nó
+sinh ra nặng hơn hẳn đuôi của cửa sổ 20 ngày liên tục có thật. Kurtosis là metric nhạy nhất với
+đúng hiệu ứng này. Chưa kết luận được là **ngưỡng 5.0 quá chặt** hay **engine sinh đuôi sai** —
+đó là quyết định của Phúc (IN-RISK-03), người sở hữu Scenario Validation Gate. Ngưỡng do AI đề
+xuất, chưa ai ký. **Không tự nới ngưỡng để lấy màu xanh.**
+
+**2. Không có bất thường nào khác.** Cả 10 seed hội tụ và hợp lệ; không regime nào bị bỏ qua vì
+khan hiếm block; chỉ 10/874 block bị loại (5 vượt `t`, 5 thiếu mã).
+
+**3. Toàn bộ run mang nhãn `NON_BASELINE_RUN`** với danh sách decision ID chưa phê duyệt ở §3.
