@@ -53,6 +53,13 @@ def test_scenario_seed_is_not_shadowed_by_base(config: Config) -> None:
 
     Nếu `configs/scenarios.yaml` khai báo lại `seed`, giá trị đó vĩnh viễn không đọc được
     và stage scenarios sẽ im lặng dùng seed của base. Test này chặn hồi quy đó.
+
+    NGOẠI LỆ CÓ CHỦ Ý với quy tắc "`Config` là nơi DUY NHẤT được `yaml.safe_load` trên
+    `configs/*.yaml`" (`qshield_contracts.config`). Chính lớp gộp phẳng của `Config` là thứ
+    đang được kiểm tra, nên đọc qua `Config` không thể phát hiện key bị đè — nó trả về giá
+    trị của base trong cả hai trường hợp. Bản đọc thô này chỉ dùng để assert sự VẮNG MẶT của
+    một key; không giá trị nào từ đây được đưa vào code. Không nhân bản pattern này ra ngoài
+    test: mọi nơi khác vẫn phải đi qua `Config`.
     """
     raw = yaml.safe_load(
         (CONFIG_PATH.parent / "scenarios.yaml").read_text(encoding="utf-8")
