@@ -43,6 +43,14 @@ def test_champion_is_inside_candidate_grid(config: Config) -> None:
     assert champion["n_states"] == 3, "RegimeDailySchema chặn state_id ở {0,1,2}"
 
 
+def test_gate_min_mean_label_agreement_is_above_chance_level(config: Config) -> None:
+    """Với 3 nhãn, đồng thuận ngẫu nhiên ~0.33 — ngưỡng cổng phải cao hơn hẳn mức đó, nếu không
+    cổng không lọc được gì (xem selection.py AD-04)."""
+    threshold = config["gate"]["min_mean_label_agreement"]
+    assert isinstance(threshold, float)
+    assert threshold > 1 / 3
+
+
 def test_transforms_reference_real_features(config: Config) -> None:
     known = {*config["features"]["market_columns"], "mean_pairwise_corr_60d"}
     assert set(config["transforms"]) <= known
