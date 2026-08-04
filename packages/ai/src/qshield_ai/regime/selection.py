@@ -23,6 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from itertools import product
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -99,7 +100,7 @@ def run_selection(
     raw_frame: pd.DataFrame,
     *,
     candidates: Mapping[str, Sequence],
-    champion: Mapping[str, object],
+    champion: Mapping[str, Any],
     seeds: Sequence[int],
     n_iter: int,
     min_state_occupancy: float,
