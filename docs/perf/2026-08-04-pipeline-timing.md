@@ -123,9 +123,10 @@ Cần một `run_id` chung cho cả pipeline: hoặc orchestrator sinh rồi tru
 `--run-id`, hoặc "dùng lại run mới nhất nếu không chỉ định". Đây là quyết định của `contracts`
 (Đỗ Ngọc Tân) vì `ArtifactPaths` sở hữu ngữ nghĩa `run_id`.
 
-## 7. `--mock` ghi đè artifact thật, không có dấu vết
+## 7. `--mock` ghi đè artifact thật, không có dấu vết — ĐÃ SỬA
 
-Phát hiện trong lúc đo, **nghiêm trọng nhất trong báo cáo này**.
+Phát hiện trong lúc đo, **nghiêm trọng nhất trong báo cáo này**. Đã sửa trong commit tiếp theo
+trên nhánh này; phần mô tả dưới đây giữ nguyên để ghi lại sự cố.
 
 `--mock` và run thật ghi vào **cùng** `artifacts/dev/`, và **không** artifact nào ghi lại rằng đầu
 vào là dữ liệu giả. Chuỗi thực tế đã xảy ra khi chạy battery đo:
@@ -139,11 +140,26 @@ vào là dữ liệu giả. Chuỗi thực tế đã xảy ra khi chạy battery
 nhất cho thấy đó là fixture, và phải biết trước con số thật (2.571 dòng, 2016-04-04 → 2026-07-30)
 mới nhận ra. `run_mode` chỉ ghi `NON_BASELINE_RUN`, không phân biệt mock/thật.
 
-Đây đúng loại lỗi "im lặng ra số sai" mà quy tắc 13 và cơ chế provenance sinh ra để chặn. Đề xuất:
-thêm khóa `input_source: mock | real` vào `regime_summary.json` và `scenario_manifest.json`, và
-chặng sau **từ chối** đọc artifact `mock` khi bản thân đang chạy thật (trừ khi `--force`).
+Đây đúng loại lỗi "im lặng ra số sai" mà quy tắc 13 và cơ chế provenance sinh ra để chặn.
 
-Chủ sở hữu: `packages/ai` (Nguyễn Anh Tú) — có thể sửa trong package, không cần đổi contracts.
+### Cách sửa đã áp dụng
+
+1. `regime_summary.json` mang khóa mới `input_source: "mock" | "real"`. Tham số của
+   `build_regime_summary` là **keyword bắt buộc, không có mặc định** — một mặc định `"real"` sẽ
+   khiến đúng lỗi này quay lại ngay khi ai đó quên truyền.
+2. `scenarios` đọc sidecar đó **trước** khi đọc bất kỳ dữ liệu nào và **từ chối** khi nguồn lệch
+   với nguồn của chính nó, theo **cả hai chiều**. `--force` vẫn cho qua nhưng ghi cảnh báo.
+3. Artifact không có khóa (do bản CLI cũ ghi) tính là `"unknown"` và **cũng bị từ chối** —
+   fail-closed. Giả định lạc quan "không ghi gì nghĩa là dữ liệu thật" chính là thứ tạo ra sự cố.
+4. `scenario_manifest.json` ghi **hai** trường tách nhau: `input_source` (của run scenarios) và
+   `regime_input_source` (của nhãn regime đã tiêu thụ). Gộp một trường sẽ giấu mất đúng trường
+   hợp `--force` cần điều tra.
+
+5 test mới. Đã chứng minh test thật sự phân biệt được: tắt guard ⇒ 3/3 test guard đỏ.
+
+**Ảnh hưởng tới cả nhóm:** mọi `artifacts/dev/regime/` sinh trước thay đổi này đều thiếu dấu vết
+nên sẽ bị chặn ở lần chạy `scenarios` kế tiếp. Cách khắc phục nằm ngay trong thông báo lỗi: chạy
+lại `qshield-ai regime`.
 
 ## 8. Toàn bộ `qshield-data` crash khi stdout không phải UTF-8
 
