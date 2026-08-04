@@ -123,7 +123,8 @@ def test_scenarios_command_writes_all_artifacts(tmp_path: Path, prepared: Path) 
 
 
 def test_cube_has_the_contracted_keys_and_shape(tmp_path: Path, prepared: Path) -> None:
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
     with np.load(
         _scenario_dir(tmp_path) / "stress_scenarios.npz", allow_pickle=False
     ) as data:
@@ -137,7 +138,8 @@ def test_cube_has_the_contracted_keys_and_shape(tmp_path: Path, prepared: Path) 
 
 
 def test_manifest_records_provenance(tmp_path: Path, prepared: Path) -> None:
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
     manifest = json.loads(
         (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
     )
@@ -155,7 +157,8 @@ def test_manifest_records_provenance(tmp_path: Path, prepared: Path) -> None:
 def test_validation_csv_covers_every_generated_regime(
     tmp_path: Path, prepared: Path
 ) -> None:
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
     report = pd.read_csv(_scenario_dir(tmp_path) / "scenario_validation.csv")
     assert {"target_regime", "metric", "verdict"} <= set(report.columns)
     assert report["target_regime"].nunique() >= 1
@@ -166,7 +169,8 @@ def test_by_regime_cubes_are_written_for_evidence(
     tmp_path: Path, prepared: Path
 ) -> None:
     """AD-12: cần >= 2 regime để so sánh stress với normal (AC-SCN-009)."""
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
     with np.load(
         _scenario_dir(tmp_path) / "scenarios_by_regime.npz", allow_pickle=False
     ) as data:
@@ -178,10 +182,16 @@ def test_by_regime_cubes_are_written_for_evidence(
 
 
 def test_rerun_reproduces_the_cube(tmp_path: Path, prepared: Path) -> None:
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    first_result = runner.invoke(
+        app, ["scenarios", "--config", str(prepared), "--mock"]
+    )
+    assert first_result.exit_code == 0, first_result.output
     with np.load(_scenario_dir(tmp_path) / "stress_scenarios.npz") as data:
         first = data["scenarios"].copy()
-    runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    second_result = runner.invoke(
+        app, ["scenarios", "--config", str(prepared), "--mock"]
+    )
+    assert second_result.exit_code == 0, second_result.output
     with np.load(_scenario_dir(tmp_path) / "stress_scenarios.npz") as data:
         second = data["scenarios"].copy()
     np.testing.assert_array_equal(first, second)
@@ -222,7 +232,10 @@ def test_force_writes_the_cube_despite_a_failed_gate(tmp_path: Path) -> None:
             "thresholds": _IMPOSSIBLE_THRESHOLDS,
         },
     )
-    runner.invoke(app, ["regime", "--config", str(config_path), "--mock"])
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
     result = runner.invoke(
         app, ["scenarios", "--config", str(config_path), "--mock", "--force"]
     )
@@ -257,15 +270,69 @@ def test_scenarios_refuses_rule_based_fallback_without_force(tmp_path: Path) -> 
 
     result = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
     assert result.exit_code != 0
+    # Không chỉ "có lỗi nào đó" — thông điệp phải thật sự nói lý do PR-REG-015 và lối thoát
+    # `--force`, nếu không assert này thỏa mãn với bất kỳ crash không liên quan nào.
+    assert "--force" in result.output
     assert not (_scenario_dir(tmp_path) / "stress_scenarios.npz").exists()
 
 
+def test_gate_fail_removes_a_previously_passed_cube(tmp_path: Path) -> None:
+    """Ghost-artifact regression for the `scenarios` command, mirroring the fix already applied to
+    `regime` two functions above in `cli.py`. `dev` mode writes to a fixed path and `paths.ensure()`
+    is `mkdir -p` only, so a stale `stress_scenarios.npz` from a PASSing run survives untouched
+    unless the FAIL path explicitly deletes it — leaving a cube on disk that contradicts the
+    freshly rewritten `scenario_manifest.json`/`scenario_validation.csv` beside it, and that Risk
+    would read as if it had passed today's gate. A fresh `tmp_path` per test cannot catch this —
+    reusing one directory across two runs is the entire point.
+    """
+    config_path = _write_config(tmp_path)
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
+
+    passing = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+    assert passing.exit_code == 0, passing.output
+    cube_path = _scenario_dir(tmp_path) / "stress_scenarios.npz"
+    assert cube_path.exists()
+
+    failing_config = _write_config(
+        tmp_path,
+        validation={
+            "reference": "regime_matched_forward_windows",
+            "min_reference_windows": 30,
+            "thresholds": _IMPOSSIBLE_THRESHOLDS,
+        },
+    )
+    failing = runner.invoke(
+        app, ["scenarios", "--config", str(failing_config), "--mock"]
+    )
+    assert failing.exit_code != 0
+
+    assert not cube_path.exists(), (
+        "cube from the earlier PASS must not survive a later FAIL"
+    )
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["gate_status"] == "FAIL"
+
+
 def test_force_allows_rule_based_fallback_regime(tmp_path: Path) -> None:
-    """Chiều ngược lại của test trên: `--force` cho phép chạy scenarios trên fallback rule-based."""
+    """Chiều ngược lại của test trên: `--force` cho phép chạy scenarios trên fallback rule-based.
+
+    Bypass đang được kiểm ở đây là *nguồn regime* (rule-based, không posterior), KHÔNG phải
+    distribution/structural gate — với ngưỡng mặc định (vô hại) của config test, cube này thực sự
+    PASS cổng chất lượng. Assert rõ `gate_status` để không lẫn với test PASS cổng bằng --force ở
+    `test_force_writes_the_cube_despite_a_failed_gate` (ngưỡng bất khả thi, gate_status="FAIL").
+    """
     config_path = _write_config(
         tmp_path, gate={"min_state_occupancy": 0.99, "min_mean_label_agreement": 0.60}
     )
-    runner.invoke(app, ["regime", "--config", str(config_path), "--mock"])
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code != 0, regime_result.output
     assert (_regime_dir(tmp_path) / "regime_daily_rule_based.parquet").exists()
 
     result = runner.invoke(
@@ -276,5 +343,9 @@ def test_force_allows_rule_based_fallback_regime(tmp_path: Path) -> None:
     manifest = json.loads(
         (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
     )
+    assert manifest["gate_status"] == "PASS"
     assert manifest["forced"] is True
     assert manifest["regime_source"] == "rule_based_fallback"
+    # Fix: nhãn fallback không có posterior HMM — manifest không được tuyên bố lọc theo posterior.
+    assert manifest["conditioning_method"] != "hard_filtered_label"
+    assert manifest["conditioning_method"] == "rule_based_threshold_label"

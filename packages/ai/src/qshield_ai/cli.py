@@ -362,6 +362,11 @@ def scenarios(
     validate_or_raise(
         returns, ReturnsSchema, context="qshield_ai.scenarios:input.returns"
     )
+    validate_or_raise(
+        market,
+        MarketFeaturesSchema,
+        context="qshield_ai.scenarios:input.market_features",
+    )
     tickers = _tickers(cfg)
     # Lịch phiên VN-Index thật (market_features), KHÔNG suy từ union ngày trong returns: một mã
     # thiếu phiên do returns không được phép làm "khoảng trống" biến mất khỏi lịch — nếu vậy luật
@@ -466,6 +471,16 @@ def scenarios(
     by_regime_arrays: dict[str, Any] = {"ticker_order": np.array(tickers), **cubes}
     np.savez_compressed(stage_dir / "scenarios_by_regime.npz", **by_regime_arrays)
 
+    # Fallback rule-based (regime_source == "rule_based_fallback") không có posterior HMM để lọc —
+    # "hard_filtered_label" chỉ đúng cho nhãn Viterbi/filtered của champion. Gán cứng một chuỗi cho
+    # cả hai nhánh khiến manifest tự mâu thuẫn: vừa nói "lọc theo posterior" vừa nói "nguồn fallback"
+    # trong cùng một file. Suy ra chuỗi từ `regime_source` để hai trường không bao giờ lệch nhau.
+    conditioning_method = (
+        "rule_based_threshold_label"
+        if regime_source == "rule_based_fallback"
+        else "hard_filtered_label"
+    )
+
     manifest: dict[str, Any] = {
         "run_mode": RUN_MODE_NON_BASELINE,
         "run_id": context.run_id,
@@ -485,7 +500,7 @@ def scenarios(
         "horizon_days": horizon_days,
         "block_length": block_length,
         "seed": base_seed,
-        "conditioning_method": "hard_filtered_label",
+        "conditioning_method": conditioning_method,
         "data_version": str(cfg["data"]["data_version"]),
         "feature_version": str(cfg["feature_contract_version"]),
         "primary": metadata_by_regime[target_regime],
@@ -514,6 +529,12 @@ def scenarios(
     )
 
     if status == SCENARIO_GATE_FAIL and not force:
+        # `dev` mode ghi vào đường dẫn cố định (paths.ensure() chỉ mkdir -p, không dọn file cũ).
+        # Run trước có thể đã PASS cổng và để lại `stress_scenarios.npz` ở đây — nếu không xóa,
+        # manifest/validation.csv bên cạnh nó đã được ghi lại nói "FAIL" hôm nay, nhưng cube vẫn
+        # là của run cũ đã PASS, và Risk phía sau đọc phải cube chưa từng qua kiểm định của run
+        # này. Xóa TRƯỚC khi exit để cube không bao giờ mâu thuẫn với artifact bên cạnh nó.
+        (stage_dir / "stress_scenarios.npz").unlink(missing_ok=True)
         print(
             f"[scenarios] GATE FAIL — cube KHÔNG được ghi. "
             f"Xem {stage_dir / 'scenario_validation.csv'}. Dùng --force để ghi có chủ ý."
