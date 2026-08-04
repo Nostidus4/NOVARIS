@@ -9,6 +9,11 @@ AD-04: champion = seed có mức đồng thuận nhãn trung bình cao nhất v�
 (medoid — nghiệm "điển hình" nhất, không phải nghiệm may nhất). Hòa thì val log-likelihood cao hơn
 thắng, rồi đến seed nhỏ hơn. Đồng thuận đo trên train+validation, KHÔNG dùng test.
 
+Cổng còn chặn theo `min_mean_label_agreement` (config `gate`): đồng thuận trung bình của chính
+champion phải đạt ngưỡng đó, nếu không cổng đóng (`GATE_FAILED`) dù đã xác định được medoid — một
+medoid không đồng thuận với các seed khác không phải bằng chứng fit ổn định. Chỉ 1 seed hợp lệ thì
+đồng thuận trung bình là NaN và luôn trượt ngưỡng — cố ý, vì không có gì để so sánh chéo.
+
 `log_likelihood_validation` tính bằng `model.score` trên đoạn validation như một chuỗi độc lập —
 đây là chỉ số so sánh giữa các candidate, không phải likelihood có điều kiện theo train.
 """
@@ -98,6 +103,7 @@ def run_selection(
     seeds: Sequence[int],
     n_iter: int,
     min_state_occupancy: float,
+    min_mean_label_agreement: float,
     feature_columns: Mapping[str, str],
 ) -> SelectionOutcome:
     """Fit toàn lưới, báo cáo tất cả, chọn champion trong họ đã ghim."""
@@ -216,23 +222,33 @@ def run_selection(
         )
 
     mean_agreement = {
+        # 1 seed hợp lệ ⇒ zero cặp để so — KHÔNG phải bằng chứng đồng thuận hoàn hảo (1.0).
+        # Cùng nguyên tắc đã áp dụng cho hàng ngoài họ champion: chưa từng chấm thì phải là NaN.
         seed: float(agreement.loc[seed].drop(index=seed).mean())
         if len(agreement) > 1
-        else 1.0
+        else float("nan")
         for seed in eligible
     }
 
     def _ranking_key(seed: int) -> tuple[float, float, int]:
-        """NaN val-log-likelihood phải xếp CUỐI, nếu không tie-break theo seed không chạy được."""
+        """NaN (mean_agreement lẫn val-log-likelihood) phải xếp CUỐI bằng sentinel hữu hạn trong
+        khóa sắp xếp — cột report vẫn giữ NaN nguyên vẹn, sentinel chỉ sống trong hàm này. Nếu
+        không, tie-break theo seed không chạy được (so sánh với NaN luôn False).
+
+        Với đúng 1 seed hợp lệ, `min` trên tập một phần tử không bao giờ so sánh nên sentinel này
+        không đổi kết quả — vẫn viết đúng vì phòng thủ, không phải vì cần thiết ở đây.
+        """
+        agreement_score = mean_agreement[seed]
         validation = eligible[seed][0].log_likelihood_validation
         return (
-            -mean_agreement[seed],
+            -agreement_score if np.isfinite(agreement_score) else float("inf"),
             -validation if np.isfinite(validation) else float("inf"),
             seed,
         )
 
     best_seed = min(eligible, key=_ranking_key)
     fit, _, label_map, profiles = eligible[best_seed]
+    champion_agreement = mean_agreement[best_seed]
 
     champion_family_rows = (report["n_states"] == champion_states) & (
         report["covariance_type"] == champion_covariance
@@ -246,6 +262,18 @@ def run_selection(
         & (report["covariance_type"] == champion_covariance),
         "is_champion",
     ] = True
+
+    # `not (x >= threshold)` thay vì `x < threshold`: NaN so sánh nào cũng False, nên `x < t` để
+    # NaN lọt qua cổng. `not (x >= t)` bắt NaN đóng cổng đúng như champion 1-seed cần.
+    if not (champion_agreement >= min_mean_label_agreement):
+        reason = (
+            f"Đồng thuận nhãn của champion (seed {best_seed}) là {champion_agreement:.4g}, "
+            f"dưới ngưỡng min_mean_label_agreement={min_mean_label_agreement}. "
+            f"Chỉ có {len(eligible)} seed hợp lệ để so sánh."
+        )
+        return SelectionOutcome(
+            None, None, None, report, agreement, GATE_FAILED, [reason]
+        )
 
     return SelectionOutcome(fit, label_map, profiles, report, agreement, GATE_OK, [])
 
