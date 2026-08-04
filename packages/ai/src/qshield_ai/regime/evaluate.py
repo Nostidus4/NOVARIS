@@ -5,7 +5,8 @@ Toàn bộ hàm ở đây nhận CHUỖI NHÃN (đã gán theo thống kê), kh�
 sánh được giữa các seed và đọc được trên slide.
 
 Quy ước: một nhãn không xuất hiện có `duration = 0` và hàng chuyển toàn 0 (không phải NaN) để
-`metrics.json` luôn tuần tự hóa được.
+`metrics.json` luôn tuần tự hóa được. `mean_durations` không kiểm duyệt (censor) run ở hai đầu
+chuỗi — xem docstring của hàm đó.
 """
 
 from __future__ import annotations
@@ -24,15 +25,34 @@ def _as_array(labels: Sequence[str]) -> np.ndarray:
     return array
 
 
+def _validate_labels_within_order(
+    labels: np.ndarray, order: Sequence[str], caller: str
+) -> None:
+    """Nhãn lạ phải nổ ngay tại biên, không được im lặng biến mất khỏi occupancy."""
+    unknown = sorted(set(map(str, labels)) - {str(name) for name in order})
+    if unknown:
+        raise ValueError(
+            f"{caller}: nhãn {unknown} không có trong order={list(order)} — "
+            f"kiểm tra label_map ở regime/labeling.py."
+        )
+
+
 def occupancy(labels: Sequence[str], *, order: Sequence[str]) -> dict[str, float]:
     """Tỷ lệ ngày ở mỗi trạng thái."""
     array = _as_array(labels)
+    _validate_labels_within_order(array, order, "occupancy")
     return {label: float(np.mean(array == label)) for label in order}
 
 
 def mean_durations(labels: Sequence[str], *, order: Sequence[str]) -> dict[str, float]:
-    """Độ dài trung bình một lượt ở mỗi trạng thái (số phiên liên tiếp trước khi đổi)."""
+    """Độ dài trung bình một lượt ở mỗi trạng thái (số phiên liên tiếp trước khi đổi).
+
+    Quy ước biên: một run đang MỞ ở cuối chuỗi, và một run BẮT ĐẦU ngay tại index 0, đều được
+    tính là run hoàn chỉnh. Không kiểm duyệt (censor) hai đầu. Với chuỗi ngắn, quy ước này kéo
+    trung bình xuống so với cách kiểm duyệt, vì run cụt vẫn được đếm đủ.
+    """
     array = _as_array(labels)
+    _validate_labels_within_order(array, order, "mean_durations")
     runs: dict[str, list[int]] = {label: [] for label in order}
     current, length = array[0], 1
     for value in array[1:]:
@@ -51,6 +71,7 @@ def mean_durations(labels: Sequence[str], *, order: Sequence[str]) -> dict[str, 
 def transition_matrix(labels: Sequence[str], *, order: Sequence[str]) -> pd.DataFrame:
     """Ma trận chuyển thực nghiệm, chuẩn hóa theo hàng. Trạng thái không xuất hiện ⇒ hàng 0."""
     array = _as_array(labels)
+    _validate_labels_within_order(array, order, "transition_matrix")
     index = {label: position for position, label in enumerate(order)}
     counts = np.zeros((len(order), len(order)), dtype=float)
     for source, target in pairwise(array):

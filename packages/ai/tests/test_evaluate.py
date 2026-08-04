@@ -77,3 +77,71 @@ def test_stability_summary_handles_single_seed() -> None:
 def test_empty_labels_are_rejected() -> None:
     with pytest.raises(ValueError, match="rỗng"):
         occupancy([], order=ORDER)
+
+
+def test_single_element_sequence_matches_hand_calculation() -> None:
+    """Một phần tử ["normal"]: occupancy normal=1.0, còn lại 0.0.
+
+    Một run duy nhất dài 1 ⇒ mean duration normal=1.0. Không có cặp liền kề nào (pairwise của
+    chuỗi 1 phần tử rỗng) ⇒ mọi hàng của transition matrix đều toàn 0.
+    """
+    labels = ["normal"]
+
+    occ = occupancy(labels, order=ORDER)
+    assert occ["normal"] == pytest.approx(1.0)
+    assert occ["volatile"] == pytest.approx(0.0)
+    assert occ["stress"] == pytest.approx(0.0)
+
+    durations = mean_durations(labels, order=ORDER)
+    assert durations["normal"] == pytest.approx(1.0)
+    assert durations["volatile"] == pytest.approx(0.0)
+    assert durations["stress"] == pytest.approx(0.0)
+
+    matrix = transition_matrix(labels, order=ORDER)
+    for label in ORDER:
+        assert matrix.loc[label].sum() == pytest.approx(0.0), (
+            "không cặp liền kề ⇒ hàng 0"
+        )
+
+
+def test_all_one_regime_sequence_matches_hand_calculation() -> None:
+    """["stress"] * 5: occupancy stress=1.0, còn lại 0.0.
+
+    Một run duy nhất dài 5 ⇒ mean duration stress=5.0, còn lại 0.0. 4 cặp liền kề đều
+    stress→stress ⇒ hàng stress có xác suất tự chuyển 1.0, các hàng khác toàn 0.
+    """
+    labels = ["stress"] * 5
+
+    occ = occupancy(labels, order=ORDER)
+    assert occ["stress"] == pytest.approx(1.0)
+    assert occ["normal"] == pytest.approx(0.0)
+    assert occ["volatile"] == pytest.approx(0.0)
+
+    durations = mean_durations(labels, order=ORDER)
+    assert durations["stress"] == pytest.approx(5.0)
+    assert durations["normal"] == pytest.approx(0.0)
+    assert durations["volatile"] == pytest.approx(0.0)
+
+    matrix = transition_matrix(labels, order=ORDER)
+    assert matrix.loc["stress", "stress"] == pytest.approx(1.0)
+    assert matrix.loc["stress", "normal"] == pytest.approx(0.0)
+    assert matrix.loc["stress", "volatile"] == pytest.approx(0.0)
+    for label in ("normal", "volatile"):
+        assert matrix.loc[label].sum() == pytest.approx(0.0), "không xuất hiện ⇒ hàng 0"
+
+
+def test_label_outside_order_raises_value_error_with_context() -> None:
+    """Nhãn "unknown" không có trong ORDER phải nổ ngay, kèm tên hàm và nhãn lạ trong message."""
+    labels_with_unknown = [*LABELS, "unknown"]
+
+    with pytest.raises(ValueError, match="unknown") as occ_err:
+        occupancy(labels_with_unknown, order=ORDER)
+    assert "occupancy" in str(occ_err.value)
+
+    with pytest.raises(ValueError, match="unknown") as dur_err:
+        mean_durations(labels_with_unknown, order=ORDER)
+    assert "mean_durations" in str(dur_err.value)
+
+    with pytest.raises(ValueError, match="unknown") as trans_err:
+        transition_matrix(labels_with_unknown, order=ORDER)
+    assert "transition_matrix" in str(trans_err.value)
