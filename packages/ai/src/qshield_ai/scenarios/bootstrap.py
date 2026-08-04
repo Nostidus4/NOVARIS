@@ -1,4 +1,4 @@
-# Nguyễn Anh Tú - regime-conditioned moving-block bootstrap, block 5 → 20 ngày; lấy nguyên vector 8 tài sản mỗi ngày, không bootstrap độc lập từng mã.
+# Nguyễn Anh Tú - regime-conditioned moving-block bootstrap, block 5 → 20 ngày; lấy nguyên vector N tài sản mỗi ngày, không bootstrap độc lập từng mã.
 """Moving-block bootstrap điều kiện hóa theo regime, generic `(S, H, N)`.
 
 Luật bất di bất dịch: MỘT NGÀY KỊCH BẢN LÀ NGUYÊN VECTOR N TÀI SẢN của một phiên lịch sử. Bootstrap
@@ -45,6 +45,8 @@ class BlockPool:
     eligible_block_count: int
     rejected: dict[str, int]
     anchor_split_counts: dict[str, int]
+    n_dates: int
+    ticker_order: tuple[str, ...]
 
 
 def build_return_panel(
@@ -58,6 +60,18 @@ def build_return_panel(
         raise ValueError(f"returns thiếu ticker {missing} — không dựng được panel.")
 
     index = pd.DatetimeIndex(pd.to_datetime(list(calendar)))
+    if not index.is_monotonic_increasing:
+        raise ValueError(
+            "build_return_panel: calendar phải tăng dần — vị trí trong panel chính là thứ tự "
+            "phiên, nên calendar lộn xộn khiến block 'liền kề' nối các phiên không liền nhau."
+        )
+    if not index.is_unique:
+        duplicated = index[index.duplicated()].unique()
+        raise ValueError(
+            f"build_return_panel: calendar có {len(duplicated)} ngày trùng "
+            f"(đầu tiên {duplicated[0].date()}) — reindex sẽ nhân bản dòng và position_of "
+            f"chỉ giữ vị trí CUỐI."
+        )
     aligned = wide[list(tickers)].reindex(index)
     values = aligned.to_numpy(dtype=float)
     return ReturnPanel(
@@ -149,6 +163,8 @@ def build_block_pool(
         eligible_block_count=len(starts),
         rejected=rejected,
         anchor_split_counts=split_counts,
+        n_dates=len(panel.dates),
+        ticker_order=panel.tickers,
     )
 
 
@@ -162,6 +178,12 @@ def generate_cube(
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """`(cube_simple, cube_log, metadata)` — mỗi kịch bản là `horizon/block` block nối lại."""
+    if pool.n_dates != len(panel.dates) or pool.ticker_order != panel.tickers:
+        raise ValueError(
+            f"generate_cube: pool được dựng từ panel {pool.n_dates} ngày x ticker "
+            f"{pool.ticker_order}, nhưng panel truyền vào có {len(panel.dates)} ngày x ticker "
+            f"{panel.tickers} — pool và panel lệch nhau."
+        )
     if horizon_days % block_length != 0:
         raise ValueError(
             f"horizon_days={horizon_days} phải chia hết cho block_length={block_length}."
