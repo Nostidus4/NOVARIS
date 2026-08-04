@@ -11,6 +11,11 @@ import numpy as np
 
 @dataclass(frozen=True)
 class CostRates:
+    """Approved non-negative cost rates applied to absolute gross sold notional.
+
+    Rates are decimal fractions, not percentages. Production values must come from Config; this
+    class deliberately provides no financial defaults.
+    """
     fee: float
     spread: float
     liquidity_penalty: float
@@ -45,6 +50,7 @@ class CostRates:
 
 @dataclass(frozen=True)
 class CostBreakdown:
+    """Fee, spread and liquidity costs in raw decimal pre-trade NAV units."""
     gross_sales: float
     fee: float
     spread: float
@@ -56,6 +62,7 @@ class CostBreakdown:
 
 
 def transaction_costs(gross_sales: float, rates: CostRates) -> CostBreakdown:
+    """Calculate additive cost components for gross sales measured on pre-trade NAV=1."""
     if not np.isfinite(gross_sales) or gross_sales < 0.0:
         raise ValueError(
             f"[risk.costs] gross_sales must be finite and non-negative, got {gross_sales!r}."
