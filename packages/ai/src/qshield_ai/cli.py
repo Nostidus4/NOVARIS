@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import typer
 from qshield_contracts.config import Config
@@ -26,6 +27,7 @@ from qshield_contracts.schemas.regime import (
     check_probabilities_sum_to_one,
 )
 from qshield_contracts.schemas.returns import ReturnsSchema
+from qshield_contracts.schemas.scenarios import ScenarioMetadata, validate_scenarios
 from qshield_contracts.validate import validate_or_raise
 
 from qshield_ai.baseline.rule_based_regime import rule_based_labels
@@ -39,6 +41,7 @@ from qshield_ai.regime.feature_set import (
 )
 from qshield_ai.regime.output import (
     RUN_MODE_NON_BASELINE,
+    UNRESOLVED_DECISIONS,
     build_regime_daily,
     build_regime_summary,
 )
@@ -47,6 +50,20 @@ from qshield_ai.regime.train import (
     filtered_probabilities,
     smoothed_probabilities,
     viterbi_states,
+)
+from qshield_ai.scenarios.bootstrap import (
+    build_block_pool,
+    build_return_panel,
+    generate_cube,
+    resolve_evaluation_date,
+)
+from qshield_ai.scenarios.validate import GATE_FAIL as SCENARIO_GATE_FAIL
+from qshield_ai.scenarios.validate import (
+    build_validation_report,
+    distribution_metrics,
+    gate_status,
+    reference_windows,
+    structural_violations,
 )
 
 
@@ -86,6 +103,8 @@ _FEATURE_COLUMNS = {
     "correlation_column": CORR_FEATURE,
 }
 _MOCK_DAYS = 900
+# Thứ tự cố định ⇒ mỗi regime nhận một seed lệch xác định, tái lập được giữa các lần chạy.
+_REGIME_ORDER = ("normal", "volatile", "stress")
 
 
 def _resolve_run_id(config: Config) -> str | None:
@@ -265,6 +284,53 @@ def regime(
     print(f"[regime] OK — {len(daily)} dòng → {stage_dir}")
 
 
+def _load_regime_daily(
+    paths: ArtifactPaths, *, force: bool, logger: Any
+) -> tuple[pd.DataFrame, str]:
+    """Đọc `regime_daily.parquet` (champion HMM); nếu cổng HMM đã FAIL thì chỉ còn
+    `regime_daily_rule_based.parquet` — PR-REG-015 chặn chặng scenarios trên nhãn đó trừ khi
+    `--force`. Fallback KHÔNG có `state_id`/`prob_*`/`model_version`/`seed` theo thiết kế
+    (`qshield_ai.baseline.rule_based_regime`), nên không validate được bằng `RegimeDailySchema`
+    — chỉ kiểm tra tối thiểu hai cột `build_block_pool`/`resolve_evaluation_date` thực sự cần.
+
+    Trả về `(regime_daily, source)` với `source` ∈ {"hmm_champion", "rule_based_fallback"} để ghi
+    vào manifest — công cụ downstream cần biết run này có posterior HMM hay không.
+    """
+    champion_path = paths.for_stage(Stage.REGIME, "regime_daily.parquet")
+    fallback_path = paths.for_stage(Stage.REGIME, "regime_daily_rule_based.parquet")
+
+    if champion_path.exists():
+        regime_daily = pd.read_parquet(champion_path)
+        regime_daily = validate_or_raise(
+            regime_daily, RegimeDailySchema, context="qshield_ai.scenarios:input.regime"
+        )
+        return regime_daily, "hmm_champion"
+
+    if fallback_path.exists():
+        if not force:
+            raise typer.BadParameter(
+                f"Chưa có {champion_path} — cổng HMM đã FAIL ở chặng regime, chỉ còn "
+                f"{fallback_path.name} (rule-based, KHÔNG có posterior). PR-REG-015 chặn "
+                "scenarios điều kiện hóa trên nhãn đó. Dùng --force để chạy có chủ ý."
+            )
+        logger.warning(
+            "Dùng regime fallback rule-based (%s) vì --force — nhãn này KHÔNG có posterior HMM.",
+            fallback_path.name,
+        )
+        regime_daily = pd.read_parquet(fallback_path)
+        missing = {"date", "regime"} - set(regime_daily.columns)
+        if missing:
+            raise ValueError(
+                f"{fallback_path} thiếu cột {sorted(missing)} — không đủ để điều kiện hóa."
+            )
+        return regime_daily, "rule_based_fallback"
+
+    raise typer.BadParameter(
+        f"Chưa có {champion_path} lẫn {fallback_path} — chạy `qshield-ai regime` trước "
+        "(PR-REG-015: không có model hợp lệ thì chặn scenario conditioning)."
+    )
+
+
 @app.command()
 def scenarios(
     config: str = typer.Option(
@@ -275,9 +341,207 @@ def scenarios(
         "--mock",
         help="Sinh dữ liệu giả từ qshield_ai.fixtures thay vì đọc nguồn thật",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Ghi cube kể cả khi quality gate FAIL, hoặc chạy trên regime fallback rule-based "
+        "— run vẫn bị đánh dấu NON_BASELINE",
+    ),
 ) -> None:
     """Sinh kịch bản stress bằng regime-conditioned moving-block bootstrap → stress_scenarios."""
-    raise NotImplementedError
+    cfg = Config.load(Path(config))
+    paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
+    context = RunContext(cfg, paths)
+    logger = context.logger("scenarios")
+    paths.ensure(Stage.SCENARIOS)
+    stage_dir = paths.stage_dir(Stage.SCENARIOS)
+
+    regime_daily, regime_source = _load_regime_daily(paths, force=force, logger=logger)
+
+    returns, market = _load_inputs(cfg, mock=mock)
+    validate_or_raise(
+        returns, ReturnsSchema, context="qshield_ai.scenarios:input.returns"
+    )
+    tickers = _tickers(cfg)
+    # Lịch phiên VN-Index thật (market_features), KHÔNG suy từ union ngày trong returns: một mã
+    # thiếu phiên do returns không được phép làm "khoảng trống" biến mất khỏi lịch — nếu vậy luật
+    # "block không thể nối qua khoảng trống" (bootstrap.py) trở thành vô nghĩa với đúng những
+    # ngày cần bắt.
+    calendar = sorted(
+        pd.to_datetime(market.loc[market["split"] != "out_of_scope", "date"]).unique()
+    )
+    panel = build_return_panel(returns, calendar, tickers=tickers)
+
+    evaluation_date = resolve_evaluation_date(
+        regime_daily, panel, configured=cfg.get("evaluation_date")
+    )
+    last_position = list(panel.dates).index(evaluation_date)
+    target_regime = str(
+        regime_daily.loc[
+            pd.to_datetime(regime_daily["date"]) == evaluation_date, "regime"
+        ].iloc[0]
+    )
+    logger.info(
+        "Ngày đánh giá t=%s, regime mục tiêu=%s", evaluation_date.date(), target_regime
+    )
+
+    num_scenarios = int(cfg["num_scenarios"])
+    horizon_days = int(cfg["horizon_days"])
+    block_length = int(cfg["block_length"])
+    thresholds = cfg["validation"]["thresholds"]
+    min_reference_windows = int(cfg["validation"]["min_reference_windows"])
+    base_seed = int(cfg["scenario_seed"])
+
+    cubes: dict[str, np.ndarray] = {}
+    reports: list[pd.DataFrame] = []
+    metadata_by_regime: dict[str, dict[str, Any]] = {}
+    skipped: dict[str, str] = {}
+
+    for offset, regime_name in enumerate(_REGIME_ORDER):
+        pool = build_block_pool(
+            panel,
+            regime_daily,
+            target_regime=regime_name,
+            block_length=block_length,
+            evaluation_date=evaluation_date,
+        )
+        if pool.eligible_block_count == 0:
+            skipped[regime_name] = f"pool rỗng, lý do loại: {pool.rejected}"
+            logger.warning("Bỏ qua regime %s: %s", regime_name, skipped[regime_name])
+            continue
+
+        simple, log_cube, meta = generate_cube(
+            panel,
+            pool,
+            num_scenarios=num_scenarios,
+            horizon_days=horizon_days,
+            block_length=block_length,
+            seed=base_seed + offset,
+        )
+        reference = reference_windows(
+            panel, pool, horizon_days=horizon_days, last_position=last_position
+        )
+        if reference.size == 0:
+            skipped[regime_name] = "không có cửa sổ tham chiếu để kiểm định"
+            logger.warning("Bỏ qua regime %s: %s", regime_name, skipped[regime_name])
+            continue
+
+        cubes[regime_name] = simple
+        cubes[f"{regime_name}_log"] = log_cube
+        metadata_by_regime[regime_name] = meta
+        reports.append(
+            build_validation_report(
+                log_cube,
+                reference,
+                thresholds=thresholds,
+                target_regime=regime_name,
+                min_reference_windows=min_reference_windows,
+            )
+        )
+
+    if target_regime not in metadata_by_regime:
+        raise typer.BadParameter(
+            f"Không sinh được cube cho regime mục tiêu {target_regime!r}: "
+            f"{skipped.get(target_regime, 'lý do không xác định')}"
+        )
+
+    report = pd.concat(reports, ignore_index=True)
+    report.to_csv(stage_dir / "scenario_validation.csv", index=False)
+
+    primary_simple = cubes[target_regime]
+    primary_log = cubes[f"{target_regime}_log"]
+    structural = structural_violations(
+        primary_simple,
+        expected_shape=(num_scenarios, horizon_days, len(tickers)),
+        tickers=tickers,
+    )
+    distribution_gate = gate_status(
+        report.loc[report["target_regime"] == target_regime]
+    )
+    status = SCENARIO_GATE_FAIL if structural else distribution_gate
+
+    # `dict[str, Any]` (không phải `dict[str, np.ndarray]`) trước khi splat: numpy-stubs khớp sai
+    # overload của `savez_compressed(file, *args, allow_pickle=..., **kwds)` khi `**kwds` mang kiểu
+    # `ndarray` cụ thể, báo "expected bool" — false positive đã xác minh, không phải lỗi thật.
+    by_regime_arrays: dict[str, Any] = {"ticker_order": np.array(tickers), **cubes}
+    np.savez_compressed(stage_dir / "scenarios_by_regime.npz", **by_regime_arrays)
+
+    manifest: dict[str, Any] = {
+        "run_mode": RUN_MODE_NON_BASELINE,
+        "run_id": context.run_id,
+        "gate_status": status,
+        "forced": bool(force),
+        "regime_source": regime_source,
+        "structural_violations": structural,
+        "evaluation_date": str(evaluation_date.date()),
+        "target_regime": target_regime,
+        "return_type": "simple",
+        "return_type_note": (
+            "scenarios = simple daily returns; scenarios_log = log daily returns; "
+            "simple = expm1(log). R^(H) mỗi tài sản = prod(1+r) - 1 trên 20 ngày."
+        ),
+        "ticker_order": list(tickers),
+        "num_scenarios": num_scenarios,
+        "horizon_days": horizon_days,
+        "block_length": block_length,
+        "seed": base_seed,
+        "conditioning_method": "hard_filtered_label",
+        "data_version": str(cfg["data"]["data_version"]),
+        "feature_version": str(cfg["feature_contract_version"]),
+        "primary": metadata_by_regime[target_regime],
+        "by_regime": metadata_by_regime,
+        "skipped_regimes": skipped,
+        "validation_reference": str(cfg["validation"]["reference"]),
+        "unresolved_decisions": list(UNRESOLVED_DECISIONS),
+    }
+    _write_json(stage_dir / "scenario_manifest.json", manifest)
+
+    context.write_config_snapshot()
+    context.write_data_version(str(cfg["data"]["data_version"]))
+    context.write_metrics(
+        {
+            "stage": "scenarios",
+            "gate_status": status,
+            "forced": bool(force),
+            "regime_source": regime_source,
+            "target_regime": target_regime,
+            "evaluation_date": str(evaluation_date.date()),
+            "eligible_block_count": metadata_by_regime[target_regime][
+                "eligible_block_count"
+            ],
+            "reuse_rate": metadata_by_regime[target_regime]["reuse_rate"],
+        }
+    )
+
+    if status == SCENARIO_GATE_FAIL and not force:
+        print(
+            f"[scenarios] GATE FAIL — cube KHÔNG được ghi. "
+            f"Xem {stage_dir / 'scenario_validation.csv'}. Dùng --force để ghi có chủ ý."
+        )
+        raise typer.Exit(code=1)
+
+    validate_scenarios(
+        primary_simple,
+        ScenarioMetadata(
+            seed=base_seed,
+            regime_conditioned_on=target_regime,
+            block_length=block_length,
+            num_scenarios=num_scenarios,
+            horizon_days=horizon_days,
+            n_assets=len(tickers),
+            validation=distribution_metrics(primary_log),
+        ),
+    )
+    np.savez_compressed(
+        stage_dir / "stress_scenarios.npz",
+        scenarios=primary_simple,
+        scenarios_log=primary_log,
+        ticker_order=np.array(tickers),
+    )
+    print(
+        f"[scenarios] {status} — cube {primary_simple.shape} regime={target_regime} "
+        f"t={evaluation_date.date()} → {stage_dir}"
+    )
 
 
 if __name__ == "__main__":
