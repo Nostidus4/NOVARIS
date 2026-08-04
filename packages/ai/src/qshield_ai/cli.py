@@ -63,11 +63,21 @@ def _tolerate_legacy_console_encoding() -> None:
             stream.reconfigure(errors="replace")
 
 
-_tolerate_legacy_console_encoding()
-
 app = typer.Typer(
     help="Q-SHIELD AI CLI: market regime detection & scenario generation."
 )
+
+
+@app.callback()
+def _main() -> None:
+    """Chạy trước mọi subcommand — chỉ khi gọi qua CLI, không khi `import qshield_ai.cli`.
+
+    Mutating `sys.stdout`/`sys.stderr` là side effect toàn tiến trình; đặt ở đây thay vì module
+    level để một orchestrator (vd. `qshield_pipeline`) import module này mà không tự nhiên bị đổi
+    encoding console của nó.
+    """
+    _tolerate_legacy_console_encoding()
+
 
 _FEATURE_COLUMNS = {
     "return_column": "market_log_return",
@@ -185,10 +195,18 @@ def regime(
             feature_version=str(cfg["feature_contract_version"]),
             run_mode=RUN_MODE_NON_BASELINE,
         )
-        validated = validate_or_raise(
+        # `validate_or_raise` có `coerce=True` (RegimeDailySchema) nên frame trả về có thể lệch
+        # dtype so với `daily` gốc — ghi frame ĐÃ validate, không phải bản trước khi coerce, để
+        # dtype drift trong tương lai được sửa thay vì âm thầm trôi ra artifact.
+        daily = validate_or_raise(
             daily, RegimeDailySchema, context="qshield_ai.regime:output"
         )
-        check_probabilities_sum_to_one(validated)
+        check_probabilities_sum_to_one(daily)
+        # `dev` mode ghi vào đường dẫn cố định (paths.ensure() chỉ mkdir -p, không dọn file cũ).
+        # Run trước có thể đã fail cổng và để lại fallback rule-based ở đây — nếu không xóa,
+        # downstream (packages/risk, backend) vẫn thấy cả hai file cùng lúc, nhập nhằng file nào
+        # là champion hiện hành. Xóa TRƯỚC khi ghi validated để hai nhánh luôn loại trừ nhau.
+        (stage_dir / "regime_daily_rule_based.parquet").unlink(missing_ok=True)
         daily.to_parquet(stage_dir / "regime_daily.parquet", index=False)
         logger.info(
             "Champion seed=%s, %d dòng regime đã ghi.",
@@ -203,6 +221,10 @@ def regime(
             vol_quantile=float(cfg["fallback"]["vol_quantile"]),
             drawdown_threshold=float(cfg["fallback"]["drawdown_threshold"]),
         )
+        # Đối xứng với nhánh OK: run trước có thể đã qua cổng và để lại champion thật ở đây.
+        # Không xóa thì `regime_daily.parquet` của run FAIL hôm nay là artifact "ma" của một
+        # run cũ đã pass cổng — đúng cái outcome fallback này phải ngăn (xem docstring module).
+        (stage_dir / "regime_daily.parquet").unlink(missing_ok=True)
         fallback.to_parquet(stage_dir / "regime_daily_rule_based.parquet", index=False)
         logger.warning("Cổng HMM FAIL: %s", "; ".join(outcome.gate_reasons))
 
@@ -231,7 +253,15 @@ def regime(
     if outcome.gate_status != GATE_OK:
         print(f"[regime] GATE FAIL: {'; '.join(outcome.gate_reasons)}")
         raise typer.Exit(code=1)
-    assert daily is not None, "gate_status == GATE_OK phải đi kèm daily đã dựng."
+    if daily is None:
+        # Bất biến của SelectionOutcome: champion is None ⇔ gate_status == GATE_FAILED
+        # (packages/ai/src/qshield_ai/regime/selection.py). Đã loại nhánh GATE_FAILED ở trên,
+        # nên tới đây `daily` luôn được build_regime_daily() dựng — None chỉ có thể là bug
+        # phá vỡ bất biến đó, không phải trạng thái vận hành bình thường.
+        raise RuntimeError(
+            "Bất biến vỡ: gate_status == GATE_OK nhưng daily vẫn None — "
+            "kiểm tra SelectionOutcome/run_selection."
+        )
     print(f"[regime] OK — {len(daily)} dòng → {stage_dir}")
 
 
