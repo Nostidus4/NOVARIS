@@ -14,6 +14,12 @@ def validate_scenario_cube(
     expected_horizon: int | None = None,
     expected_assets: int | None = None,
 ) -> FloatArray:
+    """Validate and return a simple-return cube in ``(scenario, horizon, asset)`` order.
+
+    ``expected_horizon`` and ``expected_assets`` enforce the locked Risk boundary when supplied.
+    A simple return equal to or below ``-1`` is rejected because cumulative wealth would become
+    non-positive and no longer represent the long-only cash-transfer action model.
+    """
     cube = np.asarray(scenarios, dtype=float)
     if cube.ndim != 3 or 0 in cube.shape:
         raise ValueError(
@@ -40,7 +46,7 @@ def validate_scenario_cube(
 
 
 def asset_growth_paths(scenarios: npt.ArrayLike) -> FloatArray:
-    """Compound simple returns independently for each scenario and asset."""
+    """Compound simple daily returns as ``cumprod(1 + r)`` for each asset path."""
     cube = validate_scenario_cube(scenarios)
     return np.asarray(np.cumprod(1.0 + cube, axis=1), dtype=np.float64)
 
@@ -50,7 +56,12 @@ def portfolio_wealth_paths(
     stock_amounts: npt.ArrayLike,
     cash_amount: float,
 ) -> FloatArray:
-    """Mark a one-time-rebalanced portfolio through the horizon without daily rebalancing."""
+    """Mark a one-time-rebalanced portfolio without daily rebalancing.
+
+    ``stock_amounts`` and ``cash_amount`` are actual decimal-NAV amounts after the hedge, not
+    normalized post-cost weights. Cash has zero return in Risk v1. The result has shape
+    ``(scenario, horizon)`` and remains measured against pre-trade NAV=1.
+    """
     cube = validate_scenario_cube(scenarios)
     stocks = np.asarray(stock_amounts, dtype=float)
     if stocks.ndim != 1 or stocks.shape[0] != cube.shape[2]:
