@@ -11,6 +11,7 @@ from qshield_ai.regime.feature_set import (
 from qshield_ai.regime.train import (
     aic_bic,
     count_parameters,
+    emission_log_prob,
     filtered_probabilities,
     fit_hmm,
     smoothed_probabilities,
@@ -101,7 +102,10 @@ def test_filtered_differs_from_smoothed_mid_series(fitted) -> None:
     model, matrix = fitted
     filtered = filtered_probabilities(model, matrix)
     smoothed = smoothed_probabilities(model, matrix)
-    assert np.abs(filtered - smoothed).max() > 0.05
+    # Cắt hai đầu: tại t=0 hai phân phối luôn lệch mạnh, tại t=T-1 chúng luôn trùng khớp.
+    # Chỉ phần GIỮA mới là bằng chứng recursion chạy tiến thật, đúng như tên test.
+    interior = slice(10, -10)
+    assert np.abs(filtered[interior] - smoothed[interior]).max() > 0.05
 
 
 def test_forward_recursion_reproduces_model_log_likelihood(fitted) -> None:
@@ -119,3 +123,33 @@ def test_viterbi_returns_valid_state_ids(fitted) -> None:
     states = viterbi_states(model, matrix)
     assert states.shape == (len(matrix),)
     assert set(np.unique(states)) <= {0, 1, 2}
+
+
+def test_emission_log_prob_rejects_nan_and_names_location(fitted) -> None:
+    """Một NaN duy nhất phải chặn ngay tại emission_log_prob, và lỗi phải chỉ đúng vị trí."""
+    model, matrix = fitted
+    bad = matrix[:6].copy()
+    bad[3, 2] = np.nan
+    with pytest.raises(ValueError, match=r"hàng=3, cột=2"):
+        emission_log_prob(model, bad)
+
+
+def test_emission_log_prob_rejects_wrong_width(fitted) -> None:
+    model, matrix = fitted
+    with pytest.raises(ValueError, match="shape"):
+        emission_log_prob(model, matrix[:, :3])
+
+
+def test_emission_log_prob_rejects_empty(fitted) -> None:
+    model, matrix = fitted
+    with pytest.raises(ValueError, match="rỗng"):
+        emission_log_prob(model, matrix[:0])
+
+
+def test_filtered_probabilities_rejects_non_finite_input(fitted) -> None:
+    """Chốt chặn ở emission_log_prob phải bảo vệ luôn đường downstream filtered_probabilities."""
+    model, matrix = fitted
+    bad = matrix[:6].copy()
+    bad[3, 2] = np.nan
+    with pytest.raises(ValueError, match="không hữu hạn"):
+        filtered_probabilities(model, bad)
