@@ -204,6 +204,16 @@ def test_skew_and_kurtosis_hand_computed_on_symmetric_array() -> None:
 # --- Verdict failure paths for metric families beyond std_ratio ------------------------------
 
 
+def test_quantiles_hand_computed_on_evenly_spaced_array() -> None:
+    """Cube toàn bộ chỉ chứa 0..20 (21 phần tử, cách đều). numpy.quantile phương pháp mặc định
+    'linear' tại phân vị p trên mảng đã sắp xếp dùng vị trí p*(n-1): 0.05*20=1.0 (đúng chỉ số,
+    không cần nội suy) ⇒ q05=1.0; 0.95*20=19.0 ⇒ q95=19.0."""
+    cube = np.arange(21, dtype=float).reshape(21, 1, 1)
+    metrics = distribution_metrics(cube)
+    assert metrics["q05"] == pytest.approx(1.0)
+    assert metrics["q95"] == pytest.approx(19.0)
+
+
 def test_shifted_mean_fails_the_mean_abs_diff_metric() -> None:
     """Scenario dịch mean thêm 0.01 so với reference (ngưỡng mean_abs_diff_max=0.0010) ⇒ FAIL."""
     rng = np.random.default_rng(3)
