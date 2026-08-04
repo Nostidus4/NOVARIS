@@ -330,7 +330,75 @@ def test_generate_cube_rejects_pool_built_from_a_different_panel() -> None:
         evaluation_date=calendar_a[-1],
     )
     panel_b, _, _ = _setup(n_days=300, seed=9)
-    with pytest.raises(ValueError, match="lệch nhau"):
+    with pytest.raises(ValueError, match="độ dài lệch"):
+        generate_cube(
+            panel_b,
+            pool_a,
+            num_scenarios=10,
+            horizon_days=HORIZON,
+            block_length=BLOCK,
+            seed=7,
+        )
+
+
+def test_generate_cube_rejects_same_length_panel_covering_different_sessions() -> None:
+    """Trường hợp nguy hiểm hơn: CÙNG số ngày, CÙNG thứ tự ticker, nhưng phủ phiên khác.
+
+    Một guard chỉ so `len(dates)` sẽ cho lọt — `block_starts` vẫn là chỉ số hợp lệ nên không
+    IndexError, cube chỉ đơn giản cắt nhầm phiên và không ai biết. Đây là lý do pool giữ
+    nguyên dãy ngày chứ không chỉ giữ số lượng.
+    """
+    returns, _ = synthetic_dataset(tickers=TICKERS, n_days=400, seed=9)
+    calendar = sorted(returns["date"].unique())
+    panel_a = build_return_panel(returns, calendar, tickers=TICKERS)
+    regime_daily = pd.DataFrame(
+        {
+            "date": calendar,
+            "regime": ["stress"] * len(calendar),
+            "split": ["train"] * len(calendar),
+        }
+    )
+    pool_a = build_block_pool(
+        panel_a,
+        regime_daily,
+        target_regime="stress",
+        block_length=BLOCK,
+        evaluation_date=calendar[-1],
+    )
+
+    shifted = returns.assign(date=returns["date"] + pd.Timedelta(days=365))
+    shifted_calendar = sorted(shifted["date"].unique())
+    panel_b = build_return_panel(shifted, shifted_calendar, tickers=TICKERS)
+    assert len(panel_b.dates) == len(panel_a.dates)
+    assert panel_b.tickers == panel_a.tickers
+
+    with pytest.raises(ValueError, match="ngày đầu lệch tại vị trí 0"):
+        generate_cube(
+            panel_b,
+            pool_a,
+            num_scenarios=10,
+            horizon_days=HORIZON,
+            block_length=BLOCK,
+            seed=7,
+        )
+
+
+def test_generate_cube_rejects_panel_with_a_different_ticker_order() -> None:
+    """Nhánh thứ hai của guard: cùng ngày, khác thứ tự ticker ⇒ cột tài sản bị hoán vị."""
+    panel_a, regime_daily, calendar = _setup(n_days=400, seed=9)
+    pool_a = build_block_pool(
+        panel_a,
+        regime_daily,
+        target_regime="stress",
+        block_length=BLOCK,
+        evaluation_date=calendar[-1],
+    )
+    returns, _ = synthetic_dataset(tickers=TICKERS, n_days=400, seed=9)
+    permuted = list(reversed(TICKERS))
+    panel_b = build_return_panel(returns, calendar, tickers=permuted)
+    assert panel_b.dates == panel_a.dates
+
+    with pytest.raises(ValueError, match="ticker pool="):
         generate_cube(
             panel_b,
             pool_a,
