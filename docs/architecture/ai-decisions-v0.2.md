@@ -105,7 +105,13 @@ sinh ra nặng hơn hẳn đuôi của cửa sổ 20 ngày liên tục có thậ
 đó là quyết định của Phúc (IN-RISK-03), người sở hữu Scenario Validation Gate. Ngưỡng do AI đề
 xuất, chưa ai ký. **Không tự nới ngưỡng để lấy màu xanh.**
 
-**2. Không có bất thường nào khác.** Cả 10 seed hội tụ và hợp lệ; không regime nào bị bỏ qua vì
+**2. Battery kiểm định là IN-SAMPLE theo cấu tạo (SCN-OD-04):** `reference_windows`
+(`packages/ai/src/qshield_ai/scenarios/validate.py`) lấy cửa sổ tham chiếu từ chính
+`pool.block_starts` — đúng tập anchor mà bootstrap resample — nên các con số 8/9 và 9/9 ở trên chỉ
+đo việc resampling có bóp méo phân phối của chính tập anchor đó hay không, KHÔNG phải bằng chứng
+out-of-sample và không thể phát hiện over-fitting *vào* tập anchor.
+
+**3. Không có bất thường nào khác.** Cả 10 seed hội tụ và hợp lệ; không regime nào bị bỏ qua vì
 khan hiếm block; chỉ 10/874 block bị loại (5 vượt `t`, 5 thiếu mã).
 
-**3. Toàn bộ run mang nhãn `NON_BASELINE_RUN`** với danh sách decision ID chưa phê duyệt ở §3.
+**4. Toàn bộ run mang nhãn `NON_BASELINE_RUN`** với danh sách decision ID chưa phê duyệt ở §3.

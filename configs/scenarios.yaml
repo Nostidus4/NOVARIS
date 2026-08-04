@@ -9,7 +9,6 @@ cvae:
   # CLAUDE.md "Đóng băng phạm vi": CVAE không được thêm trừ khi bootstrap đã qua kiểm định.
   enabled: false
 
-# TODO(Nguyễn Anh Tú): seed cho bootstrap — chưa có giá trị cụ thể được đăng ký ở tài liệu nguồn.
 # PROVISIONAL (IN-CTR-09): seed bootstrap do AI đề xuất, chờ Ngọc duyệt.
 # Tên khóa KHÔNG được là `seed`: `Config.load` gộp phẳng và `merged.update(config)` khiến key
 # top-level của base.yaml luôn đè include, nên `seed` ở đây sẽ vĩnh viễn không đọc được.

@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import typer
 from qshield_contracts.config import Config
-from qshield_contracts.enums import ArtifactMode, Stage
+from qshield_contracts.enums import ArtifactMode, RegimeName, Stage
 from qshield_contracts.paths import ArtifactPaths
 from qshield_contracts.runs import RunContext
 from qshield_contracts.schemas.features import MarketFeaturesSchema
@@ -103,8 +103,15 @@ _FEATURE_COLUMNS = {
     "correlation_column": CORR_FEATURE,
 }
 _MOCK_DAYS = 900
-# Thứ tự cố định ⇒ mỗi regime nhận một seed lệch xác định, tái lập được giữa các lần chạy.
-_REGIME_ORDER = ("normal", "volatile", "stress")
+# Thứ tự cố định ⇒ mỗi regime nhận một seed lệch xác định, tái lập được giữa các lần chạy: đổi
+# thứ tự là đổi cube sinh ra, nên tuple này được viết tường minh chứ không lấy theo thứ tự khai
+# báo của enum. Dựng từ thành viên `RegimeName` (không phải literal chuỗi) để đổi tên nhãn ở
+# `qshield_contracts` vỡ ngay lúc import, thay vì âm thầm cho ra ba pool block rỗng.
+_REGIME_ORDER = (
+    RegimeName.NORMAL.value,
+    RegimeName.VOLATILE.value,
+    RegimeName.STRESS.value,
+)
 
 
 def _resolve_run_id(config: Config) -> str | None:
@@ -356,6 +363,20 @@ def scenarios(
     paths.ensure(Stage.SCENARIOS)
     stage_dir = paths.stage_dir(Stage.SCENARIOS)
 
+    # Dọn artifact của CHÍNH chặng này TRƯỚC mọi thứ có thể raise (đọc regime, pool rỗng, cổng
+    # FAIL). `dev` mode ghi vào đường dẫn cố định và `paths.ensure()` chỉ mkdir -p, nên nếu thoát
+    # sớm mà không dọn, cả bộ artifact của run TRƯỚC vẫn nằm nguyên: cube + manifest ghi
+    # `gate_status: PASS` + validation.csv, trông y hệt kết quả của hôm nay. Một artifact cũ còn
+    # sót nguy hiểm hơn hẳn không có artifact nào — Risk phía sau đọc phải cube chưa từng qua
+    # chặng này mà không có cách nào biết. Sau lệnh này, mọi đường thoát đều để lại thư mục sạch.
+    for stale in (
+        "stress_scenarios.npz",
+        "scenario_manifest.json",
+        "scenario_validation.csv",
+        "scenarios_by_regime.npz",
+    ):
+        (stage_dir / stale).unlink(missing_ok=True)
+
     regime_daily, regime_source = _load_regime_daily(paths, force=force, logger=logger)
 
     returns, market = _load_inputs(cfg, mock=mock)
@@ -473,7 +494,7 @@ def scenarios(
 
     # Fallback rule-based (regime_source == "rule_based_fallback") không có posterior HMM để lọc —
     # "hard_filtered_label" chỉ đúng cho nhãn Viterbi/filtered của champion. Gán cứng một chuỗi cho
-    # cả hai nhánh khiến manifest tự mâu thuẫn: vừa nói "lọc theo posterior" vừa nói "nguồn fallback"
+    # cả hai nhánh khiến manifest tự mâu thuẫn: vừa nói "lọc theo posterior" vừa nói "fallback"
     # trong cùng một file. Suy ra chuỗi từ `regime_source` để hai trường không bao giờ lệch nhau.
     conditioning_method = (
         "rule_based_threshold_label"
@@ -529,12 +550,9 @@ def scenarios(
     )
 
     if status == SCENARIO_GATE_FAIL and not force:
-        # `dev` mode ghi vào đường dẫn cố định (paths.ensure() chỉ mkdir -p, không dọn file cũ).
-        # Run trước có thể đã PASS cổng và để lại `stress_scenarios.npz` ở đây — nếu không xóa,
-        # manifest/validation.csv bên cạnh nó đã được ghi lại nói "FAIL" hôm nay, nhưng cube vẫn
-        # là của run cũ đã PASS, và Risk phía sau đọc phải cube chưa từng qua kiểm định của run
-        # này. Xóa TRƯỚC khi exit để cube không bao giờ mâu thuẫn với artifact bên cạnh nó.
-        (stage_dir / "stress_scenarios.npz").unlink(missing_ok=True)
+        # Không cần xóa `stress_scenarios.npz` ở đây: nhánh này chưa từng ghi nó, và bản của run
+        # trước đã bị dọn ngay đầu lệnh. Bằng chứng của lần FAIL này (manifest + validation.csv)
+        # vẫn ở lại vì chúng vừa được ghi phía trên.
         print(
             f"[scenarios] GATE FAIL — cube KHÔNG được ghi. "
             f"Xem {stage_dir / 'scenario_validation.csv'}. Dùng --force để ghi có chủ ý."
