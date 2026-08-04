@@ -5,7 +5,8 @@
 Quyết định AD-01 (`docs/architecture/ai-decisions-v0.2.md`): Feature Contract v0.1 bị rút — dùng
 cột Data đã emit thật thay vì bắt Data tính lại 5 feature cross-sectional chưa ai sản xuất.
 
-CLAUDE.md quy tắc 4: mọi rolling chỉ nhìn về quá khứ; `StandardScaler` fit CHỈ trên `split=="train"`.
+CLAUDE.md quy tắc 4: mọi rolling chỉ nhìn về quá khứ; `StandardScaler` fit CHỈ trên
+`split == "train"`.
 Ngày warm-up bị loại HẲN khỏi frame — `RegimeDailySchema` không cho phép null nên không có cách nào
 biểu diễn chúng thành dòng (AD-06).
 """
@@ -119,7 +120,8 @@ def fit_scaler(frame: pd.DataFrame, feature_names: Sequence[str]) -> StandardSca
     train = frame.loc[frame["split"] == "train", list(feature_names)]
     if train.empty:
         raise ValueError(
-            "Không có dòng split=='train' để fit scaler — kiểm tra date_range trong configs/data.yaml."
+            "Không có dòng split=='train' để fit scaler — kiểm tra date_range "
+            "trong configs/data.yaml."
         )
     return StandardScaler().fit(train.to_numpy(dtype=float))
 

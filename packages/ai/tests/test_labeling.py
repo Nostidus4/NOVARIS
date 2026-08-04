@@ -34,7 +34,8 @@ def _states() -> np.ndarray:
 
 
 def test_stress_score_matches_hand_calculation() -> None:
-    """Giá trị [1,2,3] có trung bình 2, độ lệch chuẩn tổng thể sqrt(2/3) ⇒ z = ∓sqrt(3/2), 0, ±sqrt(3/2).
+    """Giá trị [1,2,3]: trung bình 2, độ lệch chuẩn tổng thể sqrt(2/3)
+    ⇒ z = ∓sqrt(3/2), 0, ±sqrt(3/2).
 
     vol z  = [-√1.5, 0, +√1.5]; return z = [+√1.5, 0, -√1.5]; |drawdown| z = [-√1.5, 0, +√1.5].
     stress = z(vol) − z(return) + z(|drawdown|) ⇒ [−3√1.5, 0, +3√1.5].

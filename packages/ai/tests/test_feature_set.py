@@ -1,4 +1,4 @@
-# Nguyễn Anh Tú - test 5 feature HMM: tương quan tính tay, không nhìn tương lai, scaler chỉ fit train.
+# Nguyễn Anh Tú - test 5 feature HMM: tương quan tính tay, không nhìn tương lai, scaler fit train.
 import numpy as np
 import pandas as pd
 import pytest
@@ -17,7 +17,7 @@ MARKET_COLS = ["market_log_return", "realized_vol_20d", "drawdown", "liquidity_2
 
 
 def _returns_from_matrix(values: dict[str, list[float]]) -> pd.DataFrame:
-    """Dựng khung returns tối thiểu chỉ có (date, ticker, log_return) — đủ cho mean_pairwise_corr."""
+    """Dựng khung returns tối thiểu (date, ticker, log_return) — đủ cho mean_pairwise_corr."""
     dates = pd.bdate_range("2024-01-01", periods=len(next(iter(values.values()))))
     frames = [
         pd.DataFrame({"date": dates, "ticker": ticker, "log_return": series})

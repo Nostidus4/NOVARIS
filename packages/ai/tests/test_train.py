@@ -98,7 +98,7 @@ def test_filtered_equals_smoothed_at_the_final_observation(fitted) -> None:
 
 
 def test_filtered_differs_from_smoothed_mid_series(fitted) -> None:
-    """Nếu hai cái trùng nhau khắp nơi thì forward recursion đang chạy sai (hoặc dữ liệu bão hòa)."""
+    """Trùng nhau khắp nơi ⇒ forward recursion đang chạy sai (hoặc dữ liệu bão hòa)."""
     model, matrix = fitted
     filtered = filtered_probabilities(model, matrix)
     smoothed = smoothed_probabilities(model, matrix)
