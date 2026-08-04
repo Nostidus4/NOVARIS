@@ -395,3 +395,115 @@ def test_force_allows_rule_based_fallback_regime(tmp_path: Path) -> None:
     # Fix: nhãn fallback không có posterior HMM — manifest không được tuyên bố lọc theo posterior.
     assert manifest["conditioning_method"] != "hard_filtered_label"
     assert manifest["conditioning_method"] == "rule_based_threshold_label"
+
+
+# ---------------------------------------------------------------------------
+# Provenance mock/thật — chặn việc trộn nguồn dữ liệu giữa hai chặng.
+# Sự cố thật đã xảy ra khi đo hiệu năng (docs/perf/2026-08-04-pipeline-timing.md §7):
+# `regime --mock` ghi đè artifact, rồi `scenarios` chạy THẬT đọc đúng file đó và báo gate PASS
+# trên cube (5000, 20, 8) — không exception nào, không dấu hiệu nào trong manifest.
+# ---------------------------------------------------------------------------
+
+
+def _regime_summary_path(tmp_path: Path) -> Path:
+    return _regime_dir(tmp_path) / "regime_summary.json"
+
+
+def _set_regime_input_source(tmp_path: Path, value: str | None) -> None:
+    """Sửa dấu vết nguồn trong sidecar. `None` = xóa hẳn khóa (artifact bản CLI cũ)."""
+    path = _regime_summary_path(tmp_path)
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    if value is None:
+        summary.pop("input_source", None)
+    else:
+        summary["input_source"] = value
+    path.write_text(json.dumps(summary, ensure_ascii=False), encoding="utf-8")
+
+
+def test_real_scenarios_run_refuses_mock_regime_labels(tmp_path: Path) -> None:
+    """Tái hiện đúng sự cố: nhãn regime sinh từ fixture, chặng scenarios chạy thật.
+
+    Guard nằm TRƯỚC `_load_inputs`, nên test này không cần `data/processed/` thật — nếu guard
+    biến mất, lệnh sẽ đi tiếp và fail vì thiếu file dữ liệu thật, tức vẫn đỏ nhưng vì lý do khác;
+    bởi vậy phải assert cả nội dung thông báo chứ không chỉ exit code.
+    """
+    config_path = _write_config(tmp_path)
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
+
+    # KHÔNG có --mock: chặng scenarios tự nhận mình chạy trên dữ liệu thật.
+    result = runner.invoke(app, ["scenarios", "--config", str(config_path)])
+
+    assert result.exit_code != 0
+    assert "input_source" in result.output
+    assert "'mock'" in result.output and "'real'" in result.output
+    assert not (_scenario_dir(tmp_path) / "stress_scenarios.npz").exists()
+
+
+def test_mock_scenarios_run_refuses_real_regime_labels(tmp_path: Path) -> None:
+    """Chiều ngược lại — trộn nguồn theo hướng nào cũng cho ra cube vô nghĩa."""
+    config_path = _write_config(tmp_path)
+    assert (
+        runner.invoke(app, ["regime", "--config", str(config_path), "--mock"]).exit_code
+        == 0
+    )
+    _set_regime_input_source(tmp_path, "real")
+
+    result = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+
+    assert result.exit_code != 0
+    assert "input_source" in result.output
+
+
+def test_regime_artifact_without_the_marker_is_refused(tmp_path: Path) -> None:
+    """Artifact do bản CLI cũ ghi (chưa có `input_source`) phải bị từ chối, không mặc định "thật".
+
+    Fail-closed có chủ ý: giả định lạc quan "không ghi gì nghĩa là dữ liệu thật" chính là thứ đã
+    tạo ra sự cố. Thông báo phải nói rõ cách khắc phục, nếu không người dùng chỉ thấy lỗi vô cớ.
+    """
+    config_path = _write_config(tmp_path)
+    assert (
+        runner.invoke(app, ["regime", "--config", str(config_path), "--mock"]).exit_code
+        == 0
+    )
+    _set_regime_input_source(tmp_path, None)
+
+    result = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+
+    assert result.exit_code != 0
+    assert "unknown" in result.output
+    assert "qshield-ai regime" in result.output
+
+
+def test_force_crosses_sources_and_the_manifest_records_both(tmp_path: Path) -> None:
+    """`--force` cho qua, nhưng manifest phải ghi lại CẢ HAI nguồn để còn truy được."""
+    config_path = _write_config(tmp_path)
+    assert (
+        runner.invoke(app, ["regime", "--config", str(config_path), "--mock"]).exit_code
+        == 0
+    )
+    _set_regime_input_source(tmp_path, "real")
+
+    result = runner.invoke(
+        app, ["scenarios", "--config", str(config_path), "--mock", "--force"]
+    )
+    assert result.exit_code == 0, result.output
+
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["input_source"] == "mock"
+    assert manifest["regime_input_source"] == "real"
+
+
+def test_manifest_records_both_sources_on_a_consistent_run(
+    tmp_path: Path, prepared: Path
+) -> None:
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["input_source"] == manifest["regime_input_source"] == "mock"
