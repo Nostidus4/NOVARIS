@@ -23,6 +23,14 @@ from scipy.stats import multivariate_normal
 _SUPPORTED_COVARIANCE = ("diag", "full")
 
 
+def _validate_covariance_type(covariance_type: str) -> None:
+    """Chốt chặn dùng chung cho `fit_hmm` và `count_parameters` — cùng một thông báo lỗi."""
+    if covariance_type not in _SUPPORTED_COVARIANCE:
+        raise ValueError(
+            f"covariance_type {covariance_type!r} không hỗ trợ, chỉ có {_SUPPORTED_COVARIANCE}."
+        )
+
+
 @dataclass(frozen=True)
 class HmmFit:
     """Một lần fit + các chỉ số dùng để chấm nó. `model` giữ nguyên để suy luận lại."""
@@ -48,10 +56,7 @@ def fit_hmm(
     n_iter: int,
 ) -> GaussianHMM:
     """Fit trên MA TRẬN TRAIN đã scale. `random_state=seed` để tái lập được."""
-    if covariance_type not in _SUPPORTED_COVARIANCE:
-        raise ValueError(
-            f"covariance_type {covariance_type!r} không hỗ trợ, chỉ có {_SUPPORTED_COVARIANCE}."
-        )
+    _validate_covariance_type(covariance_type)
     if len(x_train) <= n_states:
         raise ValueError(
             f"Chỉ có {len(x_train)} quan sát train cho {n_states} trạng thái — không fit được."
@@ -71,14 +76,11 @@ def count_parameters(n_states: int, n_features: int, covariance_type: str) -> in
     start = n_states - 1
     transitions = n_states * (n_states - 1)
     means = n_states * n_features
+    _validate_covariance_type(covariance_type)
     if covariance_type == "diag":
         covariances = n_states * n_features
-    elif covariance_type == "full":
+    else:  # "full" — đã được _validate_covariance_type xác nhận hợp lệ
         covariances = n_states * n_features * (n_features + 1) // 2
-    else:
-        raise ValueError(
-            f"covariance_type {covariance_type!r} không hỗ trợ, chỉ có {_SUPPORTED_COVARIANCE}."
-        )
     return start + transitions + means + covariances
 
 
@@ -94,7 +96,25 @@ def aic_bic(
 
 
 def emission_log_prob(model: GaussianHMM, x: np.ndarray) -> np.ndarray:
-    """`log p(x_t | state=k)` cho mọi `t`, `k` → `(T, K)`."""
+    """`log p(x_t | state=k)` cho mọi `t`, `k` → `(T, K)`.
+
+    Chốt chặn đầu vào cho CẢ BA đường suy diễn (filtered/smoothed/viterbi đều đi qua đây
+    hoặc qua hmmlearn với cùng ma trận `x`). Một `NaN` duy nhất trong `x` sẽ lan qua
+    `log_alpha[step-1]` và đầu độc toàn bộ phần còn lại của chuỗi — artifact regime sẽ hỏng
+    im lặng thay vì báo lỗi. CLAUDE.md quy tắc 12: fail fast tại chỗ.
+    """
+    if x.ndim != 2 or x.shape[1] != model.n_features:
+        raise ValueError(
+            f"emission_log_prob: x phải có shape (T, {model.n_features}), nhận {x.shape}."
+        )
+    if len(x) == 0:
+        raise ValueError("emission_log_prob: x rỗng, cần ít nhất một quan sát.")
+    if not np.isfinite(x).all():
+        bad = np.argwhere(~np.isfinite(x))
+        raise ValueError(
+            f"emission_log_prob: x chứa {len(bad)} giá trị không hữu hạn, "
+            f"đầu tiên tại (hàng={bad[0][0]}, cột={bad[0][1]})."
+        )
     return np.column_stack(
         [
             multivariate_normal(
