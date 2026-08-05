@@ -20,6 +20,7 @@ _UNIVERSE_COLUMNS = [
     "first_trading_date",
     "exchange_current",
     "exchange_history",
+    "exchange_periods",
     "data_source",
     "notes",
 ]
