@@ -14,6 +14,7 @@ HOSE (±7%). Dùng `exchange_current` cho toàn bộ lịch sử sẽ báo nhầ
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -123,6 +124,61 @@ def _periods_by_ticker(
     return out
 
 
+def _exchanges_mentioned(text: str, vocabulary: Sequence[str]) -> set[str]:
+    """Tập tên sàn trong `vocabulary` xuất hiện dạng từ nguyên vẹn (không phân biệt hoa/thường)
+    trong `text`. Dùng biên từ `\\b` để `"HOSE"` không khớp nhầm vào giữa một từ dài hơn."""
+    found: set[str] = set()
+    for exchange in vocabulary:
+        pattern = r"(?i)\b" + re.escape(str(exchange)) + r"\b"
+        if re.search(pattern, text):
+            found.add(str(exchange))
+    return found
+
+
+def _check_exchange_history_covered_by_periods(
+    universe: pd.DataFrame,
+    periods_by_ticker: Mapping[str, Sequence[Mapping[str, Any]]],
+    bands_by_exchange: Mapping[str, float],
+) -> None:
+    """`exchange_history` (văn xuôi, vd. `"HNX→HOSE 2020-12"`) là bản ghi lịch sử sàn thứ ba,
+    độc lập với `exchange_periods`. Check `exchange_current` (`_periods_by_ticker`) không bắt được
+    trường hợp `exchange_periods` bị xóa/thu gọn lịch sử (vd. ACB còn mỗi `[{"exchange": "HOSE"}]`)
+    khi sàn đang hiệu lực không đổi — `exchange_current` vẫn khớp `in_force`, check đó pass, và 12
+    phiên HNX hợp lệ của ACB bị chấm nhầm bằng biên HOSE ±7%. `exchange_history` vẫn còn nhắc tới
+    sàn đã mất nên bắt được đúng lỗi này.
+
+    Từ vựng tên sàn lấy từ khoá của `bands_by_exchange` (configs/data.yaml: price_limits.
+    bands_by_exchange) — đây là những sàn DUY NHẤT hệ thống biết tới; không hard-code tên sàn ở
+    đây (CLAUDE.md quy tắc 8) và không suy đoán bằng regex tách token viết hoa (sẽ false-positive
+    với văn xuôi tiếng Việt viết hoa tùy tiện).
+    """
+    if (
+        "exchange_history" not in universe.columns
+        or "exchange_current" not in universe.columns
+    ):
+        return
+    vocabulary = list(bands_by_exchange)
+    for row in universe.itertuples(index=False):
+        ticker = str(row.ticker)
+        history = row.exchange_history
+        if history is None:
+            continue
+        history_text = str(history)
+        mentioned = _exchanges_mentioned(history_text, vocabulary)
+        if not mentioned:
+            continue
+        periods = periods_by_ticker.get(ticker, [])
+        covered = {_period_exchange(ticker, p) for p in periods}
+        missing = sorted(mentioned - covered)
+        if missing:
+            raise ValueError(
+                f"Ticker {ticker!r}: exchange_history {history_text!r} nhắc tới sàn {missing}, "
+                "nhưng exchange_periods không có period nào ở (các) sàn đó (hiện có: "
+                f"{sorted(covered)}). exchange_periods có thể đã bị thu gọn/xóa lịch sử — đồng bộ "
+                "lại với configs/universe.yaml."
+            )
+
+
 def resolve_exchange_column(returns: pd.DataFrame, universe: pd.DataFrame) -> pd.Series:
     """Sàn đang áp dụng cho mỗi dòng của `returns`, theo `(ticker, date)`.
 
@@ -220,6 +276,10 @@ def find_price_limit_violations(
                 f"Biên độ của sàn {exchange!r} phải > 0, nhận {band} "
                 "(configs/data.yaml: price_limits.bands_by_exchange)."
             )
+
+    _check_exchange_history_covered_by_periods(
+        universe, _periods_by_ticker(universe), bands_by_exchange
+    )
 
     exchange_col = resolve_exchange_column(returns, universe)
     unknown = sorted(set(exchange_col.dropna()) - set(bands_by_exchange))
