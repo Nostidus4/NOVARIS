@@ -100,3 +100,63 @@ def resolve_exchange_column(returns: pd.DataFrame, universe: pd.DataFrame) -> pd
             )
 
     return resolved
+
+
+def find_price_limit_violations(
+    returns: pd.DataFrame,
+    universe: pd.DataFrame,
+    *,
+    bands_by_exchange: Mapping[str, float],
+    tolerance_pct: float,
+) -> pd.DataFrame:
+    """Các dòng có `|simple_return|` vượt biên độ sàn cộng dung sai.
+
+    Vi phạm khi `abs(simple_return) > band + tolerance_pct` — bất đẳng thức NGẶT, giá trị đúng
+    bằng biên không tính là vi phạm.
+
+    `simple_return` NaN được BỎ QUA: không phải vi phạm, cũng không phải lỗi. Phiên đầu tiên của
+    mỗi mã không có giá trước đó nên luôn NaN (8 dòng trong returns.parquet hiện tại). Lọc tường
+    minh, không dựa vào việc `NaN > x` cho `False` — đúng kết quả nhưng sai lý do, và sẽ hỏng âm
+    thầm nếu phép so sánh được viết lại.
+
+    Trả DataFrame RỖNG đúng cột khi sạch, không bao giờ `None` — caller không phải rẽ nhánh.
+    """
+    if tolerance_pct < 0:
+        raise ValueError(
+            f"tolerance_pct phải >= 0, nhận {tolerance_pct} "
+            "(configs/data.yaml: price_limits.tolerance_pct)."
+        )
+    for exchange, band in bands_by_exchange.items():
+        if band <= 0:
+            raise ValueError(
+                f"Biên độ của sàn {exchange!r} phải > 0, nhận {band} "
+                "(configs/data.yaml: price_limits.bands_by_exchange)."
+            )
+
+    exchange_col = resolve_exchange_column(returns, universe)
+    unknown = sorted(set(exchange_col.dropna()) - set(bands_by_exchange))
+    if unknown:
+        raise ValueError(
+            f"Không có biên độ cho sàn {unknown} trong configs/data.yaml "
+            f"(price_limits.bands_by_exchange hiện có: {sorted(bands_by_exchange)})."
+        )
+
+    frame = pd.DataFrame(
+        {
+            "date": pd.to_datetime(returns["date"]),
+            "ticker": returns["ticker"].astype(str),
+            "exchange": exchange_col,
+            "simple_return": returns["simple_return"].astype(float),
+        }
+    )
+    frame["band"] = frame["exchange"].map(bands_by_exchange).astype(float)
+    frame["tolerance"] = float(tolerance_pct)
+    frame["excess"] = frame["simple_return"].abs() - frame["band"]
+
+    has_return = frame["simple_return"].notna()
+    is_violation = has_return & (
+        frame["simple_return"].abs() > frame["band"] + tolerance_pct
+    )
+
+    violations = frame.loc[is_violation, _VIOLATION_COLUMNS]
+    return violations.sort_values("excess", ascending=False).reset_index(drop=True)
