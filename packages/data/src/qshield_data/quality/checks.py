@@ -1,5 +1,7 @@
 # Nguyễn Đỗ Minh Anh - duplicate, missing, outlier, leakage, overlap.
-"""Data Quality Gate — port từ `CLEAN.ipynb` (7 check DQ-001..DQ-007, `PR-DAT-*`/`AC-DAT-*`).
+"""Data Quality Gate — 6 check DQ-001..DQ-006 port từ `CLEAN.ipynb` (`PR-DAT-*`/`AC-DAT-*`), cộng
+DQ-007 mới trên nhánh này (phát hiện vượt biên độ giá — notebook gốc không có check tương đương,
+xem `docs/perf/2026-08-05-kurtosis-fail-vcb.md`).
 
 Mỗi check trả về `dict` (`check_id, check_name, type, status, count, trace`) — `run_all_checks`
 gộp thành DataFrame và cờ `all_pass` (chỉ tính trên check `type == "MUST_PASS"`, theo đúng gate
@@ -10,7 +12,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from qshield_data.quality.price_limits import _VIOLATION_COLUMNS
+from qshield_data.quality.price_limits import VIOLATION_COLUMNS
 
 
 def check_no_duplicates(prices: pd.DataFrame) -> dict:
@@ -118,9 +120,11 @@ def check_price_limit(violations: pd.DataFrame) -> dict:
     Nhận sẵn khung vi phạm đã tính (`quality.price_limits.find_price_limit_violations`) thay vì tự
     tính, để công việc chỉ chạy đúng một lần và module này giữ nguyên vai trò đăng ký check.
 
-    `type="WARN"`: check này KHÔNG chặn gate. Trên dữ liệu hiện tại nó bắn 24 dòng mà mới chỉ một
-    dòng (VCB 2025-03-03) là bất khả thi thật sự; để MUST_PASS sẽ chặn mọi lần chạy data trong khi
-    23 dòng còn lại chưa ai phân loại. Nâng lên MUST_PASS khi việc sửa dữ liệu hoàn tất.
+    `type="WARN"`: check này KHÔNG chặn gate. Số dòng bị gắn cờ hiện tại và bao nhiêu trong số đó
+    đã được xác nhận là bất khả thi thật sự (khác với biến động giá thường) xem
+    `docs/perf/2026-08-05-kurtosis-fail-vcb.md` — chỉ khi phần lớn dòng đã được phân loại rõ mới
+    nên nâng check này lên MUST_PASS; để MUST_PASS khi còn dòng chưa phân loại sẽ chặn mọi lần
+    chạy data vì lý do chưa xác định.
 
     `trace` trỏ tới doc điều tra vì chưa có requirement id nào phủ kiểm tra biên độ giá — việc
     đăng ký id trong `docs/product/rtm.md` thuộc Minh Anh và Ngọc.
@@ -128,7 +132,7 @@ def check_price_limit(violations: pd.DataFrame) -> dict:
     Raise `ValueError` nếu `violations` thiếu cột — tránh nhận nhầm khung khác (vd. `returns`
     thô) rồi vẫn báo một `WARN` có vẻ hợp lý bằng `len()` của nó (CLAUDE.md quy tắc 12).
     """
-    missing = [c for c in _VIOLATION_COLUMNS if c not in violations.columns]
+    missing = [c for c in VIOLATION_COLUMNS if c not in violations.columns]
     if missing:
         raise ValueError(
             f"violations thiếu cột {missing} — không phải khung từ "
