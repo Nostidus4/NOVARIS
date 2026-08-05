@@ -1,5 +1,5 @@
 # Nguyễn Đỗ Minh Anh - duplicate, missing, outlier, leakage, overlap.
-"""Data Quality Gate — port từ `CLEAN.ipynb` (6 check DQ-001..DQ-006, `PR-DAT-*`/`AC-DAT-*`).
+"""Data Quality Gate — port từ `CLEAN.ipynb` (7 check DQ-001..DQ-007, `PR-DAT-*`/`AC-DAT-*`).
 
 Mỗi check trả về `dict` (`check_id, check_name, type, status, count, trace`) — `run_all_checks`
 gộp thành DataFrame và cờ `all_pass` (chỉ tính trên check `type == "MUST_PASS"`, theo đúng gate
@@ -9,6 +9,8 @@ gộp thành DataFrame và cờ `all_pass` (chỉ tính trên check `type == "MU
 from __future__ import annotations
 
 import pandas as pd
+
+from qshield_data.quality.price_limits import _VIOLATION_COLUMNS
 
 
 def check_no_duplicates(prices: pd.DataFrame) -> dict:
@@ -122,7 +124,17 @@ def check_price_limit(violations: pd.DataFrame) -> dict:
 
     `trace` trỏ tới doc điều tra vì chưa có requirement id nào phủ kiểm tra biên độ giá — việc
     đăng ký id trong `docs/product/rtm.md` thuộc Minh Anh và Ngọc.
+
+    Raise `ValueError` nếu `violations` thiếu cột — tránh nhận nhầm khung khác (vd. `returns`
+    thô) rồi vẫn báo một `WARN` có vẻ hợp lý bằng `len()` của nó (CLAUDE.md quy tắc 12).
     """
+    missing = [c for c in _VIOLATION_COLUMNS if c not in violations.columns]
+    if missing:
+        raise ValueError(
+            f"violations thiếu cột {missing} — không phải khung từ "
+            "quality.price_limits.find_price_limit_violations. Cột hiện có: "
+            f"{list(violations.columns)}."
+        )
     n_violations = len(violations)
     return {
         "check_id": "DQ-007",

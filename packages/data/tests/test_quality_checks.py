@@ -101,7 +101,7 @@ def test_check_price_limit_passes_when_empty() -> None:
     assert result["count"] == 0
 
 
-def test_check_price_limit_warns_and_never_blocks() -> None:
+def test_check_price_limit_warns_when_violations_present() -> None:
     violations = pd.DataFrame(
         {
             "date": pd.to_datetime(["2025-03-03"]),
@@ -146,6 +146,51 @@ def test_run_all_checks_stays_green_with_violations_present() -> None:
     dq007 = report_df.loc[report_df["check_id"] == "DQ-007"].iloc[0]
     assert dq007["status"] == "WARN"
     assert dq007["count"] == 1
+
+
+def test_check_price_limit_rejects_frame_missing_column() -> None:
+    wrong = _NO_VIOLATIONS.drop(columns=["excess"])
+    try:
+        check_price_limit(wrong)
+    except ValueError as exc:
+        assert "excess" in str(exc)
+    else:
+        raise AssertionError(
+            "check_price_limit phải raise ValueError khi thiếu cột 'excess'"
+        )
+
+
+def test_run_all_checks_flips_all_pass_false_on_must_pass_failure() -> None:
+    """DQ-007 là check WARN đầu tiên trong registry — filter `type == MUST_PASS` phải vẫn lọc
+    đúng: chặn khi có MUST_PASS thật sự FAIL, và không bị DQ-007 (WARN) che mất."""
+    dup_prices = _prices(
+        date=pd.to_datetime(["2022-01-01", "2022-01-01"])
+    )  # kích DQ-001 FAIL
+    returns = pd.DataFrame({"date": dup_prices["date"], "split": ["train", "train"]})
+    violations = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2025-03-03"]),
+            "ticker": ["VCB"],
+            "exchange": ["HOSE"],
+            "simple_return": [-0.331104],
+            "band": [0.07],
+            "tolerance": [0.005],
+            "excess": [0.261104],
+        }
+    )
+    report_df, all_pass = run_all_checks(
+        dup_prices,
+        _UNIVERSE,
+        returns,
+        expected_universe_count=2,
+        price_limit_violations=violations,
+    )
+
+    assert all_pass is False
+    dq001 = report_df.loc[report_df["check_id"] == "DQ-001"].iloc[0]
+    assert dq001["status"] == "FAIL"
+    dq007 = report_df.loc[report_df["check_id"] == "DQ-007"].iloc[0]
+    assert dq007["status"] == "WARN"
 
 
 def test_run_all_checks_all_pass() -> None:
