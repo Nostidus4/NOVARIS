@@ -91,7 +91,7 @@ def test_quality_missing_bands_by_exchange_key_exits_nonzero_naming_key(
 
 
 def test_quality_with_full_config_does_not_hit_the_guard(tmp_path: Path) -> None:
-    """Kiểm soát: config đầy đủ phải chạy qua khỏi đoạn `try`/`except` (không exit 1 vì thiếu key)."""
+    """Kiểm soát: config đầy đủ phải đi qua đoạn `try`/`except` (không exit 1 vì thiếu key)."""
     result = _run(tmp_path, with_price_limits=True)
     assert result.exit_code == 0, result.output
     assert (tmp_path / "reports" / "price_limit_violations.csv").exists()
