@@ -35,6 +35,7 @@ from qshield_data.clean import corporate_actions, normalize, validate_prices
 from qshield_data.manifest import build_manifest, write_manifest
 from qshield_data.quality import checks as checks_mod
 from qshield_data.quality import report as report_mod
+from qshield_data.quality.price_limits import find_price_limit_violations
 from qshield_data.sources import fetch as fetch_mod
 from qshield_data.sources import registry
 
@@ -342,8 +343,27 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
     universe = registry.load_universe(cfg)
     expected_count = cfg.get("expected_ticker_count", len(universe))
 
+    try:
+        price_limits_cfg = cfg["price_limits"]
+        bands = price_limits_cfg["bands_by_exchange"]
+        tolerance = price_limits_cfg["tolerance_pct"]
+    except KeyError as exc:
+        typer.echo(
+            f"✗ Thiếu khóa {exc.args[0]!r} trong configs/data.yaml (price_limits) — "
+            "không chạy được DQ-007.",
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+
+    violations = find_price_limit_violations(
+        returns,
+        universe,
+        bands_by_exchange=bands,
+        tolerance_pct=tolerance,
+    )
+
     report_df, all_pass = checks_mod.run_all_checks(
-        prices, universe, returns, expected_count
+        prices, universe, returns, expected_count, violations
     )
     typer.echo(report_df.to_string(index=False))
     typer.echo(
@@ -353,6 +373,16 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
     out_path = paths.reports_root / "data_quality_report.csv"
     report_mod.write_quality_report(report_df, out_path)
     typer.echo(f"✓ DQ report: {out_path}")
+
+    violations_path = paths.reports_root / "price_limit_violations.csv"
+    report_mod.write_violations(violations, violations_path)
+    if len(violations):
+        typer.echo(
+            f"⚠️  DQ-007: {len(violations)} phiên vượt biên độ sàn — xem {violations_path}"
+        )
+        typer.echo(violations.head(5).to_string(index=False))
+    else:
+        typer.echo(f"✓ DQ-007: không có phiên nào vượt biên độ — {violations_path}")
     return all_pass
 
 

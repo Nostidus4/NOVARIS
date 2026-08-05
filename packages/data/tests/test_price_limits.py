@@ -7,6 +7,7 @@ from qshield_data.quality.price_limits import (
     find_price_limit_violations,
     resolve_exchange_column,
 )
+from qshield_data.quality.report import write_violations
 
 _ACB_PERIODS = [
     {"exchange": "HNX", "until": "2020-11-30"},
@@ -258,3 +259,21 @@ def test_negative_tolerance_raises() -> None:
         find_price_limit_violations(
             rows, _universe(), bands_by_exchange=_BANDS, tolerance_pct=-0.01
         )
+
+
+def test_write_violations_writes_even_when_empty(tmp_path) -> None:
+    """Ghi cả khi rỗng: thiếu file phải có nghĩa 'gate chưa chạy', khác với 'không tìm thấy gì'."""
+    empty = pd.DataFrame(
+        columns=[
+            "date",
+            "ticker",
+            "exchange",
+            "simple_return",
+            "band",
+            "tolerance",
+            "excess",
+        ]
+    )
+    out = write_violations(empty, tmp_path / "reports" / "price_limit_violations.csv")
+    assert out.exists()
+    assert pd.read_csv(out).empty
