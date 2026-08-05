@@ -122,6 +122,30 @@ def test_exchange_current_mismatch_with_periods_raises_naming_both_values() -> N
         resolve_exchange_column(_returns(["2022-01-04"], ["ACB"]), mismatched)
 
 
+def test_exchange_history_mentions_exchange_missing_from_periods_raises() -> None:
+    """`exchange_current` không bắt được ca lịch sử bị xóa: nếu `exchange_periods` của ACB bị thu
+    gọn về chỉ còn HOSE, sàn "hiện hành" vẫn là HOSE (đúng `exchange_current`), check cross-check
+    cũ pass, và 12 phiên HNX hợp lệ của ACB bị chấm nhầm bằng biên HOSE ±7% — đúng lỗi module này
+    sinh ra để chặn (finding 1, review round 2). `exchange_history` còn nhắc "HNX→HOSE 2020-12"
+    nên bắt được lỗi này dù `exchange_periods` đã mất history."""
+    collapsed = pd.DataFrame(
+        {
+            "ticker": ["ACB"],
+            "exchange_current": ["HOSE"],
+            "exchange_history": ["HNX→HOSE 2020-12"],
+            "exchange_periods": [[{"exchange": "HOSE"}]],
+        }
+    )
+    with pytest.raises(ValueError, match="ACB") as excinfo:
+        find_price_limit_violations(
+            _returns_with([0.01], ["2022-01-04"], ["ACB"]),
+            collapsed,
+            bands_by_exchange=_BANDS,
+            tolerance_pct=_TOL,
+        )
+    assert "HNX" in str(excinfo.value)
+
+
 def test_exchange_current_absent_column_does_not_trigger_cross_check() -> None:
     """Universe không có cột `exchange_current` (vd. các test helper thuần trong module này)
     phải tiếp tục hoạt động không bị chặn bởi validation mới — guard trên sự hiện diện của cột."""
