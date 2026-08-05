@@ -42,3 +42,14 @@ eligibility:
   min_coverage_pct: 0.98
   # Ngưỡng thanh khoản 20 ngày — PROVISIONAL, cần Hoài Phúc phê duyệt (xem CLEAN.ipynb ghi chú gốc).
   min_turnover_20d_vnd: 1000000000
+
+# PROVISIONAL (IN-DAT-*): biên độ dao động giá theo sàn, dùng cho quality check DQ-007.
+# Nguồn: quy chế giao dịch HOSE/HNX/UPCoM. AI đề xuất, Data Owner duyệt.
+# `tolerance_pct` là khoảng dôi cho làm tròn bước giá: giá trần/sàn được làm tròn về bước giá
+# nên một phiên kịch trần hợp lệ vẫn có thể tính ra nhỉnh hơn biên độ danh nghĩa.
+price_limits:
+  tolerance_pct: 0.005          # 0,5 điểm phần trăm
+  bands_by_exchange:
+    HOSE: 0.07
+    HNX: 0.10
+    UPCOM: 0.15
