@@ -114,6 +114,14 @@ def find_price_limit_violations(
     Vi phạm khi `abs(simple_return) > band + tolerance_pct` — bất đẳng thức NGẶT, giá trị đúng
     bằng biên không tính là vi phạm.
 
+    Cột `excess` đo so với `band` (biên độ danh nghĩa) mà thôi, KHÔNG so với ngưỡng phát hiện
+    `band + tolerance_pct` — mọi dòng bị gắn cờ vẫn có `excess > tolerance_pct`, nhưng đừng đọc
+    `excess` là "vượt ngưỡng phát hiện bao nhiêu".
+
+    Kết quả sắp theo `excess` giảm dần, khóa phụ `(date, ticker)` tăng dần để các dòng bằng
+    `excess` có thứ tự xác định, lặp lại được giữa các lần chạy — không dựa vào tính ổn định của
+    thuật toán sắp xếp mặc định.
+
     `simple_return` NaN được BỎ QUA: không phải vi phạm, cũng không phải lỗi. Phiên đầu tiên của
     mỗi mã không có giá trước đó nên luôn NaN (8 dòng trong returns.parquet hiện tại). Lọc tường
     minh, không dựa vào việc `NaN > x` cho `False` — đúng kết quả nhưng sai lý do, và sẽ hỏng âm
@@ -159,4 +167,6 @@ def find_price_limit_violations(
     )
 
     violations = frame.loc[is_violation, _VIOLATION_COLUMNS]
-    return violations.sort_values("excess", ascending=False).reset_index(drop=True)
+    return violations.sort_values(
+        ["excess", "date", "ticker"], ascending=[False, True, True]
+    ).reset_index(drop=True)

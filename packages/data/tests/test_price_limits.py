@@ -1,4 +1,6 @@
 # Nguyễn Anh Tú - test resolve sàn theo ngày và phát hiện vượt biên độ (DQ-007).
+import math
+
 import pandas as pd
 import pytest
 from qshield_data.quality.price_limits import (
@@ -119,7 +121,11 @@ def _returns_with(
 
 
 def test_value_exactly_at_boundary_is_not_a_violation() -> None:
-    at_boundary = _returns_with([0.075], ["2022-01-04"], ["VCB"])
+    # Dùng đúng float mà implementation tính (_BANDS["HOSE"] + _TOL), không gõ tay 0.075 —
+    # 0.075 gõ tay nằm DƯỚI ngưỡng do sai số biểu diễn nhị phân, nên test sẽ pass dù dùng
+    # ">" hay ">=", không phân biệt được strict inequality (xem finding 1 review round 1).
+    threshold = _BANDS["HOSE"] + _TOL
+    at_boundary = _returns_with([threshold], ["2022-01-04"], ["VCB"])
     out = find_price_limit_violations(
         at_boundary, _universe(), bands_by_exchange=_BANDS, tolerance_pct=_TOL
     )
@@ -127,7 +133,11 @@ def test_value_exactly_at_boundary_is_not_a_violation() -> None:
 
 
 def test_value_just_over_boundary_is_a_violation() -> None:
-    over = _returns_with([0.0751], ["2022-01-04"], ["VCB"])
+    # math.nextafter(threshold, inf) là giá trị float nhỏ nhất CHỨNG MINH được lớn hơn threshold —
+    # loại bỏ mọi nghi ngờ về sai số làm tròn khi so với giá trị "gõ tay lớn hơn một chút".
+    threshold = _BANDS["HOSE"] + _TOL
+    just_over = math.nextafter(threshold, math.inf)
+    over = _returns_with([just_over], ["2022-01-04"], ["VCB"])
     out = find_price_limit_violations(
         over, _universe(), bands_by_exchange=_BANDS, tolerance_pct=_TOL
     )
@@ -195,6 +205,38 @@ def test_output_sorted_by_excess_descending() -> None:
     )
     assert list(out["excess"]) == sorted(out["excess"], reverse=True)
     assert out.iloc[0]["date"] == pd.Timestamp("2025-03-03")
+
+
+def test_ties_in_excess_break_deterministically_by_date_then_ticker() -> None:
+    # Hai mã, hai ngày, cùng |simple_return| -> cùng "excess". Không có unstable sort nào được
+    # tin cậy để quyết định thứ tự các dòng bằng nhau; sort phải có khóa phụ tường minh
+    # (date, rồi ticker) để artifact CSV có thứ tự lặp lại được giữa các lần chạy.
+    tied = _returns_with(
+        [0.12, 0.12, 0.12, 0.12],
+        ["2022-01-05", "2022-01-04", "2022-01-04", "2022-01-05"],
+        ["VCB", "VCB", "ACB", "ACB"],
+    )
+    universe_two = _universe(
+        exchange_periods=[[{"exchange": "HOSE"}], [{"exchange": "HOSE"}]]
+    )
+    out = find_price_limit_violations(
+        tied, universe_two, bands_by_exchange=_BANDS, tolerance_pct=_TOL
+    )
+    expected = [
+        (pd.Timestamp("2022-01-04"), "ACB"),
+        (pd.Timestamp("2022-01-04"), "VCB"),
+        (pd.Timestamp("2022-01-05"), "ACB"),
+        (pd.Timestamp("2022-01-05"), "VCB"),
+    ]
+    assert list(zip(out["date"], out["ticker"], strict=True)) == expected
+
+    # Đổi thứ tự input ngược lại: kết quả phải giống hệt — đây mới là phần chứng minh tính
+    # xác định, vì một unstable sort có thể tình cờ đúng thứ tự ở một chiều input.
+    tied_reversed = tied.iloc[::-1].reset_index(drop=True)
+    out_reversed = find_price_limit_violations(
+        tied_reversed, universe_two, bands_by_exchange=_BANDS, tolerance_pct=_TOL
+    )
+    assert list(zip(out_reversed["date"], out_reversed["ticker"], strict=True)) == expected
 
 
 def test_unknown_exchange_raises_naming_available_bands() -> None:
