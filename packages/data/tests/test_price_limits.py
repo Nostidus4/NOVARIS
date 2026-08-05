@@ -69,6 +69,30 @@ def test_overlapping_periods_raise() -> None:
         resolve_exchange_column(_returns(["2020-12-15"], ["ACB"]), overlapped)
 
 
+def test_multi_ticker_interleaved_rows_resolve_independently() -> None:
+    # Trình pipeline thật gọi resolve_exchange_column một lần cho cả 8 mã, xen kẽ theo ngày —
+    # không nhóm theo ticker như các test trên. Dùng index không mặc định để phơi ra bất kỳ
+    # nhầm lẫn positional-vs-label nào trong `resolved[in_period] = ...`, và bố trí ACB ở cả
+    # hai phía của mốc chuyển sàn để phơi ra bộ đếm `hits` bị rò rỉ giữa các ticker.
+    frame = pd.DataFrame(
+        {
+            "date": pd.to_datetime(
+                ["2020-11-30", "2020-01-01", "2020-12-01", "2021-01-01"]
+            ),
+            "ticker": ["ACB", "VCB", "ACB", "VCB"],
+        },
+        index=pd.Index([5, 2, 9, 7]),
+    )
+
+    out = resolve_exchange_column(frame, _universe())
+
+    assert out.index.equals(frame.index)
+    assert out.loc[5] == "HNX"
+    assert out.loc[2] == "HOSE"
+    assert out.loc[9] == "HOSE"
+    assert out.loc[7] == "HOSE"
+
+
 def test_empty_periods_raise() -> None:
     empty = _universe(exchange_periods=[[], [{"exchange": "HOSE"}]])
     with pytest.raises(ValueError, match="ACB"):
