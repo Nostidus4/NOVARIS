@@ -277,3 +277,40 @@ def test_write_violations_writes_even_when_empty(tmp_path) -> None:
     out = write_violations(empty, tmp_path / "reports" / "price_limit_violations.csv")
     assert out.exists()
     assert pd.read_csv(out).empty
+
+
+def test_write_violations_round_trips_columns_and_row_order(tmp_path) -> None:
+    """Khung có dữ liệu, đã sort theo `excess` giảm dần trước khi truyền vào (đúng như CLI làm) —
+    phải đọc lại được ĐÚNG bộ cột và ĐÚNG thứ tự dòng. Bug `to_csv` xáo trộn dòng hoặc rớt cột sẽ
+    không bị `test_write_violations_writes_even_when_empty` bắt (khung đó không có dòng nào để mà
+    xáo trộn), nên cần một test riêng trên khung 3 dòng.
+    """
+    columns = [
+        "date",
+        "ticker",
+        "exchange",
+        "simple_return",
+        "band",
+        "tolerance",
+        "excess",
+    ]
+    populated = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2025-03-03", "2025-10-13", "2021-07-09"]),
+            "ticker": ["VCB", "VIC", "MWG"],
+            "exchange": ["HOSE", "HOSE", "HOSE"],
+            "simple_return": [-0.331104, 0.144290, 0.125638],
+            "band": [0.07, 0.07, 0.07],
+            "tolerance": [0.005, 0.005, 0.005],
+            "excess": [0.261104, 0.074290, 0.055638],
+        }
+    )[columns]
+
+    out = write_violations(
+        populated, tmp_path / "reports" / "price_limit_violations.csv"
+    )
+    read_back = pd.read_csv(out, parse_dates=["date"])
+
+    assert list(read_back.columns) == columns
+    assert list(read_back["ticker"]) == ["VCB", "VIC", "MWG"]
+    assert list(read_back["excess"]) == sorted(read_back["excess"], reverse=True)
