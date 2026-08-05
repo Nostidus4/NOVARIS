@@ -90,6 +90,23 @@ def test_quality_missing_bands_by_exchange_key_exits_nonzero_naming_key(
     assert "bands_by_exchange" in result.output
 
 
+def test_quality_scalar_price_limits_exits_nonzero_not_a_traceback(
+    tmp_path: Path,
+) -> None:
+    """`price_limits: 0.07` (scalar thay vì mapping) — kiểu YAML plausible do gõ nhầm section.
+    `price_limits_cfg["bands_by_exchange"]` raise `TypeError` (không subscript được float bằng
+    chuỗi), không phải `KeyError` — guard phải bắt cả hai (Minor 5, review round cuối)."""
+    config_path = _write_config(tmp_path, with_price_limits=True)
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config["price_limits"] = 0.07
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    result = runner.invoke(app, ["quality", "--config", str(config_path)])
+    assert result.exit_code == 1, result.output
+    assert "✗" in result.output
+    assert "price_limits" in result.output
+
+
 def test_quality_with_full_config_does_not_hit_the_guard(tmp_path: Path) -> None:
     """Kiểm soát: config đầy đủ phải đi qua đoạn `try`/`except` (không exit 1 vì thiếu key)."""
     result = _run(tmp_path, with_price_limits=True)
