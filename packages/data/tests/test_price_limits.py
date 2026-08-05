@@ -236,7 +236,9 @@ def test_ties_in_excess_break_deterministically_by_date_then_ticker() -> None:
     out_reversed = find_price_limit_violations(
         tied_reversed, universe_two, bands_by_exchange=_BANDS, tolerance_pct=_TOL
     )
-    assert list(zip(out_reversed["date"], out_reversed["ticker"], strict=True)) == expected
+    assert (
+        list(zip(out_reversed["date"], out_reversed["ticker"], strict=True)) == expected
+    )
 
 
 def test_unknown_exchange_raises_naming_available_bands() -> None:
