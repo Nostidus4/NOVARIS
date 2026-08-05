@@ -19,7 +19,7 @@ from typing import Any
 
 import pandas as pd
 
-_VIOLATION_COLUMNS = [
+VIOLATION_COLUMNS = [
     "date",
     "ticker",
     "exchange",
@@ -30,24 +30,96 @@ _VIOLATION_COLUMNS = [
 ]
 
 
+def _is_periods_shape(periods: Any) -> bool:
+    """`True` khi `periods` là sequence các mapping — KHÔNG chấp nhận `str`.
+
+    `str` cũng là `Sequence` trong Python, nên `isinstance(x, Sequence)` một mình sẽ cho qua
+    một chuỗi ký tự (đúng dạng sinh ra bởi round-trip YAML → CSV → `pd.read_csv`, xem docstring
+    `_periods_by_ticker`). Phải loại `str` tường minh trước khi kiểm tra `Sequence`.
+    """
+    if isinstance(periods, str):
+        return False
+    if not isinstance(periods, Sequence):
+        return False
+    return all(isinstance(item, Mapping) for item in periods)
+
+
+def _period_exchange(ticker: str, period: Mapping[str, Any]) -> str:
+    """`period["exchange"]` với lỗi có ngữ cảnh thay vì `KeyError` trần."""
+    exchange = period.get("exchange")
+    if exchange is None:
+        raise ValueError(
+            f"Ticker {ticker!r} có một period trong exchange_periods thiếu khoá 'exchange': "
+            f"{dict(period)!r}. Sửa configs/universe.yaml."
+        )
+    return str(exchange)
+
+
+def _period_in_force(ticker: str, periods: Sequence[Mapping[str, Any]]) -> str:
+    """Sàn của period đang có hiệu lực "hiện tại" — period không có `until` (mở), hoặc nếu mọi
+    period đều đã đóng thì period có `until` muộn nhất."""
+    open_ended = [p for p in periods if p.get("until") is None]
+    candidate = (
+        open_ended[-1]
+        if open_ended
+        else max(periods, key=lambda p: pd.Timestamp(p.get("until")))
+    )
+    return _period_exchange(ticker, candidate)
+
+
 def _periods_by_ticker(
     universe: pd.DataFrame,
 ) -> dict[str, Sequence[Mapping[str, Any]]]:
-    """`ticker -> exchange_periods`, báo lỗi ngay nếu thiếu hoặc rỗng."""
+    """`ticker -> exchange_periods`, báo lỗi ngay nếu thiếu, rỗng, sai dạng, hoặc lệch
+    `exchange_current`.
+
+    `configs/universe.yaml` mang lịch sử sàn của mỗi ticker ba lần: `exchange_current` (máy đọc
+    được), `exchange_history` (văn xuôi), `exchange_periods` (máy đọc được, dùng để resolve biên
+    độ). Chỉ `exchange_periods` được đọc ở đây — nếu nó lệch với `exchange_current` thì một trong
+    hai đã bị sửa mà quên sửa cái kia, và triệu chứng duy nhất là một con số vi phạm không ai có
+    baseline để so sánh. Vì vậy khi `universe` có cột `exchange_current`, period đang có hiệu lực
+    "hiện tại" của mỗi ticker phải khớp giá trị đó.
+
+    `exchange_periods` cũng có thể tới dưới dạng chuỗi repr Python (`"[{'exchange': 'HOSE'}]"`)
+    nếu nó đi qua round-trip `registry.save_universe_and_sources` (ghi CSV) rồi
+    `loader.load_data("universe")` (đọc lại bằng `pd.read_csv`, vốn không parse `list[dict]`) —
+    trường hợp đó phải bị từ chối tường minh ở đây, không được lặp ký tự của chuỗi rồi chết ở tầng
+    dưới với `AttributeError` vô nghĩa.
+    """
     if "exchange_periods" not in universe.columns:
         raise ValueError(
             "universe thiếu cột 'exchange_periods' — không resolve được sàn theo ngày. "
             "Thêm trường này vào configs/universe.yaml (xem registry._UNIVERSE_COLUMNS)."
         )
+    has_current = "exchange_current" in universe.columns
     out: dict[str, Sequence[Mapping[str, Any]]] = {}
     for row in universe.itertuples(index=False):
+        ticker = str(row.ticker)
         periods = row.exchange_periods
-        if periods is None or len(periods) == 0:
+        if not _is_periods_shape(periods):
             raise ValueError(
-                f"Ticker {row.ticker!r} có exchange_periods rỗng trong configs/universe.yaml — "
+                f"Ticker {ticker!r} có exchange_periods sai dạng: kỳ vọng list[dict], nhận "
+                f"{type(periods).__name__} = {periods!r}. Nguyên nhân thường gặp: universe đã đi "
+                "qua round-trip registry.save_universe_and_sources (ghi CSV) rồi "
+                "pd.read_csv (đọc lại) — CSV không giữ được kiểu list[dict], cột đó thành chuỗi "
+                "repr. Đọc universe qua configs/universe.yaml (registry.load_universe), không qua "
+                "CSV đã ghi, nếu cần exchange_periods."
+            )
+        if len(periods) == 0:
+            raise ValueError(
+                f"Ticker {ticker!r} có exchange_periods rỗng trong configs/universe.yaml — "
                 "không suy ra được biên độ. Không có fallback theo thiết kế."
             )
-        out[str(row.ticker)] = periods
+        if has_current:
+            declared = str(row.exchange_current)
+            in_force = _period_in_force(ticker, periods)
+            if in_force != declared:
+                raise ValueError(
+                    f"Ticker {ticker!r}: exchange_periods cho thấy sàn đang hiệu lực là "
+                    f"{in_force!r}, nhưng exchange_current lại ghi {declared!r} trong "
+                    "configs/universe.yaml — hai trường lệch nhau. Đồng bộ lại cả hai."
+                )
+        out[ticker] = periods
     return out
 
 
@@ -82,7 +154,7 @@ def resolve_exchange_column(returns: pd.DataFrame, universe: pd.DataFrame) -> pd
             if end is not None:
                 in_period &= dates <= pd.Timestamp(end)
             hits += in_period.astype(int)
-            resolved[in_period] = str(period["exchange"])
+            resolved[in_period] = _period_exchange(ticker, period)
 
         overlapping = is_ticker & (hits > 1)
         if overlapping.any():
@@ -129,6 +201,14 @@ def find_price_limit_violations(
 
     Trả DataFrame RỖNG đúng cột khi sạch, không bao giờ `None` — caller không phải rẽ nhánh.
     """
+    missing_cols = [
+        c for c in ("date", "ticker", "simple_return") if c not in returns.columns
+    ]
+    if missing_cols:
+        raise ValueError(
+            f"returns thiếu cột {missing_cols} — không phải khung `returns.parquet` hợp lệ "
+            f"(schemas/returns.py). Cột hiện có: {list(returns.columns)}."
+        )
     if tolerance_pct < 0:
         raise ValueError(
             f"tolerance_pct phải >= 0, nhận {tolerance_pct} "
@@ -144,9 +224,13 @@ def find_price_limit_violations(
     exchange_col = resolve_exchange_column(returns, universe)
     unknown = sorted(set(exchange_col.dropna()) - set(bands_by_exchange))
     if unknown:
+        affected = sorted(
+            returns.loc[exchange_col.isin(unknown), "ticker"].astype(str).unique()
+        )
         raise ValueError(
             f"Không có biên độ cho sàn {unknown} trong configs/data.yaml "
-            f"(price_limits.bands_by_exchange hiện có: {sorted(bands_by_exchange)})."
+            f"(price_limits.bands_by_exchange hiện có: {sorted(bands_by_exchange)}). "
+            f"Mã bị ảnh hưởng: {affected}."
         )
 
     frame = pd.DataFrame(
@@ -166,7 +250,7 @@ def find_price_limit_violations(
         frame["simple_return"].abs() > frame["band"] + tolerance_pct
     )
 
-    violations = frame.loc[is_violation, _VIOLATION_COLUMNS]
+    violations = frame.loc[is_violation, VIOLATION_COLUMNS]
     return violations.sort_values(
         ["excess", "date", "ticker"], ascending=[False, True, True]
     ).reset_index(drop=True)

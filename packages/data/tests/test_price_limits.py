@@ -105,6 +105,55 @@ def test_empty_periods_raise() -> None:
         resolve_exchange_column(_returns(["2022-01-04"], ["ACB"]), empty)
 
 
+def test_exchange_current_mismatch_with_periods_raises_naming_both_values() -> None:
+    """`exchange_current` và `exchange_periods` là hai nguồn ghi lịch sử sàn độc lập trong
+    configs/universe.yaml — chỉ `exchange_periods` được đọc, nên nếu chúng lệch nhau (một cái
+    được sửa, cái kia bị quên) thì phải nổ lỗi ngay, không được im lặng dùng `exchange_periods`
+    và bỏ qua `exchange_current` (finding Important 1, review round cuối).
+    """
+    mismatched = pd.DataFrame(
+        {
+            "ticker": ["ACB"],
+            "exchange_current": ["HNX"],  # cố tình lệch: period đang hiệu lực là HOSE
+            "exchange_periods": [[{"exchange": "HOSE"}]],
+        }
+    )
+    with pytest.raises(ValueError, match="ACB.*HOSE.*HNX|ACB.*HNX.*HOSE"):
+        resolve_exchange_column(_returns(["2022-01-04"], ["ACB"]), mismatched)
+
+
+def test_exchange_current_absent_column_does_not_trigger_cross_check() -> None:
+    """Universe không có cột `exchange_current` (vd. các test helper thuần trong module này)
+    phải tiếp tục hoạt động không bị chặn bởi validation mới — guard trên sự hiện diện của cột."""
+    out = resolve_exchange_column(
+        _returns(["2022-01-04"], ["VCB"]),
+        _universe(),  # _universe() không có exchange_current
+    )
+    assert list(out) == ["HOSE"]
+
+
+def test_exchange_periods_as_repr_string_raises_naming_ticker() -> None:
+    """Round-trip YAML → `registry.save_universe_and_sources` (CSV) → `pd.read_csv` biến
+    `exchange_periods` (list[dict]) thành chuỗi repr Python. Một `str` cũng là `Sequence` nên
+    `isinstance(x, Sequence)` một mình sẽ cho qua — phải loại `str` tường minh (finding
+    Important 3, review round cuối)."""
+    malformed = pd.DataFrame(
+        {"ticker": ["ACB"], "exchange_periods": ["[{'exchange': 'HOSE'}]"]}
+    )
+    with pytest.raises(ValueError, match="ACB"):
+        resolve_exchange_column(_returns(["2022-01-04"], ["ACB"]), malformed)
+
+
+def test_period_missing_exchange_key_raises_naming_ticker() -> None:
+    """Period thiếu khoá 'exchange' phải raise `ValueError` có ngữ cảnh, không phải `KeyError`
+    trần (Minor 3, review round cuối)."""
+    bad_period = _universe(
+        exchange_periods=[[{"until": "2020-11-30"}], [{"exchange": "HOSE"}]]
+    )
+    with pytest.raises(ValueError, match="ACB"):
+        resolve_exchange_column(_returns(["2020-01-04"], ["ACB"]), bad_period)
+
+
 _BANDS = {"HOSE": 0.07, "HNX": 0.10}
 _TOL = 0.005
 

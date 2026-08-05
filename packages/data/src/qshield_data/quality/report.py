@@ -27,7 +27,27 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
             "2007-11-15",
         ),
         ("exchange_current", "string", "-", "Sàn hiện tại", "HOSE"),
-        ("exchange_history", "string", "-", "Lịch sử chuyển sàn", "HNX→HOSE 2020"),
+        (
+            "exchange_history",
+            "string",
+            "-",
+            "Lịch sử chuyển sàn (văn xuôi)",
+            "HNX→HOSE 2020",
+        ),
+        (
+            "exchange_periods",
+            "list[dict]",
+            "-",
+            (
+                "Lịch sử chuyển sàn dạng máy đọc được, dùng để resolve biên độ giá theo ngày "
+                "(quality.price_limits). Mỗi phần tử {exchange, from?, until?}, biên đóng. "
+                "Phải khớp exchange_current ở period hiện hành."
+            ),
+            (
+                "[{'exchange': 'HNX', 'until': '2020-11-30'}, "
+                "{'exchange': 'HOSE', 'from': '2020-12-01'}]"
+            ),
+        ),
         ("data_source", "string", "enum", "Nguồn tải giá chính: yahoo | dnse", "dnse"),
     ],
     "prices_adjusted": [
