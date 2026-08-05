@@ -5,3 +5,4 @@ DQ-003,Không có volume âm,MUST_PASS,PASS,0,AC-DAT-005
 DQ-004,Không có giá trước first_trading_date,MUST_PASS,PASS,0,"AC-DAT-011, PR-DAT-017"
 DQ-005,Universe = 8 tickers,MUST_PASS,PASS,8,"AC-DAT-001, PR-DAT-001"
 DQ-006,Train/Val/Test không giao nhau,MUST_PASS,PASS,0,"AC-DAT-009, PR-DAT-013"
+DQ-007,Return ngày trong biên độ sàn,WARN,WARN,24,docs/perf/2026-08-05-kurtosis-fail-vcb.md
