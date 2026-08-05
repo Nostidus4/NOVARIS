@@ -5,6 +5,7 @@ from qshield_data.quality.checks import (
     check_no_negative_volume,
     check_no_pre_listing,
     check_positive_prices,
+    check_price_limit,
     check_split_no_overlap,
     check_universe_count,
     run_all_checks,
@@ -80,12 +81,83 @@ def test_check_split_no_overlap() -> None:
     assert check_split_no_overlap(overlapping)["status"] == "FAIL"
 
 
+_NO_VIOLATIONS = pd.DataFrame(
+    columns=[
+        "date",
+        "ticker",
+        "exchange",
+        "simple_return",
+        "band",
+        "tolerance",
+        "excess",
+    ]
+)
+
+
+def test_check_price_limit_passes_when_empty() -> None:
+    result = check_price_limit(_NO_VIOLATIONS)
+    assert result["check_id"] == "DQ-007"
+    assert result["status"] == "PASS"
+    assert result["count"] == 0
+
+
+def test_check_price_limit_warns_and_never_blocks() -> None:
+    violations = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2025-03-03"]),
+            "ticker": ["VCB"],
+            "exchange": ["HOSE"],
+            "simple_return": [-0.331104],
+            "band": [0.07],
+            "tolerance": [0.005],
+            "excess": [0.261104],
+        }
+    )
+    result = check_price_limit(violations)
+    assert result["status"] == "WARN"
+    assert result["count"] == 1
+    assert result["type"] == "WARN"
+
+
+def test_run_all_checks_stays_green_with_violations_present() -> None:
+    prices = _prices()
+    returns = pd.DataFrame({"date": prices["date"], "split": ["train", "train"]})
+    violations = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2025-03-03"]),
+            "ticker": ["VCB"],
+            "exchange": ["HOSE"],
+            "simple_return": [-0.331104],
+            "band": [0.07],
+            "tolerance": [0.005],
+            "excess": [0.261104],
+        }
+    )
+    report_df, all_pass = run_all_checks(
+        prices,
+        _UNIVERSE,
+        returns,
+        expected_universe_count=2,
+        price_limit_violations=violations,
+    )
+
+    assert all_pass is True
+    assert len(report_df) == 7
+    dq007 = report_df.loc[report_df["check_id"] == "DQ-007"].iloc[0]
+    assert dq007["status"] == "WARN"
+    assert dq007["count"] == 1
+
+
 def test_run_all_checks_all_pass() -> None:
     prices = _prices()
     returns = pd.DataFrame({"date": prices["date"], "split": ["train", "train"]})
     report_df, all_pass = run_all_checks(
-        prices, _UNIVERSE, returns, expected_universe_count=2
+        prices,
+        _UNIVERSE,
+        returns,
+        expected_universe_count=2,
+        price_limit_violations=_NO_VIOLATIONS,
     )
 
     assert all_pass is True
-    assert len(report_df) == 6
+    assert len(report_df) == 7
