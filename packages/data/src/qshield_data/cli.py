@@ -347,10 +347,15 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
         price_limits_cfg = cfg["price_limits"]
         bands = price_limits_cfg["bands_by_exchange"]
         tolerance = price_limits_cfg["tolerance_pct"]
-    except KeyError as exc:
+    except (KeyError, TypeError) as exc:
+        # KeyError: thiếu hẳn khóa (vd. không có `price_limits` hoặc không có `bands_by_exchange`).
+        # TypeError: khóa có mặt nhưng không phải mapping (vd. `price_limits: 0.07` — một số vô
+        # tình được viết ở chỗ lẽ ra phải là section — thì `price_limits_cfg["bands_by_exchange"]`
+        # không raise KeyError mà raise TypeError vì không subscript được bằng chuỗi).
         typer.echo(
-            f"✗ Thiếu khóa {exc.args[0]!r} trong configs/data.yaml (price_limits) — "
-            "không chạy được DQ-007.",
+            f"✗ configs/data.yaml (price_limits) thiếu khóa hoặc sai kiểu: {exc} — "
+            "không chạy được DQ-007. Cần price_limits.bands_by_exchange (mapping) và "
+            "price_limits.tolerance_pct (số).",
             err=True,
         )
         raise typer.Exit(code=1) from exc
@@ -417,6 +422,7 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
         "eligibility_daily": paths.processed_dir / "eligibility_daily.parquet",
         "data_dictionary": dict_out,
         "data_quality_report": paths.reports_root / "data_quality_report.csv",
+        "price_limit_violations": paths.reports_root / "price_limit_violations.csv",
     }
 
     row_counts = {}
