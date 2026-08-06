@@ -1,0 +1,51 @@
+{
+  "var_0": 0.07515758149676588,
+  "cvar_0": 0.11003244127376074,
+  "portfolio_weights": {
+    "ACB": 0.125,
+    "CTG": 0.125,
+    "FPT": 0.125,
+    "HPG": 0.125,
+    "MWG": 0.125,
+    "VCB": 0.125,
+    "VIC": 0.125,
+    "VNM": 0.125
+  },
+  "alpha": 0.95,
+  "cash_weight": 0.0,
+  "ticker_order": [
+    "ACB",
+    "CTG",
+    "VCB",
+    "HPG",
+    "VIC",
+    "MWG",
+    "VNM",
+    "FPT"
+  ],
+  "risk_metrics": {
+    "expected_horizon_return": 0.007642819245082122,
+    "worst_scenario_max_drawdown": -0.21028107917316885,
+    "var": {
+      "0.95": 0.07515758149676588,
+      "0.975": 0.09493018471386508,
+      "0.99": 0.1182996039755117
+    },
+    "cvar": {
+      "0.95": 0.11003244127376074,
+      "0.975": 0.13270021542475424,
+      "0.99": 0.17078071168166903
+    },
+    "tail_counts": {
+      "0.95": 25,
+      "0.975": 13,
+      "0.99": 5
+    },
+    "scenario_count": 500,
+    "units": "decimal_nav"
+  },
+  "evaluation_date": "2026-07-30",
+  "target_regime": "volatile",
+  "input_source": "real",
+  "scenario_run_id": "run_20260806_205517"
+}

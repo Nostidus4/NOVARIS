@@ -47,7 +47,7 @@ tại (phần lớn còn là scaffold — file `.py` rỗng chỉ có một dòn
 
 | Thư mục | Có gì bên trong (hiện tại) | Nhiệm vụ |
 |---|---|---|
-| `configs/` | 7 file `.yaml` (`base`, `universe`, `data`, `regime`, `scenarios`, `risk`, `quantum`) + `uat/` (3 kịch bản). Tham số đã khóa đã điền sẵn; phần chưa chốt để `null` kèm `TODO(Tên người)`. | Nơi **duy nhất** chứa tham số của toàn hệ thống — không hard-code trong code. |
+| `configs/` | 7 file `.yaml` (`base`, `universe`, `data`, `regime`, `scenarios`, `risk`, `quantum`) + `uat/` (3 kịch bản) + `profiles/` (`demo_fast.yaml`, `workflow_update.yaml`, `README.md`). Tham số đã khóa đã điền sẵn; phần chưa chốt để `null` kèm `TODO(Tên người)`. | Nơi **duy nhất** chứa tham số của toàn hệ thống — không hard-code trong code. `profiles/` là contract cấp cao: `workflow_update` (2026-08-06, team chốt làm baseline chính thức — 30 mã/top-10/20-bit) vs `demo_fast` (8 mã, code hiện tại đang chạy scope này, chưa bắt kịp baseline) — xem `README.md` gốc mục "Profile" và `docs/limitations.md` §1. |
 | `packages/` | 6 package Python độc lập (`contracts`, `data`, `ai`, `risk`, `quantum`, `pipeline`), mỗi package có `src/` + `tests/`. | Chứa **toàn bộ trí tuệ của hệ thống**: từ đọc dữ liệu thô đến giải QUBO. Không biết gì về web/HTTP. |
 | ├─ `packages/contracts/` | `schemas/`, `mocks/`, `config.py`, `paths.py`, `runs.py`, `validate.py`, `enums.py` | Hợp đồng dữ liệu dạng code — mọi package khác phụ thuộc vào đây (xem `docs/architecture/data_contracts.md`). |
 | ├─ `packages/data/` | `sources/`, `clean/`, `quality/`, `returns.py`, `features.py`, `split.py`, `manifest.py` | Thu thập, làm sạch, tạo feature và version hóa dữ liệu. |
