@@ -1,0 +1,63 @@
+{
+  "run_id": "run_20260806_213710",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-downstream-provisional-v1",
+  "config_hash": "f423312f2d5b1f633555345fbd42850ea62e3acd7d4a93b156f99801e8587704",
+  "input_source": "mock",
+  "evaluation_date": "mock",
+  "scenario_count": 500,
+  "ticker_order": [
+    "ACB",
+    "CTG",
+    "VCB",
+    "HPG",
+    "VIC",
+    "MWG",
+    "VNM",
+    "FPT"
+  ],
+  "portfolio_weights": {
+    "ACB": 0.125,
+    "CTG": 0.125,
+    "VCB": 0.125,
+    "HPG": 0.125,
+    "VIC": 0.125,
+    "MWG": 0.125,
+    "VNM": 0.125,
+    "FPT": 0.125
+  },
+  "cash_weight": 0.0,
+  "candidate_order_hash": "d41d31e06d7f98d5b13fb4d9319bf84a49e047eb6ebea2a5f93e09997b8d3456",
+  "candidate_count": 8,
+  "total_decision_bits": 16,
+  "cvar_alpha_primary": 0.95,
+  "loss_sign_convention": "positive_is_loss",
+  "metrics": {
+    "expected_horizon_return": -0.011288032616060347,
+    "worst_scenario_max_drawdown": -0.1838791611112025,
+    "var": {
+      "0.95": 0.10428908473222354,
+      "0.975": 0.12459771518967884,
+      "0.99": 0.1461771023797063
+    },
+    "cvar": {
+      "0.95": 0.12830712793681204,
+      "0.975": 0.14362570587177043,
+      "0.99": 0.15666914264851772
+    },
+    "tail_counts": {
+      "0.95": 25,
+      "0.975": 13,
+      "0.99": 5
+    },
+    "scenario_count": 500,
+    "units": "decimal_nav"
+  },
+  "target_cash_increment": 0.1,
+  "quantum_constraints": {},
+  "warnings": [
+    "PROVISIONAL financial/candidate parameters; NON_BASELINE_RUN.",
+    "UNDERFILLED_CANDIDATES_8_OF_10"
+  ]
+}

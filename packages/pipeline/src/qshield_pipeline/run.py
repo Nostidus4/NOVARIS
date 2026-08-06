@@ -136,3 +136,71 @@ def run_all(config_path: Path, *, mock: bool = False) -> str | None:
 
     logger.info("Pipeline hoàn tất — toàn bộ %d chặng PASS.", len(STAGE_ORDER))
     return ctx.run_id
+
+
+def run_downstream(
+    config_path: Path,
+    profile_path: Path,
+    override_path: Path,
+    *,
+    mock: bool = False,
+) -> str | None:
+    """Run the provisional four-level branch from Risk handoff through final accounting.
+
+    This intentionally does not run Data/Regime/Scenarios. It consumes the current scenario
+    artifact, or deterministic mock scenarios when requested, and scales dimensions from
+    ``M=min(N_eligible, 10)``: 16 bits today and 20 bits once ten candidates are available.
+    """
+    cfg = Config.load_profiled(config_path, profile_path, override_path)
+    runtime = cfg.workflow_runtime()
+    if runtime.profile_status != "NON_BASELINE_RUN":
+        raise ValueError(
+            "The underfilled downstream development command requires NON_BASELINE_RUN."
+        )
+    ctx = PipelineRunContext(cfg)
+    logger = ctx.logger
+    resolved_config_path = ctx.resolve_config_path(cfg, config_path)
+    mock_flag = ["--mock"] if mock else []
+    profile_args = [
+        "--profile",
+        str(profile_path),
+        "--override",
+        str(override_path),
+    ]
+    stages = (
+        (
+            "risk_workflow",
+            "qshield_risk.cli",
+            "prepare-workflow",
+            [*mock_flag, *profile_args],
+        ),
+        (
+            "quantum_workflow",
+            "qshield_quantum.cli",
+            "workflow",
+            profile_args,
+        ),
+        (
+            "rerank_polish",
+            "qshield_risk.cli",
+            "rerank-polish",
+            [*mock_flag, *profile_args],
+        ),
+    )
+    logger.info(
+        "Bắt đầu downstream NON_BASELINE_RUN — run_id=%s, candidates=%d, bits=%d.",
+        ctx.run_id,
+        runtime.candidate_count,
+        runtime.total_decision_bits,
+    )
+    for index, (stage, module, command, extra_args) in enumerate(stages, start=1):
+        logger.info("[%d/%d] %s", index, len(stages), STAGE_LABELS[stage])
+        result = _run_stage_subprocess(
+            module, command, resolved_config_path, list(extra_args)
+        )
+        if result.returncode != 0:
+            raise StageError(
+                stage, f"tiến trình con thoát với exit code {result.returncode}"
+            )
+    logger.info("Downstream NON_BASELINE_RUN hoàn tất — 3/3 chặng PASS.")
+    return ctx.run_id

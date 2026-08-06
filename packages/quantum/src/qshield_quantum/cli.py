@@ -9,6 +9,7 @@ DUY NHẤT được phép trong chiều phụ thuộc một chiều (CLAUDE.md q
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -22,6 +23,10 @@ from qshield_contracts.config import Config
 from qshield_contracts.enums import ArtifactMode, SolverKind, Stage
 from qshield_contracts.paths import ArtifactPaths
 from qshield_contracts.runs import RunContext
+from qshield_contracts.schemas.downstream import (
+    validate_candidate_top10,
+    validate_objective_samples,
+)
 from qshield_contracts.schemas.optimization import QaoaResult, validate_qaoa_result
 from qshield_contracts.schemas.risk import ActionEffectsSchema, PairwiseEffectsSchema
 from qshield_contracts.validate import validate_or_raise
@@ -37,6 +42,12 @@ from qshield_quantum.io import action_effects_to_arrays, pairwise_to_matrix
 from qshield_quantum.solvers.exact import solve_exact
 from qshield_quantum.solvers.qaoa import solve_qaoa
 from qshield_quantum.verify.consistency import verify_consistency
+from qshield_quantum.workflow import (
+    exact_result_payload,
+    qaoa_result_payload,
+    run_four_level_workflow,
+    validate_four_level_profile,
+)
 
 
 def _fast_exit_if_standalone() -> None:
@@ -161,6 +172,158 @@ def _resolved_penalty(cfg: Config, g, C, c) -> tuple[float, float, float, bool]:
         else float(p)
     )
     return lambda_1, lambda_2, p, is_provisional
+
+
+@app.command("workflow")
+def solve_workflow(
+    config: str = _CONFIG_OPTION,
+    profile: str = typer.Option(
+        "configs/profiles/workflow_update.yaml",
+        "--profile",
+        help="Profile declaring top10_four_level_actions",
+    ),
+    override: str = typer.Option(
+        "configs/provisional/workflow_update_downstream.yaml",
+        "--override",
+        help="Explicit NON_BASELINE runtime/financial override",
+    ),
+    no_warm_start: bool = typer.Option(
+        False, "--no-warm-start", help="Disable Qiskit warm-start even when installed"
+    ),
+) -> None:
+    """Consume the workflow risk handoff and emit model/exact/QAOA candidate artifacts."""
+    cfg = Config.load_profiled(Path(config), Path(profile), Path(override))
+    quantum = validate_four_level_profile(cfg)
+    paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
+    context = RunContext(cfg, paths)
+    logger = context.logger("quantum_workflow")
+    paths.ensure(Stage.QUBO)
+
+    candidate_path = paths.for_stage(Stage.RISK, "candidate_top10.csv")
+    samples_path = paths.for_stage(Stage.RISK, "qubo_objective_samples.parquet")
+    summary_path = paths.for_stage(Stage.RISK, "risk_summary.json")
+    missing = [
+        path
+        for path in (candidate_path, samples_path, summary_path)
+        if not path.exists()
+    ]
+    if missing:
+        raise typer.BadParameter(
+            f"Missing workflow risk handoff files: {[str(path) for path in missing]}."
+        )
+    candidates = pd.read_csv(candidate_path)
+    samples = pd.read_parquet(samples_path)
+    risk_summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    runtime = cfg.workflow_runtime()
+    validate_candidate_top10(candidates, expected_candidates=runtime.candidate_count)
+    validate_objective_samples(samples, expected_bit_count=runtime.total_decision_bits)
+    profile_id = str((cfg.get("profile", {}) or {}).get("id", ""))
+    handoff_profiles = set(candidates["profile_id"].astype(str))
+    if handoff_profiles != {profile_id} or risk_summary.get("profile_id") != profile_id:
+        raise typer.BadParameter(
+            "Risk handoff profile_id does not match the resolved Quantum profile."
+        )
+
+    qaoa_cfg = dict(quantum.get("qaoa", {}) or {})
+    minimum_seeds = max(10, int(qaoa_cfg.get("min_seeds", 10)))
+    configured_seeds = qaoa_cfg.get("seeds")
+    seed_base = int(cfg.get("seed") or 0)
+    seeds = (
+        [int(seed) for seed in configured_seeds]
+        if configured_seeds
+        else [seed_base + offset for offset in range(minimum_seeds)]
+    )
+    if len(seeds) < minimum_seeds:
+        raise typer.BadParameter(
+            f"Workflow QAOA requires at least {minimum_seeds} seeds, got {len(seeds)}."
+        )
+    logger.info(
+        "Four-level workflow: %d candidates, %d bits, %d QAOA seeds.",
+        int(quantum["input_candidates"]),
+        int(quantum["bit_encoding"]["total_decision_bits"]),
+        len(seeds),
+    )
+    result = run_four_level_workflow(
+        candidates,
+        samples,
+        profile=cfg,
+        risk_summary=risk_summary,
+        seeds=seeds,
+        shots=int(qaoa_cfg.get("shots", 1024)),
+        maxiter=int(qaoa_cfg.get("optimizer_maxiter", 200)),
+        candidate_pool_size=20,
+        warm_start=not no_warm_start,
+    )
+
+    provenance = {
+        "run_id": context.run_id,
+        "profile_id": profile_id,
+        "profile_status": str((cfg.get("profile", {}) or {}).get("status", "")),
+        "config_version": str(
+            (cfg.get("provenance") or {}).get("config_version", "provisional-v1")
+        ),
+        "config_hash": str(risk_summary.get("config_hash", "")),
+        "candidate_order_hash": str(risk_summary.get("candidate_order_hash", "")),
+    }
+    model_payload = {
+        **provenance,
+        "mode": quantum["mode"],
+        "candidate_order": list(result.candidate_order),
+        "bit_encoding": {
+            "bits_per_candidate": 2,
+            "mapping": {"00": 0, "10": 10, "01": 20, "11": 30},
+        },
+        "target_column": result.target_column,
+        **result.model.to_dict(),
+    }
+    model_hash_payload = json.dumps(
+        model_payload, sort_keys=True, separators=(",", ":"), default=str
+    )
+    model_payload["qubo_hash"] = hashlib.sha256(
+        model_hash_payload.encode("utf-8")
+    ).hexdigest()
+    exact_payload = {
+        **provenance,
+        "qubo_hash": model_payload["qubo_hash"],
+        **exact_result_payload(result.exact),
+    }
+    qaoa_payload = {
+        **provenance,
+        "qubo_hash": model_payload["qubo_hash"],
+        **qaoa_result_payload(result.qaoa_by_seed, result.candidate_pool),
+    }
+    outputs = {
+        "qubo_model.json": model_payload,
+        "exact_solution.json": exact_payload,
+        "qaoa_results.json": qaoa_payload,
+        "workflow_benchmark.json": {
+            **provenance,
+            "qubo_hash": model_payload["qubo_hash"],
+            **result.benchmark,
+        },
+    }
+    for filename, payload in outputs.items():
+        paths.for_stage(Stage.QUBO, filename).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+    context.write_config_snapshot()
+    context.write_metrics(
+        {
+            "stage": "quantum",
+            "profile_id": model_payload["profile_id"],
+            "gate_status": "PASS",
+            "mode": quantum["mode"],
+            "evaluated_states": result.exact.evaluated_states,
+            "qaoa_seed_count": len(result.qaoa_by_seed),
+            "candidate_pool_size": len(result.candidate_pool),
+        }
+    )
+    typer.echo(
+        f"[quantum/workflow] OK — {result.exact.evaluated_states} states, "
+        f"{len(result.candidate_pool)} candidates → {paths.stage_dir(Stage.QUBO)}"
+    )
+    _fast_exit_if_standalone()
 
 
 @app.command()
@@ -329,6 +492,10 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
             "true_cvar_before/after = NaN, KHÔNG dùng làm bằng chứng baseline."
         )
     else:
+        if not isinstance(baseline, dict):
+            raise TypeError(
+                "[quantum] non-mock baseline_risk.json must decode to a mapping."
+            )
         scenario_cube = _load_scenario_cube(paths, tickers)
         bits = [int(b) for b in winning_bitstring]
         risk_eval = risk_evaluate(

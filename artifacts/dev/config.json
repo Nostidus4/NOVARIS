@@ -1,136 +1,181 @@
 {
-  "action_reduction_pct": 0.2,
-  "artifacts": {
-    "mode": "dev"
-  },
-  "backend": "simulator",
-  "block_length": 5,
-  "candidate_selection": {
-    "output_candidates": 10
-  },
-  "candidates": {
-    "covariance_type": [
-      "diag",
-      "full"
-    ],
-    "n_states": [
-      2,
-      3,
-      4,
-      5
-    ]
-  },
-  "champion": {
-    "covariance_type": "diag",
-    "n_states": 3
-  },
-  "corporate_actions": [
-    {
-      "adjustment_factor": 1.495,
-      "event_date": "2025-03-03",
-      "evidence": "docs/perf/2026-08-05-kurtosis-fail-vcb.md — Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE.",
-      "ticker": "VCB",
-      "type": "stock_dividend"
-    }
-  ],
-  "covariance_type": "diag",
-  "cvae": {
-    "enabled": false
-  },
-  "cvar_alpha": 0.95,
-  "data": {
-    "data_version": "v1.0.0",
-    "universe_as_of": "2026-08-03",
-    "universe_version": "v1.0"
-  },
-  "date_range": {
-    "asset_train_end": "2022-12-31",
-    "asset_train_start": "2018-07-02",
-    "market_train_end": "2022-12-31",
-    "market_train_start": "2016-01-01",
-    "test_end": "2026-07-31",
-    "test_start": "2024-01-01",
-    "validation_end": "2023-12-31",
-    "validation_start": "2023-01-01"
-  },
-  "eligibility": {
-    "min_coverage_pct": 0.98,
-    "min_turnover_20d_vnd": 1000000000
-  },
-  "evaluation_date": null,
   "expected_ticker_count": 8,
-  "fallback": {
-    "drawdown_threshold": -0.1,
-    "vol_quantile": 0.8
-  },
-  "feature_contract_version": "v0.2",
-  "features": {
-    "corr_window": 60,
-    "market_columns": [
-      "market_log_return",
-      "realized_vol_20d",
-      "drawdown",
-      "liquidity_20d"
-    ]
-  },
-  "frequency": "daily",
-  "gate": {
-    "min_mean_label_agreement": 0.6,
-    "min_state_occupancy": 0.02
-  },
-  "horizon_days": 20,
-  "k_actions": 3,
-  "logging": {
-    "level": "INFO",
-    "path": null
-  },
-  "min_history_sessions": 252,
-  "missing_data_policy": "no_forward_fill",
-  "n_iter": 500,
-  "n_states": 3,
-  "num_scenarios": 500,
-  "paths": {
-    "data_root": "data",
-    "reports_root": "reports"
-  },
-  "penalty": {
-    "P": null,
-    "lambda_1": null,
-    "lambda_2": null
-  },
-  "price_limits": {
-    "bands_by_exchange": {
-      "HNX": 0.1,
-      "HOSE": 0.07,
-      "UPCOM": 0.15
+  "tickers": [
+    {
+      "ticker": "ACB",
+      "yahoo_symbol": "ACB.VN",
+      "company_name": "Ngân hàng Á Châu",
+      "first_trading_date": "2006-11-21",
+      "exchange_current": "HOSE",
+      "exchange_history": "HNX→HOSE 2020-12",
+      "exchange_periods": [
+        {
+          "exchange": "HNX",
+          "until": "2020-11-30"
+        },
+        {
+          "exchange": "HOSE",
+          "from": "2020-12-01"
+        }
+      ],
+      "data_source": "dnse",
+      "notes": ""
     },
-    "tolerance_pct": 0.005
-  },
-  "qaoa": {
-    "min_seeds": 10,
-    "optimizer": "COBYLA",
-    "optimizer_maxiter": 200,
-    "p": 1,
-    "seeds": null,
-    "shots": 1024
-  },
-  "robustness_confidence_levels": [
-    0.975,
-    0.99
+    {
+      "ticker": "CTG",
+      "yahoo_symbol": "CTG.VN",
+      "company_name": "VietinBank",
+      "first_trading_date": "2009-07-16",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "VCB",
+      "yahoo_symbol": "VCB.VN",
+      "company_name": "Vietcombank",
+      "first_trading_date": "2009-06-30",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "HPG",
+      "yahoo_symbol": "HPG.VN",
+      "company_name": "Hoà Phát",
+      "first_trading_date": "2007-11-15",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "VIC",
+      "yahoo_symbol": "VIC.VN",
+      "company_name": "Vingroup",
+      "first_trading_date": "2007-09-19",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "MWG",
+      "yahoo_symbol": "MWG.VN",
+      "company_name": "Thế Giới Di Động",
+      "first_trading_date": "2014-07-14",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "VNM",
+      "yahoo_symbol": "VNM.VN",
+      "company_name": "Vinamilk",
+      "first_trading_date": "2006-01-19",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    },
+    {
+      "ticker": "FPT",
+      "yahoo_symbol": "FPT.VN",
+      "company_name": "FPT Corporation",
+      "first_trading_date": "2006-12-13",
+      "exchange_current": "HOSE",
+      "exchange_history": "-",
+      "exchange_periods": [
+        {
+          "exchange": "HOSE"
+        }
+      ],
+      "data_source": "yahoo",
+      "notes": ""
+    }
   ],
   "sample_portfolio_weights": {
     "ACB": 0.125,
     "CTG": 0.125,
-    "FPT": 0.125,
-    "HPG": 0.125,
-    "MWG": 0.125,
     "VCB": 0.125,
+    "HPG": 0.125,
     "VIC": 0.125,
-    "VNM": 0.125
+    "MWG": 0.125,
+    "VNM": 0.125,
+    "FPT": 0.125
   },
-  "scaler": "standard",
-  "scenario_seed": 20260804,
-  "seed": 20260804,
+  "snapshot_date": "2026-08-03",
+  "frequency": "daily",
+  "source": "yahoo_dnse_vnstock",
+  "date_range": {
+    "market_train_start": "2016-01-01",
+    "market_train_end": "2022-12-31",
+    "asset_train_start": "2018-07-02",
+    "asset_train_end": "2022-12-31",
+    "validation_start": "2023-01-01",
+    "validation_end": "2023-12-31",
+    "test_start": "2024-01-01",
+    "test_end": "2026-07-31"
+  },
+  "missing_data_policy": "no_forward_fill",
+  "min_history_sessions": 252,
+  "eligibility": {
+    "min_coverage_pct": 0.98,
+    "min_turnover_20d_vnd": 1000000000
+  },
+  "price_limits": {
+    "tolerance_pct": 0.005,
+    "bands_by_exchange": {
+      "HOSE": 0.07,
+      "HNX": 0.1,
+      "UPCOM": 0.15
+    }
+  },
+  "corporate_actions": [
+    {
+      "ticker": "VCB",
+      "event_date": "2025-03-03",
+      "type": "stock_dividend",
+      "adjustment_factor": 1.495,
+      "evidence": "docs/perf/2026-08-05-kurtosis-fail-vcb.md — Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE."
+    }
+  ],
+  "n_states": 3,
+  "n_iter": 500,
+  "covariance_type": "diag",
   "seeds": {
     "count": 10,
     "values": [
@@ -146,159 +191,688 @@
       1001
     ]
   },
-  "snapshot_date": "2026-08-03",
-  "source": "yahoo_dnse_vnstock",
-  "tickers": [
-    {
-      "company_name": "Ngân hàng Á Châu",
-      "data_source": "dnse",
-      "exchange_current": "HOSE",
-      "exchange_history": "HNX→HOSE 2020-12",
-      "exchange_periods": [
-        {
-          "exchange": "HNX",
-          "until": "2020-11-30"
-        },
-        {
-          "exchange": "HOSE",
-          "from": "2020-12-01"
-        }
-      ],
-      "first_trading_date": "2006-11-21",
-      "notes": "",
-      "ticker": "ACB",
-      "yahoo_symbol": "ACB.VN"
-    },
-    {
-      "company_name": "VietinBank",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2009-07-16",
-      "notes": "",
-      "ticker": "CTG",
-      "yahoo_symbol": "CTG.VN"
-    },
-    {
-      "company_name": "Vietcombank",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2009-06-30",
-      "notes": "",
-      "ticker": "VCB",
-      "yahoo_symbol": "VCB.VN"
-    },
-    {
-      "company_name": "Hoà Phát",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2007-11-15",
-      "notes": "",
-      "ticker": "HPG",
-      "yahoo_symbol": "HPG.VN"
-    },
-    {
-      "company_name": "Vingroup",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2007-09-19",
-      "notes": "",
-      "ticker": "VIC",
-      "yahoo_symbol": "VIC.VN"
-    },
-    {
-      "company_name": "Thế Giới Di Động",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2014-07-14",
-      "notes": "",
-      "ticker": "MWG",
-      "yahoo_symbol": "MWG.VN"
-    },
-    {
-      "company_name": "Vinamilk",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2006-01-19",
-      "notes": "",
-      "ticker": "VNM",
-      "yahoo_symbol": "VNM.VN"
-    },
-    {
-      "company_name": "FPT Corporation",
-      "data_source": "yahoo",
-      "exchange_current": "HOSE",
-      "exchange_history": "-",
-      "exchange_periods": [
-        {
-          "exchange": "HOSE"
-        }
-      ],
-      "first_trading_date": "2006-12-13",
-      "notes": "",
-      "ticker": "FPT",
-      "yahoo_symbol": "FPT.VN"
-    }
-  ],
-  "transaction_cost": {
-    "fee": 0.0015,
-    "liquidity_penalty": 0.0005,
-    "spread": 0.001
+  "feature_contract_version": "v0.2",
+  "features": {
+    "market_columns": [
+      "market_log_return",
+      "realized_vol_20d",
+      "drawdown",
+      "liquidity_20d"
+    ],
+    "corr_window": 60
   },
   "transforms": {
-    "mean_pairwise_corr_60d": "fisher_z",
-    "realized_vol_20d": "log"
+    "realized_vol_20d": "log",
+    "mean_pairwise_corr_60d": "fisher_z"
   },
+  "scaler": "standard",
+  "candidates": {
+    "n_states": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "covariance_type": [
+      "diag",
+      "full"
+    ]
+  },
+  "champion": {
+    "n_states": 3,
+    "covariance_type": "diag"
+  },
+  "gate": {
+    "min_state_occupancy": 0.02,
+    "min_mean_label_agreement": 0.6
+  },
+  "fallback": {
+    "vol_quantile": 0.8,
+    "drawdown_threshold": -0.1
+  },
+  "num_scenarios": 500,
+  "horizon_days": 20,
+  "block_length": 5,
+  "cvae": {
+    "enabled": false
+  },
+  "scenario_seed": 20260804,
+  "evaluation_date": null,
   "validation": {
-    "min_reference_windows": 30,
     "reference": "regime_matched_forward_windows",
+    "min_reference_windows": 30,
     "thresholds": {
+      "mean_abs_diff_max": 0.001,
+      "std_ratio_min": 0.8,
+      "std_ratio_max": 1.25,
+      "skew_abs_diff_max": 1.0,
+      "kurtosis_abs_diff_max": 5.0,
+      "quantile_rel_error_max": 0.25,
       "autocorr_abs_diff_max": 0.1,
       "corr_mean_abs_diff_max": 0.1,
-      "kurtosis_abs_diff_max": 5.0,
-      "mean_abs_diff_max": 0.001,
-      "quantile_rel_error_max": 0.25,
-      "skew_abs_diff_max": 1.0,
-      "std_ratio_max": 1.25,
-      "std_ratio_min": 0.8,
-      "tail_coverage_ratio_max": 2.0,
-      "tail_coverage_ratio_min": 0.5
+      "tail_coverage_ratio_min": 0.5,
+      "tail_coverage_ratio_max": 2.0
     }
   },
-  "weight_sum_tolerance": 1e-06
+  "cvar_alpha": 0.95,
+  "action_reduction_pct": 0.2,
+  "transaction_cost": {
+    "fee": 0.0015,
+    "spread": 0.001,
+    "liquidity_penalty": 0.0005
+  },
+  "weight_sum_tolerance": 1e-08,
+  "robustness_confidence_levels": [
+    0.975,
+    0.99
+  ],
+  "candidate_selection": {
+    "output_candidates": 10,
+    "output_filename": "candidate_top10.csv",
+    "selected_count": 8,
+    "underfilled": true,
+    "deterministic_order_required": true,
+    "ticker_source": "upstream_candidate_selection",
+    "score_weights": {
+      "marginal_10": 1.0,
+      "marginal_20": 1.0,
+      "marginal_30": 1.0,
+      "baseline_contribution": 1.0,
+      "transaction_cost": 1.0,
+      "liquidity_penalty": 1.0
+    }
+  },
+  "k_actions": 3,
+  "qaoa": {
+    "p": 1,
+    "shots": 1024,
+    "optimizer": "COBYLA",
+    "optimizer_maxiter": 200,
+    "min_seeds": 10,
+    "seeds": null
+  },
+  "penalty": {
+    "lambda_1": null,
+    "lambda_2": null,
+    "P": null
+  },
+  "backend": "simulator",
+  "seed": 20260804,
+  "artifacts": {
+    "mode": "dev",
+    "risk_summary": "risk_summary.json",
+    "objective_samples": "objective_samples.parquet",
+    "qubo_model": "qubo_model.json",
+    "exact_result": "exact_solution.json",
+    "qaoa_result": "qaoa_results.json",
+    "reranked_candidates": "reranked_candidates.csv",
+    "final_recommendation": "final_recommendation.json"
+  },
+  "logging": {
+    "level": "INFO",
+    "path": null
+  },
+  "data": {
+    "data_version": "v1.0.0",
+    "universe_version": "v1.0",
+    "universe_as_of": "2026-08-03",
+    "universe_mode": "fixed_snapshot_with_dynamic_eligibility",
+    "universe_family": "VN30",
+    "snapshot_date": "2026-08-03",
+    "expected_input_tickers": 30,
+    "ticker_source": "Universe Registry approved by Data Owner and Product Owner",
+    "ticker_list_status": "TBD_001",
+    "ticker_registry_required_columns": [
+      "ticker",
+      "yahoo_symbol",
+      "company_name",
+      "first_trading_date",
+      "exchange_current",
+      "exchange_history",
+      "data_source",
+      "adjusted_close_evidence",
+      "notes"
+    ],
+    "adjusted_price_policy": {
+      "required_field": "adjusted_close",
+      "return_calculation": "simple_return/log_return tinh tu adjusted_close",
+      "allowed_methods": [
+        "vendor_adjusted_close_with_documented_corporate_actions",
+        "self_adjusted_from_raw_close_and_corporate_actions",
+        "cross_checked_free_source_with_ADJ_VERIFIED_flag"
+      ],
+      "disallowed_methods": [
+        "Gan adjusted_close = close ma khong co evidence"
+      ],
+      "dnse_requirement": {
+        "current_repo_assumption": "DNSE Close = Adj Close",
+        "workflow_update_requirement": "Phai co evidence/cross-check truoc khi gan ADJ_VERIFIED"
+      }
+    },
+    "date_range": {
+      "market_train_start": "2016-01-01",
+      "asset_train_start": "2016-01-01",
+      "validation_start": "2023-01-01",
+      "test_start": "2024-01-01",
+      "test_end": "2026-07-31"
+    },
+    "eligibility": {
+      "dynamic_by_evaluation_date": true,
+      "min_history_sessions": 252,
+      "min_coverage_pct": 0.98,
+      "min_turnover_20d_vnd": 1000000000,
+      "excluded_tickers_must_have_reason_code": true
+    }
+  },
+  "paths": {
+    "data_root": "data",
+    "reports_root": "reports"
+  },
+  "profile": {
+    "id": "workflow_update_downstream",
+    "name": "Workflow update",
+    "status": "NON_BASELINE_RUN",
+    "owner": "Nguyen Thi Anh Ngoc",
+    "purpose": "Phat trien ban day du, co the dung cho UAT/baseline sau khi owner duyet",
+    "report_label": "Provisional downstream workflow - 8 candidates, 16 bits",
+    "allowed_for": [
+      "downstream_contract_development",
+      "integration_smoke_test"
+    ],
+    "not_allowed_for": [
+      "final_uat_baseline",
+      "product_claim_full_workflow",
+      "quantum_advantage_claim"
+    ],
+    "parent_profile_id": "workflow_update"
+  },
+  "governance": {
+    "source_of_truth": [
+      "NOVARIS_Q-SHIELD_Workflow_Updated.docx",
+      "docs/product/mvp_scope.md",
+      "docs/product/product_requirements.md",
+      "docs/product/user_stories_backlog.md",
+      "docs/product/acceptance_criteria.md",
+      "docs/product/rtm.md"
+    ],
+    "module_owners": {
+      "product_scope_uat": "Nguyen Thi Anh Ngoc",
+      "data_universe_eligibility": "Nguyen Do Minh Anh",
+      "regime_scenarios": "Nguyen Anh Tu",
+      "risk_candidate_engine": "Lieu Hoai Phuc",
+      "quantum_pipeline_dashboard": "Do Ngoc Tan"
+    },
+    "approval_gates": {
+      "data_gate": {
+        "owner": "Nguyen Do Minh Anh",
+        "required_outputs": [
+          "universe_30_asof_20260803.csv",
+          "data_quality_report.csv",
+          "adjusted_close_evidence_report",
+          "eligibility_daily.parquet"
+        ]
+      },
+      "scenario_gate": {
+        "owner": "Lieu Hoai Phuc",
+        "required_outputs": [
+          "scenario_validation.csv",
+          "scenario_manifest.json",
+          "regime_summary.json"
+        ]
+      },
+      "product_gate": {
+        "owner": "Nguyen Thi Anh Ngoc",
+        "required_outputs": [
+          "requirement_coverage_report",
+          "limitations_report",
+          "UAT_evidence"
+        ]
+      }
+    }
+  },
+  "regime": {
+    "engine": "GaussianHMM",
+    "champion": {
+      "n_states": 3,
+      "labels": [
+        "normal",
+        "volatile",
+        "stress"
+      ],
+      "covariance_type": "diag",
+      "n_iter": 500
+    },
+    "candidate_grid_must_be_reported": true,
+    "seeds": {
+      "count": 10,
+      "values": [
+        101,
+        202,
+        303,
+        404,
+        505,
+        606,
+        707,
+        808,
+        909,
+        1001
+      ]
+    },
+    "feature_contract_version": "v0.2",
+    "features": {
+      "market_columns": [
+        "market_log_return",
+        "realized_vol_20d",
+        "drawdown",
+        "liquidity_20d"
+      ],
+      "ai_computed_columns": [
+        "mean_pairwise_corr_60d"
+      ]
+    },
+    "labels_must_be_profile_based": true
+  },
+  "scenarios": {
+    "method": "moving_block_bootstrap",
+    "num_scenarios": {
+      "dev": 2000,
+      "final": 5000
+    },
+    "horizon_days": 20,
+    "block_length_default": 5,
+    "sensitivity_grid_required_before_final": {
+      "block_length": [
+        3,
+        5,
+        10,
+        20
+      ],
+      "num_scenarios": [
+        2000,
+        5000
+      ],
+      "seeds": [
+        101,
+        202,
+        303,
+        404,
+        505,
+        606,
+        707,
+        808,
+        909,
+        1001
+      ]
+    },
+    "target_regime_policy": "point_in_time_selected_regime",
+    "validation_gate": {
+      "owner": "Lieu Hoai Phuc",
+      "status": "MUST_BE_APPROVED",
+      "hard_fail_behavior": "no_baseline_without_approved_exception",
+      "thresholds": {
+        "mean_abs_diff_max": 0.001,
+        "std_ratio_min": 0.8,
+        "std_ratio_max": 1.25,
+        "skew_abs_diff_max": 1.0,
+        "kurtosis_abs_diff_max": 5.0,
+        "quantile_rel_error_max": 0.25,
+        "autocorr_abs_diff_max": 0.1,
+        "corr_mean_abs_diff_max": 0.1,
+        "tail_coverage_ratio_min": 0.5,
+        "tail_coverage_ratio_max": 2.0
+      }
+    }
+  },
+  "risk": {
+    "scope": "rank_30_select_top_10",
+    "cvar_alpha_primary": 0.95,
+    "robustness_confidence_levels": [
+      0.975,
+      0.99
+    ],
+    "baseline_metrics": [
+      "VaR_95",
+      "CVaR_95",
+      "VaR_97_5",
+      "CVaR_97_5",
+      "VaR_99",
+      "CVaR_99",
+      "expected_horizon_return",
+      "worst_scenario_max_drawdown",
+      "turnover",
+      "transaction_cost",
+      "liquidity_penalty",
+      "cash_generated"
+    ],
+    "candidate_selection": {
+      "enabled": true,
+      "input_assets": 30,
+      "output_candidates": 10,
+      "ranking_direction": "descending_net_risk_score",
+      "score_components": {
+        "benefit": [
+          "marginal_CVaR_reduction_10pct",
+          "marginal_CVaR_reduction_20pct",
+          "marginal_CVaR_reduction_30pct",
+          "baseline_CVaR_contribution"
+        ],
+        "cost": [
+          "transaction_fee",
+          "spread_cost",
+          "liquidity_penalty",
+          "constraint_penalty"
+        ]
+      },
+      "required_output_file": "candidate_top10.csv",
+      "required_columns": [
+        "rank",
+        "ticker",
+        "current_weight",
+        "eligible_status",
+        "baseline_CVaR_contribution",
+        "marginal_CVaR_reduction_10pct",
+        "marginal_CVaR_reduction_20pct",
+        "marginal_CVaR_reduction_30pct",
+        "transaction_cost_estimate",
+        "liquidity_penalty",
+        "net_risk_score",
+        "selected_top10",
+        "reason"
+      ]
+    },
+    "cash_budget": {
+      "required": true,
+      "source": "stress probability / approved policy",
+      "output": "B_t"
+    },
+    "transaction_cost": {
+      "fee": null,
+      "spread": null,
+      "liquidity_penalty": null,
+      "status": "TBD_002"
+    },
+    "handoff_to_quantum": {
+      "required": true,
+      "required_files": [
+        "candidate_top10.csv",
+        "qubo_objective_samples.parquet",
+        "risk_summary.json"
+      ],
+      "objective_samples": {
+        "minimum_count": 211,
+        "must_include": [
+          "all_zero_action",
+          "single_asset_actions",
+          "pairwise_interaction_actions",
+          "risk_top_candidate_actions"
+        ]
+      }
+    }
+  },
+  "quantum": {
+    "mode": "top10_four_level_actions",
+    "direct_30_asset_quantum_allowed": false,
+    "input_candidates": 8,
+    "action_levels_pct": [
+      0,
+      10,
+      20,
+      30
+    ],
+    "bit_encoding": {
+      "bits_per_asset": 2,
+      "asset_count": 8,
+      "total_decision_bits": 16,
+      "mapping": {
+        "00": 0,
+        "10": 10,
+        "01": 20,
+        "11": 30
+      },
+      "exact_reference_states": 65536
+    },
+    "exact_solver": {
+      "required": true,
+      "purpose": "benchmark QUBO 20 bit"
+    },
+    "qaoa": {
+      "p": 1,
+      "shots": 1024,
+      "optimizer": "COBYLA",
+      "optimizer_maxiter": 200,
+      "min_seeds": 10,
+      "seeds": [
+        101,
+        202,
+        303,
+        404,
+        505,
+        606,
+        707,
+        808,
+        909,
+        1001
+      ]
+    },
+    "reranking": {
+      "required": true,
+      "owner": "Lieu Hoai Phuc",
+      "metric": "true_CVaR_objective",
+      "top_distinct_feasible_bitstrings": "10_to_20"
+    },
+    "local_polishing": {
+      "required": true,
+      "owner": "Lieu Hoai Phuc",
+      "zero_action_lock": true,
+      "max_adjustment_pp": 5,
+      "final_reduction_bounds_pct": [
+        0,
+        30
+      ]
+    }
+  },
+  "pipeline": {
+    "stages": [
+      {
+        "id": "data",
+        "owner": "Nguyen Do Minh Anh",
+        "input": "30 VN30 tickers",
+        "output": "processed returns/features/eligibility"
+      },
+      {
+        "id": "regime",
+        "owner": "Nguyen Anh Tu",
+        "input": "market features + returns",
+        "output": "regime_daily.parquet + regime_summary.json"
+      },
+      {
+        "id": "scenarios",
+        "owner": "Nguyen Anh Tu",
+        "input": "regime + returns for 30 eligible assets",
+        "output": "scenario cube S x 20 x 30 + validation report"
+      },
+      {
+        "id": "risk_top10",
+        "owner": "Lieu Hoai Phuc",
+        "input": "portfolio + scenario cube + cost/liquidity",
+        "output": "candidate_top10.csv + risk_summary.json"
+      },
+      {
+        "id": "qubo_quantum",
+        "owner": "Do Ngoc Tan",
+        "input": "top 10 + QUBO handoff",
+        "output": "exact/QAOA candidate bitstrings"
+      },
+      {
+        "id": "rerank_polish",
+        "owner": "Lieu Hoai Phuc",
+        "input": "QAOA/exact candidates",
+        "output": "final recommendation"
+      },
+      {
+        "id": "dashboard_uat",
+        "owner": "Do Ngoc Tan + Nguyen Thi Anh Ngoc",
+        "input": "all approved artifacts",
+        "output": "dashboard + UAT evidence"
+      }
+    ]
+  },
+  "outputs": {
+    "required_artifacts": [
+      "data/metadata/universe_30_asof_20260803.csv",
+      "reports/data_quality_report.csv",
+      "data/processed/prices_adjusted.parquet",
+      "data/processed/returns.parquet",
+      "data/processed/market_features.parquet",
+      "data/processed/eligibility_daily.parquet",
+      "artifacts/regime/regime_daily.parquet",
+      "artifacts/regime/regime_summary.json",
+      "artifacts/scenarios/stress_scenarios.npz",
+      "artifacts/scenarios/scenario_manifest.json",
+      "reports/scenario_validation.csv",
+      "candidate_top10.csv",
+      "risk_summary.json",
+      "qubo_objective_samples.parquet",
+      "qubo_model.json",
+      "exact_solution.json",
+      "qaoa_results.json",
+      "reranked_candidates.csv",
+      "final_recommendation.json",
+      "dashboard_uat_evidence"
+    ],
+    "comparison_metrics_against_demo_fast": {
+      "risk_quality": [
+        "CVaR_reduction_pct",
+        "CVaR_97_5_reduction_pct",
+        "CVaR_99_reduction_pct",
+        "expected_return_sacrifice",
+        "worst_drawdown_reduction",
+        "cost_per_CVaR_reduction"
+      ],
+      "candidate_quality": [
+        "top10_risk_coverage_pct",
+        "rank_stability_across_seeds",
+        "top10_overlap_across_scenario_configs"
+      ],
+      "quantum_quality": [
+        "exact_best_objective",
+        "qaoa_best_objective",
+        "exact_vs_qaoa_gap",
+        "feasible_solution_rate",
+        "seed_stability"
+      ],
+      "operations": [
+        "runtime_seconds_by_stage",
+        "memory_peak_mb",
+        "artifact_size_mb",
+        "reproducibility_run_id",
+        "requirement_coverage_pct"
+      ]
+    }
+  },
+  "development_rules": [
+    "30 ma la universe dau vao cho Data/AI/Risk, khong phai 30 ma dua thang vao Quantum.",
+    "Risk phai chon dynamic top 10 truoc Quantum.",
+    "Quantum chi chay tren top 10 voi 20 bit.",
+    "Action grid bat buoc la 0/10/20/30%.",
+    "Neu dung 8 ma hoac action 20% duy nhat thi phai gan profile_id=demo_fast.",
+    "Khong duoc noi workflow update khong kha thi dua tren benchmark Quantum 30 ma, vi benchmark do sai flow.",
+    "Moi run baseline phai co run_id, config snapshot, data manifest va gate verdict."
+  ],
+  "provenance": {
+    "config_version": "workflow-update-downstream-provisional-v1",
+    "required_fields": [
+      "run_id",
+      "profile_id",
+      "profile_status",
+      "config_version",
+      "config_hash"
+    ],
+    "require_candidate_order_hash_from_qubo_onward": true,
+    "require_qubo_hash_from_solver_onward": true
+  },
+  "runtime": {
+    "candidate_count": 8,
+    "bits_per_candidate": 2,
+    "total_decision_bits": 16,
+    "action_levels_pct": [
+      0,
+      10,
+      20,
+      30
+    ],
+    "structured_sample_count": 137,
+    "structured_design": {
+      "intercept": 1,
+      "main_effects": 16,
+      "pairwise_effects": 120
+    },
+    "baseline_target": {
+      "candidate_count": 10,
+      "total_decision_bits": 20,
+      "structured_sample_count": 211
+    }
+  },
+  "maximum_reduction": 0.3,
+  "target_cash_increment": 0.1,
+  "financial_objective": {
+    "components": {
+      "cvar": {
+        "weight": 1.0,
+        "scale": 0.1
+      },
+      "return_sacrifice": {
+        "weight": 0.25,
+        "scale": 0.05
+      },
+      "transaction_cost": {
+        "weight": 0.25,
+        "scale": 0.01
+      },
+      "turnover": {
+        "weight": 0.05,
+        "scale": 0.2
+      },
+      "liquidity_penalty": {
+        "weight": 0.25,
+        "scale": 0.01
+      },
+      "cash_budget_deviation": {
+        "weight": 0.5,
+        "scale": 0.1
+      }
+    }
+  },
+  "objective_sampling": {
+    "policy_version": "provisional-structured-v1"
+  },
+  "quantum_constraints": {},
+  "local_polishing": {
+    "max_adjustment_pp": 5,
+    "final_reduction_bounds_pct": [
+      0,
+      30
+    ]
+  },
+  "encoding": {
+    "mapping": {
+      "00": 0,
+      "10": 10,
+      "01": 20,
+      "11": 30
+    },
+    "candidate_order_filename": "candidate_order.json"
+  },
+  "gates": {
+    "surrogate_validation_required_before_solver": true,
+    "exact_reference_required": true,
+    "rerank_by_true_cvar_required": true,
+    "local_polishing_required": true,
+    "zero_action_lock": true
+  },
+  "disclosures": [
+    "NON_BASELINE_RUN: only 8 downstream candidates are currently available.",
+    "The 16-bit/137-sample run cannot be used as workflow_update baseline evidence.",
+    "No ticker universe is declared here; candidate identity comes from upstream artifacts."
+  ]
 }
