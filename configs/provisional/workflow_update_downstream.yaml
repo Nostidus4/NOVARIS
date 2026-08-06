@@ -1,0 +1,136 @@
+# Provisional, underfilled development path for downstream contract integration only.
+# This is NOT the workflow_update baseline and must never be reported as baseline/UAT evidence.
+
+profile:
+  id: workflow_update_downstream
+  parent_profile_id: workflow_update
+  status: NON_BASELINE_RUN
+  report_label: "Provisional downstream workflow - 8 candidates, 16 bits"
+  allowed_for:
+    - downstream_contract_development
+    - integration_smoke_test
+  not_allowed_for:
+    - final_uat_baseline
+    - product_claim_full_workflow
+    - quantum_advantage_claim
+
+provenance:
+  config_version: "workflow-update-downstream-provisional-v1"
+  required_fields:
+    - run_id
+    - profile_id
+    - profile_status
+    - config_version
+    - config_hash
+  require_candidate_order_hash_from_qubo_onward: true
+  require_qubo_hash_from_solver_onward: true
+
+runtime:
+  candidate_count: 8
+  bits_per_candidate: 2
+  total_decision_bits: 16
+  action_levels_pct: [0, 10, 20, 30]
+  structured_sample_count: 137
+  structured_design:
+    intercept: 1
+    main_effects: 16
+    pairwise_effects: 120
+  baseline_target:
+    candidate_count: 10
+    total_decision_bits: 20
+    structured_sample_count: 211
+
+# Explicit development-only financial assumptions. Every value below remains provisional and
+# therefore cannot be used as baseline/UAT evidence until its named owner approves it.
+weight_sum_tolerance: 0.00000001
+maximum_reduction: 0.30
+target_cash_increment: 0.10
+
+transaction_cost:
+  fee: 0.0015
+  spread: 0.0010
+  liquidity_penalty: 0.0005
+
+financial_objective:
+  components:
+    cvar: {weight: 1.0, scale: 0.10}
+    return_sacrifice: {weight: 0.25, scale: 0.05}
+    transaction_cost: {weight: 0.25, scale: 0.01}
+    turnover: {weight: 0.05, scale: 0.20}
+    liquidity_penalty: {weight: 0.25, scale: 0.01}
+    cash_budget_deviation: {weight: 0.50, scale: 0.10}
+
+candidate_selection:
+  output_filename: candidate_top10.csv
+  output_candidates: 10
+  selected_count: 8
+  underfilled: true
+  deterministic_order_required: true
+  ticker_source: upstream_candidate_selection
+  score_weights:
+    marginal_10: 1.0
+    marginal_20: 1.0
+    marginal_30: 1.0
+    baseline_contribution: 1.0
+    transaction_cost: 1.0
+    liquidity_penalty: 1.0
+
+objective_sampling:
+  policy_version: "provisional-structured-v1"
+
+quantum_constraints: {}
+
+local_polishing:
+  max_adjustment_pp: 5
+  final_reduction_bounds_pct: [0, 30]
+
+quantum:
+  mode: top10_four_level_actions
+  input_candidates: 8
+  action_levels_pct: [0, 10, 20, 30]
+  bit_encoding:
+    bits_per_asset: 2
+    asset_count: 8
+    total_decision_bits: 16
+    mapping:
+      "00": 0
+      "10": 10
+      "01": 20
+      "11": 30
+    exact_reference_states: 65536
+  qaoa:
+    p: 1
+    shots: 1024
+    optimizer: COBYLA
+    optimizer_maxiter: 200
+    min_seeds: 10
+    seeds: [101, 202, 303, 404, 505, 606, 707, 808, 909, 1001]
+
+encoding:
+  mapping:
+    "00": 0
+    "10": 10
+    "01": 20
+    "11": 30
+  candidate_order_filename: candidate_order.json
+
+artifacts:
+  risk_summary: risk_summary.json
+  objective_samples: objective_samples.parquet
+  qubo_model: qubo_model.json
+  exact_result: exact_solution.json
+  qaoa_result: qaoa_results.json
+  reranked_candidates: reranked_candidates.csv
+  final_recommendation: final_recommendation.json
+
+gates:
+  surrogate_validation_required_before_solver: true
+  exact_reference_required: true
+  rerank_by_true_cvar_required: true
+  local_polishing_required: true
+  zero_action_lock: true
+
+disclosures:
+  - "NON_BASELINE_RUN: only 8 downstream candidates are currently available."
+  - "The 16-bit/137-sample run cannot be used as workflow_update baseline evidence."
+  - "No ticker universe is declared here; candidate identity comes from upstream artifacts."

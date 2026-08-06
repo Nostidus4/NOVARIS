@@ -8,15 +8,21 @@ import numpy as np
 import numpy.typing as npt
 
 
-def validate_ticker_order(ticker_order: Sequence[str], *, expected_assets: int = 8) -> tuple[str, ...]:
-    """Require the locked number of unique non-empty scenario ticker symbols."""
+def validate_ticker_order(
+    ticker_order: Sequence[str], *, expected_assets: int | None = None
+) -> tuple[str, ...]:
+    """Require unique non-empty scenario tickers, optionally checking their count."""
     tickers = tuple(str(ticker) for ticker in ticker_order)
-    if len(tickers) != expected_assets:
+    if not tickers:
+        raise ValueError("[risk.portfolio] ticker_order must not be empty.")
+    if expected_assets is not None and len(tickers) != expected_assets:
         raise ValueError(
             f"[risk.portfolio] ticker_order has {len(tickers)} entries; expected {expected_assets}."
         )
     if any(not ticker for ticker in tickers) or len(set(tickers)) != len(tickers):
-        raise ValueError("[risk.portfolio] ticker_order must contain unique, non-empty tickers.")
+        raise ValueError(
+            "[risk.portfolio] ticker_order must contain unique, non-empty tickers."
+        )
     return tickers
 
 
@@ -45,7 +51,9 @@ def align_portfolio_weights(
         )
     aligned = np.asarray([weights[ticker] for ticker in tickers], dtype=float)
     if not np.isfinite(aligned).all() or np.any(aligned < 0.0):
-        raise ValueError("[risk.portfolio] stock weights must be finite and non-negative.")
+        raise ValueError(
+            "[risk.portfolio] stock weights must be finite and non-negative."
+        )
     if not np.isfinite(cash_weight) or cash_weight < 0.0:
         raise ValueError(
             f"[risk.portfolio] cash_weight must be finite and non-negative, got {cash_weight!r}."

@@ -1,0 +1,70 @@
+{
+  "run_id": "run_20260806_213710",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-downstream-provisional-v1",
+  "config_hash": "f423312f2d5b1f633555345fbd42850ea62e3acd7d4a93b156f99801e8587704",
+  "candidate_count": 8,
+  "bits_per_candidate": 2,
+  "total_decision_bits": 16,
+  "risk_coverage": 1.0,
+  "underfilled": true,
+  "deviation": "UNDERFILLED_CANDIDATES_8_OF_10",
+  "bit_mapping": {
+    "00": 0,
+    "10": 10,
+    "01": 20,
+    "11": 30
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "ticker": "FPT",
+      "current_weight": 0.125,
+      "candidate_score": 0.03157846110575619
+    },
+    {
+      "rank": 2,
+      "ticker": "VNM",
+      "current_weight": 0.125,
+      "candidate_score": 0.029344009783762403
+    },
+    {
+      "rank": 3,
+      "ticker": "MWG",
+      "current_weight": 0.125,
+      "candidate_score": 0.02810210894771035
+    },
+    {
+      "rank": 4,
+      "ticker": "HPG",
+      "current_weight": 0.125,
+      "candidate_score": 0.02530189347817343
+    },
+    {
+      "rank": 5,
+      "ticker": "VIC",
+      "current_weight": 0.125,
+      "candidate_score": 0.02508698106639805
+    },
+    {
+      "rank": 6,
+      "ticker": "VCB",
+      "current_weight": 0.125,
+      "candidate_score": 0.02290204902869368
+    },
+    {
+      "rank": 7,
+      "ticker": "CTG",
+      "current_weight": 0.125,
+      "candidate_score": 0.020639069528383475
+    },
+    {
+      "rank": 8,
+      "ticker": "ACB",
+      "current_weight": 0.125,
+      "candidate_score": 0.019619174945194755
+    }
+  ],
+  "candidate_order_hash": "d41d31e06d7f98d5b13fb4d9319bf84a49e047eb6ebea2a5f93e09997b8d3456"
+}

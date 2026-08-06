@@ -43,3 +43,4 @@
 2026-08-06 20:56:35,453 | qshield.run_20260806_205520.quantum | WARNING | QAOA KHÔNG thắng classical baseline (greedy theo g) — báo cáo trung thực theo CLAUDE.md quy tắc 18, không diễn giải có lợi cho QAOA.
 2026-08-06 20:56:35,460 | qshield.run_20260806_205520.quantum | INFO | True CVaR (qshield_risk.evaluate): before=0.110032 after=0.100704 (improves_cvar)
 2026-08-06 20:56:35,470 | qshield.run_20260806_205424.pipeline | INFO | Pipeline hoàn tất — toàn bộ 5 chặng PASS.
+2026-08-06 21:39:05,227 | qshield.run_20260806_213905.quantum_workflow | INFO | Four-level workflow: 8 candidates, 16 bits, 10 QAOA seeds.

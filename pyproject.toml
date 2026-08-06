@@ -63,14 +63,8 @@ qshield-pipeline = { workspace = true, editable = true }
 qshield-api = { workspace = true, editable = true }
 
 [tool.pytest.ini_options]
-# `--import-mode=importlib`: mỗi package trong workspace (contracts/data/ai/risk/quantum/pipeline)
-# có `tests/__init__.py` riêng nhưng CÙNG tên package "tests" — import-mode mặc định ("prepend")
-# nạp mọi test module vào chung một khóa `sys.modules["tests"]`, nên `uv run pytest` (chạy toàn
-# repo, đúng lệnh CLAUDE.md công bố) chỉ collect được package đầu tiên, các package sau lỗi
-# `ModuleNotFoundError: No module named 'tests.test_xxx'`. `importlib` định danh module theo
-# đường dẫn file thật, không đụng `sys.modules["tests"]` dùng chung — fix tận gốc, không phải
-# workaround (xem docs pytest: "import-mode=importlib" là cách khuyến nghị cho đúng tình huống
-# nhiều thư mục `tests/` trùng tên trong monorepo).
+# `--import-mode=importlib` cùng với test directories không có `__init__.py` ngăn các workspace
+# members cùng đăng ký module/plugin tên `tests` hoặc `tests.conftest` khi collect toàn monorepo.
 addopts = ["--import-mode=importlib"]
 markers = [
     "slow: chạy nhiều seed/nhiều candidate — bỏ qua bằng -m 'not slow'",

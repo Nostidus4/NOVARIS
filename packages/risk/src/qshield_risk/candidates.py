@@ -18,12 +18,22 @@ universe grows past `output_candidates` (30-ticker `workflow_update` scope).
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 
 from qshield_risk.costs import CostRates, transaction_costs
+from qshield_risk.evaluate import required_float
+from qshield_risk.metrics import alpha_key, value_at_risk
+from qshield_risk.objective import financial_objective
+from qshield_risk.paths import (
+    asset_growth_paths,
+    portfolio_wealth_paths,
+    validate_scenario_cube,
+)
+from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_order
 
 REQUIRED_COLUMNS = (
     "rank",
@@ -142,3 +152,162 @@ def select_candidates(
         )
 
     return frame[list(REQUIRED_COLUMNS)]
+
+
+def select_four_level_candidates(
+    scenarios: np.ndarray,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    eligibility: Mapping[str, bool],
+    config: Mapping[str, Any],
+    *,
+    output_candidates: int = 10,
+    ineligible_reasons: Mapping[str, str] | None = None,
+) -> pd.DataFrame:
+    """Rank held-eligible assets using true 10/20/30% marginal CVaR reductions.
+
+    The selected count is exactly ``min(N_eligible, output_candidates)``. All source assets remain
+    in the explanatory table; ineligible and zero-weight assets carry an explicit reason.
+    """
+    if output_candidates <= 0:
+        raise ValueError("[risk.candidates] output_candidates must be positive.")
+    tickers = validate_ticker_order(ticker_order)
+    cube = validate_scenario_cube(
+        scenarios,
+        expected_horizon=int(config.get("horizon_days", 20)),
+        expected_assets=len(tickers),
+    )
+    tolerance = required_float(config, "weight_sum_tolerance")
+    aligned = align_portfolio_weights(
+        weights, tickers, cash_weight, tolerance=tolerance
+    )
+    missing = sorted(set(tickers) - set(eligibility))
+    if missing:
+        raise ValueError(f"[risk.candidates] eligibility missing tickers: {missing}.")
+
+    selection_config = config.get("candidate_selection")
+    if not isinstance(selection_config, Mapping):
+        raise TypeError("[risk.candidates] candidate_selection mapping is required.")
+    raw_score_weights = selection_config.get("score_weights")
+    score_names = (
+        "marginal_10",
+        "marginal_20",
+        "marginal_30",
+        "baseline_contribution",
+        "transaction_cost",
+        "liquidity_penalty",
+    )
+    if not isinstance(raw_score_weights, Mapping):
+        raise TypeError(
+            "[risk.candidates] candidate_selection.score_weights is required."
+        )
+    score_weights: dict[str, float] = {}
+    for name in score_names:
+        value = raw_score_weights.get(name)
+        if value is None or not np.isfinite(float(value)):
+            raise ValueError(
+                f"[risk.candidates] score weight {name!r} must be explicit and finite."
+            )
+        score_weights[name] = float(value)
+
+    zero = np.zeros(len(tickers), dtype=float)
+    baseline = financial_objective(zero, cube, tickers, weights, cash_weight, config)
+    primary_key = alpha_key(required_float(config, "cvar_alpha"))
+    baseline_cvar = baseline.before.cvar[primary_key]
+    wealth = portfolio_wealth_paths(cube, aligned, cash_weight)
+    portfolio_losses = 1.0 - wealth[:, -1]
+    tail = portfolio_losses >= value_at_risk(
+        portfolio_losses, required_float(config, "cvar_alpha")
+    )
+    asset_terminal_losses = 1.0 - asset_growth_paths(cube)[:, -1, :]
+    contributions = (asset_terminal_losses[tail] * aligned).mean(axis=0)
+
+    reasons = ineligible_reasons or {}
+    rows: list[dict[str, object]] = []
+    for index, ticker in enumerate(tickers):
+        held_eligible = bool(eligibility[ticker]) and aligned[index] > tolerance
+        marginals: dict[int, float] = {}
+        evaluations = {}
+        for pct in (10, 20, 30):
+            reductions = zero.copy()
+            reductions[index] = pct / 100
+            evaluation = financial_objective(
+                reductions, cube, tickers, weights, cash_weight, config
+            )
+            evaluations[pct] = evaluation
+            marginals[pct] = baseline_cvar - evaluation.after.cvar[primary_key]
+        cost = evaluations[30].trade.costs
+        transaction_cost = cost.fee + cost.spread
+        score = (
+            score_weights["marginal_10"] * marginals[10]
+            + score_weights["marginal_20"] * marginals[20]
+            + score_weights["marginal_30"] * marginals[30]
+            + score_weights["baseline_contribution"] * float(contributions[index])
+            - score_weights["transaction_cost"] * transaction_cost
+            - score_weights["liquidity_penalty"] * cost.liquidity_penalty
+        )
+        reason = (
+            "eligible"
+            if held_eligible
+            else reasons.get(
+                ticker, "not_held" if aligned[index] <= tolerance else "ineligible"
+            )
+        )
+        rows.append(
+            {
+                "ticker": ticker,
+                "current_weight": float(aligned[index]),
+                "eligible_status": "eligible" if held_eligible else "ineligible",
+                "baseline_CVaR_contribution": float(contributions[index]),
+                "marginal_CVaR_reduction_10pct": marginals[10],
+                "marginal_CVaR_reduction_20pct": marginals[20],
+                "marginal_CVaR_reduction_30pct": marginals[30],
+                "transaction_cost_estimate": transaction_cost,
+                "liquidity_penalty": cost.liquidity_penalty,
+                "net_risk_score": float(score),
+                "reason": reason,
+            }
+        )
+
+    frame = pd.DataFrame(rows)
+    frame["_eligible"] = frame["eligible_status"].eq("eligible")
+    frame = frame.sort_values(
+        ["_eligible", "net_risk_score", "ticker"],
+        ascending=[False, False, True],
+        kind="stable",
+    ).reset_index(drop=True)
+    frame.insert(0, "rank", frame.index + 1)
+    eligible_count = int(frame["_eligible"].sum())
+    selected_count = min(eligible_count, output_candidates)
+    frame["selected_top10"] = frame["_eligible"] & (frame["rank"] <= selected_count)
+    underfilled_reason = (
+        None
+        if eligible_count >= output_candidates
+        else f"underfilled: Neligible={eligible_count} < requested={output_candidates}"
+    )
+    frame["underfilled_reason"] = underfilled_reason
+    frame["note"] = None
+    return frame.drop(columns="_eligible")
+
+
+def candidate_order(candidate_frame: pd.DataFrame) -> list[dict[str, object]]:
+    """Return immutable decoding order from selected rows, sorted by candidate rank."""
+    required = {"rank", "ticker", "current_weight", "net_risk_score", "selected_top10"}
+    missing = sorted(required - set(candidate_frame.columns))
+    if missing:
+        raise ValueError(
+            f"[risk.candidates] candidate frame missing columns: {missing}."
+        )
+    selected = candidate_frame.loc[candidate_frame["selected_top10"]].sort_values(
+        ["rank", "ticker"], kind="stable"
+    )
+    return [
+        {
+            "rank": int(row.rank),
+            "ticker": str(row.ticker),
+            "current_weight": float(row.current_weight),
+            "candidate_score": float(row.net_risk_score),
+        }
+        for row in selected.itertuples(index=False)
+    ]

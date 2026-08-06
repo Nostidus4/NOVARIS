@@ -61,7 +61,7 @@ tại (phần lớn còn là scaffold — file `.py` rỗng chỉ có một dòn
 | `artifacts/` | `dev/` (đường dẫn cố định), `runs/run_YYYYMMDD_HHMM/` (có version) — hiện rỗng | Output của pipeline: regime, scenarios, risk, optimization theo từng `run_id`. |
 | `reports/` | `uat/` — hiện rỗng | Báo cáo cho người đọc: data quality report, benchmark, model card, UAT report. |
 | `notebooks/` | `exploration/`, `validation/`, `benchmarks/` — hiện rỗng | Notebook thử nghiệm; theo `CLAUDE.md`, **không được** chứa core logic — chỉ gọi lại hàm trong `packages/`. |
-| `docs/` | `Structure.md` (file này), `limitations.md`, `product/` (6 file), `architecture/` (2 file), `runbook/` (3 file) | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook vận hành. |
+| `docs/` | `Structure.md` (file này), `limitations.md`, `benchmark_plan.md`, `product/`, `architecture/`, `runbook/`, `perf/` (báo cáo hiện thực & đo đạc theo ngày), `handoffs/` (input còn chờ owner duyệt) | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook vận hành, kế hoạch benchmark. |
 | `tests/` | `contracts/`, `integration/`, `e2e/` | Test tích hợp & end-to-end xuyên nhiều package; unit test nằm trong từng `packages/*/tests/`. |
 | File gốc | `pyproject.toml` (uv workspace root), `uv.lock` (1 lockfile chung), `README.md`, `CLAUDE.md`, `main.py`, `.python-version`, `.gitignore` | Cấu hình workspace và hai tài liệu bắt buộc đọc trước khi code. |
 
