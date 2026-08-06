@@ -1,5 +1,7 @@
 # Nguyễn Đỗ Minh Anh - duplicate, missing, outlier, leakage, overlap.
-"""Data Quality Gate — port từ `CLEAN.ipynb` (6 check DQ-001..DQ-006, `PR-DAT-*`/`AC-DAT-*`).
+"""Data Quality Gate — 6 check DQ-001..DQ-006 port từ `CLEAN.ipynb` (`PR-DAT-*`/`AC-DAT-*`), cộng
+DQ-007 mới trên nhánh này (phát hiện vượt biên độ giá — notebook gốc không có check tương đương,
+xem `docs/perf/2026-08-05-kurtosis-fail-vcb.md`).
 
 Mỗi check trả về `dict` (`check_id, check_name, type, status, count, trace`) — `run_all_checks`
 gộp thành DataFrame và cờ `all_pass` (chỉ tính trên check `type == "MUST_PASS"`, theo đúng gate
@@ -9,6 +11,8 @@ gộp thành DataFrame và cờ `all_pass` (chỉ tính trên check `type == "MU
 from __future__ import annotations
 
 import pandas as pd
+
+from qshield_data.quality.price_limits import VIOLATION_COLUMNS
 
 
 def check_no_duplicates(prices: pd.DataFrame) -> dict:
@@ -110,16 +114,57 @@ def check_split_no_overlap(returns: pd.DataFrame) -> dict:
     }
 
 
+def check_price_limit(violations: pd.DataFrame) -> dict:
+    """DQ-007 — return ngày vượt biên độ dao động của sàn.
+
+    Nhận sẵn khung vi phạm đã tính (`quality.price_limits.find_price_limit_violations`) thay vì tự
+    tính, để công việc chỉ chạy đúng một lần và module này giữ nguyên vai trò đăng ký check.
+
+    `type="WARN"`: check này KHÔNG chặn gate. Số dòng bị gắn cờ hiện tại và bao nhiêu trong số đó
+    đã được xác nhận là bất khả thi thật sự (khác với biến động giá thường) xem
+    `docs/perf/2026-08-05-kurtosis-fail-vcb.md` — chỉ khi phần lớn dòng đã được phân loại rõ mới
+    nên nâng check này lên MUST_PASS; để MUST_PASS khi còn dòng chưa phân loại sẽ chặn mọi lần
+    chạy data vì lý do chưa xác định.
+
+    `trace` trỏ tới doc điều tra vì chưa có requirement id nào phủ kiểm tra biên độ giá — việc
+    đăng ký id trong `docs/product/rtm.md` thuộc Minh Anh và Ngọc.
+
+    Raise `ValueError` nếu `violations` thiếu cột — tránh nhận nhầm khung khác (vd. `returns`
+    thô) rồi vẫn báo một `WARN` có vẻ hợp lý bằng `len()` của nó (CLAUDE.md quy tắc 12).
+    """
+    missing = [c for c in VIOLATION_COLUMNS if c not in violations.columns]
+    if missing:
+        raise ValueError(
+            f"violations thiếu cột {missing} — không phải khung từ "
+            "quality.price_limits.find_price_limit_violations. Cột hiện có: "
+            f"{list(violations.columns)}."
+        )
+    n_violations = len(violations)
+    return {
+        "check_id": "DQ-007",
+        "check_name": "Return ngày trong biên độ sàn",
+        "type": "WARN",
+        "status": "PASS" if n_violations == 0 else "WARN",
+        "count": n_violations,
+        "trace": "docs/perf/2026-08-05-kurtosis-fail-vcb.md",
+    }
+
+
 def run_all_checks(
     prices: pd.DataFrame,
     universe: pd.DataFrame,
     returns: pd.DataFrame,
     expected_universe_count: int,
+    price_limit_violations: pd.DataFrame,
 ) -> tuple[pd.DataFrame, bool]:
-    """Chạy toàn bộ 6 check, trả `(report_df, all_pass)`.
+    """Chạy toàn bộ 7 check, trả `(report_df, all_pass)`.
 
     `all_pass` chỉ tính trên các check `type == "MUST_PASS"` — đúng theo `GATE-02 Data`
-    (`docs/product/rtm.md` §3).
+    (`docs/product/rtm.md` §3). DQ-007 là `WARN` nên không ảnh hưởng `all_pass`.
+
+    `price_limit_violations` là tham số BẮT BUỘC, không có mặc định: một mặc định "rỗng" sẽ khiến
+    DQ-007 báo PASS mỗi khi caller quên nối dây — âm tính giả im lặng ở đúng cái check sinh ra để
+    bắt lỗi im lặng.
     """
     checks = [
         check_no_duplicates(prices),
@@ -128,6 +173,7 @@ def run_all_checks(
         check_no_pre_listing(prices, universe),
         check_universe_count(universe, expected_universe_count),
         check_split_no_overlap(returns),
+        check_price_limit(price_limit_violations),
     ]
     report_df = pd.DataFrame(checks)
     must_pass = report_df[report_df["type"] == "MUST_PASS"]
