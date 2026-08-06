@@ -1,8 +1,13 @@
 {
-  "stage": "quantum",
+  "run_id": "run_20260806_213710",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-downstream-provisional-v1",
+  "config_hash": "f423312f2d5b1f633555345fbd42850ea62e3acd7d4a93b156f99801e8587704",
+  "stage": "risk_workflow",
   "gate_status": "PASS",
-  "winning_bitstring": "01011000",
-  "actual_solver": "qaoa",
-  "optimality_gap": 1.4764135867333114e-15,
-  "penalty_is_provisional": true
+  "candidate_count": 8,
+  "bit_count": 16,
+  "structured_sample_count": 137,
+  "deviation": "UNDERFILLED_CANDIDATES_8_OF_10"
 }
