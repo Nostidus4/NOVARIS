@@ -27,7 +27,27 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
             "2007-11-15",
         ),
         ("exchange_current", "string", "-", "Sàn hiện tại", "HOSE"),
-        ("exchange_history", "string", "-", "Lịch sử chuyển sàn", "HNX→HOSE 2020"),
+        (
+            "exchange_history",
+            "string",
+            "-",
+            "Lịch sử chuyển sàn (văn xuôi)",
+            "HNX→HOSE 2020",
+        ),
+        (
+            "exchange_periods",
+            "list[dict]",
+            "-",
+            (
+                "Lịch sử chuyển sàn dạng máy đọc được, dùng để resolve biên độ giá theo ngày "
+                "(quality.price_limits). Mỗi phần tử {exchange, from?, until?}, biên đóng. "
+                "Phải khớp exchange_current ở period hiện hành."
+            ),
+            (
+                "[{'exchange': 'HNX', 'until': '2020-11-30'}, "
+                "{'exchange': 'HOSE', 'from': '2020-12-01'}]"
+            ),
+        ),
         ("data_source", "string", "enum", "Nguồn tải giá chính: yahoo | dnse", "dnse"),
     ],
     "prices_adjusted": [
@@ -168,6 +188,18 @@ def write_quality_report(checks_df: pd.DataFrame, out_path: Path) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     checks_df.to_csv(out_path, index=False, encoding="utf-8-sig")
+    return out_path
+
+
+def write_violations(violations: pd.DataFrame, out_path: Path) -> Path:
+    """Ghi danh sách vi phạm biên độ giá (DQ-007) ra CSV.
+
+    Ghi cả khi khung rỗng — file vắng mặt phải mang nghĩa "gate chưa chạy", khác hẳn với "chạy rồi
+    và không tìm thấy gì". Hai tình huống đó không được nhìn giống nhau.
+    """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    violations.to_csv(out_path, index=False, encoding="utf-8-sig")
     return out_path
 
 
