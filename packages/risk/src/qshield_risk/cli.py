@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import typer
 from qshield_contracts.config import Config  # type: ignore[import-untyped]
 from qshield_contracts.enums import ArtifactMode, Stage  # type: ignore[import-untyped]
@@ -21,6 +22,7 @@ from qshield_contracts.schemas.risk import (  # type: ignore[import-untyped]
 )
 from qshield_contracts.validate import validate_or_raise  # type: ignore[import-untyped]
 
+from qshield_risk.candidates import select_candidates
 from qshield_risk.costs import CostRates
 from qshield_risk.effects import build_effects
 from qshield_risk.evaluate import required_float
@@ -34,6 +36,7 @@ _CANONICAL_OUTPUTS = (
     "baseline_risk.json",
     "action_effects.csv",
     "pairwise_effects.csv",
+    "candidate_top10.csv",
 )
 
 
@@ -56,7 +59,9 @@ def _configured_tickers(config: Config) -> tuple[str, ...]:
     return validate_ticker_order([str(entry["ticker"]) for entry in entries])
 
 
-def _mock_scenarios(config: Config) -> tuple[np.ndarray, tuple[str, ...], dict[str, Any]]:
+def _mock_scenarios(
+    config: Config,
+) -> tuple[np.ndarray, tuple[str, ...], dict[str, Any]]:
     """Deterministic Risk-owned fixture; never evidence for a baseline run."""
     tickers = _configured_tickers(config)
     scenario_count = int(config.get("num_scenarios", 500))
@@ -92,7 +97,9 @@ def _load_real_scenarios(
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"[risk.input] invalid JSON in {manifest_path}: {exc}.") from exc
+        raise ValueError(
+            f"[risk.input] invalid JSON in {manifest_path}: {exc}."
+        ) from exc
 
     if manifest.get("gate_status") != "PASS":
         raise ValueError(
@@ -110,7 +117,9 @@ def _load_real_scenarios(
             "expected 'simple'."
         )
     if not cube_path.exists():
-        raise FileNotFoundError(f"[risk.input] missing file after PASS gate: {cube_path}.")
+        raise FileNotFoundError(
+            f"[risk.input] missing file after PASS gate: {cube_path}."
+        )
 
     with np.load(cube_path, allow_pickle=False) as data:
         if "scenarios" not in data.files or "ticker_order" not in data.files:
@@ -150,10 +159,14 @@ def _load_real_scenarios(
     return cube, manifest_tickers, manifest
 
 
-def _portfolio(config: Config, ticker_order: tuple[str, ...]) -> tuple[dict[str, float], float]:
+def _portfolio(
+    config: Config, ticker_order: tuple[str, ...]
+) -> tuple[dict[str, float], float]:
     raw = config.get("sample_portfolio_weights")
     if not isinstance(raw, dict):
-        raise TypeError("[risk.config] sample_portfolio_weights must be a ticker-to-weight mapping.")
+        raise TypeError(
+            "[risk.config] sample_portfolio_weights must be a ticker-to-weight mapping."
+        )
     weights = {str(ticker): float(weight) for ticker, weight in raw.items()}
     cash_weight = float(config.get("sample_portfolio_cash_weight", 0.0))
     tolerance = required_float(config, "weight_sum_tolerance")
@@ -163,10 +176,14 @@ def _portfolio(config: Config, ticker_order: tuple[str, ...]) -> tuple[dict[str,
 
 def _validate_outputs(actions: Any, pairs: Any, n_assets: int) -> tuple[Any, Any]:
     action_frame = validate_or_raise(
-        actions, ActionEffectsSchema, context="qshield_risk.effects:output.action_effects"
+        actions,
+        ActionEffectsSchema,
+        context="qshield_risk.effects:output.action_effects",
     )
     pair_frame = validate_or_raise(
-        pairs, PairwiseEffectsSchema, context="qshield_risk.effects:output.pairwise_effects"
+        pairs,
+        PairwiseEffectsSchema,
+        context="qshield_risk.effects:output.pairwise_effects",
     )
     expected_pairs = n_assets * (n_assets - 1) // 2
     if len(action_frame) != n_assets or action_frame["action_id"].tolist() != list(
@@ -175,9 +192,10 @@ def _validate_outputs(actions: Any, pairs: Any, n_assets: int) -> tuple[Any, Any
         raise ValueError(
             f"[risk.output] action rows/ids invalid: rows={len(action_frame)}, expected={n_assets}."
         )
-    if len(pair_frame) != expected_pairs or not (
-        pair_frame["action_i"] < pair_frame["action_j"]
-    ).all():
+    if (
+        len(pair_frame) != expected_pairs
+        or not (pair_frame["action_i"] < pair_frame["action_j"]).all()
+    ):
         raise ValueError(
             f"[risk.output] pair rows/order invalid: rows={len(pair_frame)}, "
             f"expected={expected_pairs}, required action_i < action_j."
@@ -276,6 +294,69 @@ def effects(
     print(
         f"[risk] input_source={wanted_source} actions={len(action_frame)} "
         f"pairs={len(pair_frame)} -> {stage_dir}"
+    )
+
+
+@app.command()
+def candidates(
+    config: str = typer.Option("configs/base.yaml", "--config", help="Config path"),
+) -> None:
+    """Rank tickers and flag the dynamic top-N selection (`candidate_top10.csv`).
+
+    Reads `action_effects.csv`/`baseline_risk.json` already written by `effects` — run `effects`
+    first. Generic in N (see `qshield_risk.candidates`): with the current 8-ticker universe every
+    row is selected; real filtering only kicks in once the universe passes `output_candidates`
+    (the 30-ticker `workflow_update` baseline).
+    """
+    cfg = Config.load(Path(config))
+    paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
+    context = RunContext(cfg, paths)
+    logger = context.logger("risk")
+    stage_dir = paths.stage_dir(Stage.RISK)
+
+    action_effects_path = stage_dir / "action_effects.csv"
+    baseline_path = stage_dir / "baseline_risk.json"
+    for path in (action_effects_path, baseline_path):
+        if not path.exists():
+            typer.echo(
+                f"✗ Chưa có {path} — chạy `qshield-risk effects` trước.", err=True
+            )
+            raise typer.Exit(code=1)
+
+    try:
+        action_effects = pd.read_csv(action_effects_path)
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        weights = {str(k): float(v) for k, v in baseline["portfolio_weights"].items()}
+        cost_rates = CostRates.from_config(cfg)
+        reduction_pct = required_float(cfg, "action_reduction_pct")
+        output_candidates = int(
+            (cfg.get("candidate_selection") or {}).get("output_candidates", 10)
+        )
+
+        frame = select_candidates(
+            action_effects,
+            baseline_cvar=float(baseline["cvar_0"]),
+            weights=weights,
+            cost_rates=cost_rates,
+            reduction_pct=reduction_pct,
+            output_candidates=output_candidates,
+        )
+        frame.to_csv(stage_dir / "candidate_top10.csv", index=False)
+        context.write_metrics(
+            {
+                "stage": "risk_candidates",
+                "n_tickers": len(frame),
+                "output_candidates": output_candidates,
+                "n_selected": int(frame["selected_top10"].sum()),
+            }
+        )
+    except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+        logger.error("Risk candidates failed: %s", exc)
+        raise typer.BadParameter(str(exc)) from exc
+
+    print(
+        f"[risk] candidates n_tickers={len(frame)} selected={int(frame['selected_top10'].sum())} "
+        f"-> {stage_dir / 'candidate_top10.csv'}"
     )
 
 

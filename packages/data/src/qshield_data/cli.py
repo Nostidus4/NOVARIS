@@ -202,6 +202,16 @@ def clean(config: Path = _CONFIG_OPTION) -> None:
         f"Loaded raw: {len(prices):,} rows, {prices['ticker'].nunique()} tickers"
     )
 
+    registered_actions = cfg.get("corporate_actions") or []
+    if registered_actions:
+        prices = corporate_actions.apply_registered_adjustments(
+            prices, registered_actions
+        )
+        typer.echo(
+            f"Corporate action back-adjustment: {len(registered_actions)} entry đã đăng ký "
+            "(configs/data.yaml) — xem logs.txt để biết đúng bao nhiêu phiên bị đổi."
+        )
+
     prices, n_dup = validate_prices.dedup_prices(prices)
     typer.echo(f"Duplicates removed: {n_dup}")
 

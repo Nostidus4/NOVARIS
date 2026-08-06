@@ -7,30 +7,40 @@ bố miễn trừ trách nhiệm dành cho người dùng cuối.
 
 ---
 
-## 1. Phạm vi hiện tại đã bị thu hẹp so với thiết kế sản phẩm gốc
+## 1. Code hiện tại (`demo_fast`) chưa bằng baseline sản phẩm chính thức (`workflow_update`)
 
-`docs/product/mvp_scope.md` và `docs/product/product_requirements.md` mô tả một thiết kế đầy đủ:
-universe 30 mã VN30, chọn động top 10 ứng viên, mã hóa 20 bit (2 bit/mã), 4 mức hành động
-(0/10/20/30%), 2.000–5.000 kịch bản. Đây là baseline **Baseline Candidate**, còn nhiều mục `TBD`
-chưa khóa.
+**Cập nhật 2026-08-06:** team đã thống nhất chốt `docs/product/mvp_scope.md` /
+`docs/product/product_requirements.md` — universe 30 mã VN30, Risk chọn động top 10 ứng viên, mã
+hóa 20 bit (2 bit/mã), 4 mức hành động (0/10/20/30%), 2.000–5.000 kịch bản — làm **baseline sản
+phẩm chính thức**, hình thức hóa thành `configs/profiles/workflow_update.yaml`
+(`status: BASELINE_TARGET`). Đây không còn là "thiết kế gốc tạm gác lại" — đây là đích mọi package
+phải build tới.
 
-Do ràng buộc 7 ngày / 5 người, `CLAUDE.md` và `docs/Structure.md` khóa một phạm vi kỹ thuật **nhỏ
-hơn** để bảo đảm chạy được đầu-cuối:
+Do ràng buộc 7 ngày / 5 người, `packages/*` **hiện tại** (bao gồm `packages/quantum` và
+`packages/pipeline` đã hiện thực) mới chỉ chạy đúng phạm vi rút gọn `demo_fast`
+(`configs/profiles/demo_fast.yaml`, `status: NON_BASELINE_RUN`) — dùng để có một đường chạy
+đầu-cuối sớm, KHÔNG phải baseline để đánh giá sản phẩm:
 
-| Thông số | Thiết kế gốc (PSS/PRS) | Phạm vi đã khóa (CLAUDE.md) |
+| Thông số | `workflow_update` (baseline chính thức) | `demo_fast` (code hiện tại) |
 |---|---|---|
 | Universe | 30 mã VN30 | 8 mã |
-| Số ứng viên Quantum | Top 10 (động) | Cả 8 mã |
-| Số bit QUBO | 20 bit (2 bit/mã) | Tương ứng chọn đúng K=3 hành động trong 8 mã |
+| Số ứng viên Quantum | Top 10 (Risk chọn động) | Cả 8 mã (không có bước chọn candidate) |
+| Số bit QUBO | 20 bit (2 bit/mã) | 8 bit, chọn đúng K=3 hành động |
 | Mức hành động | 0% / 10% / 20% / 30% | Một mức duy nhất: giảm 20% vị thế |
 | Số kịch bản | 2.000 (dev) / 5.000 (final) | 500 |
 | Horizon | 20 ngày | 20 ngày |
-| Local polishing (±5pp) | Có | Không có trong phạm vi đã khóa |
+| Rerank + local polishing (±5pp) | Bắt buộc (owner Phúc) | Không có |
 
-**Khi đọc bất kỳ số liệu nào từ hệ thống, phải hiểu đó là kết quả trên phạm vi đã khóa (8 mã, K=3,
-giảm 20%), không phải trên thiết kế 30-mã/top-10/20-bit mô tả trong Product Scope.** Nếu về sau mở
-rộng theo đúng thiết kế gốc, đây không phải là điều chỉnh nhỏ mà là Change Request theo
-`docs/product/mvp_scope.md` §22.
+**Khi đọc bất kỳ số liệu nào từ hệ thống hôm nay, phải hiểu đó là kết quả trên `demo_fast` (8 mã,
+K=3, giảm 20%), không phải trên baseline `workflow_update`.** Không được dùng số `demo_fast` để
+tuyên bố đã đạt hoặc đánh giá tính khả thi của `workflow_update` — đây là quy tắc phát triển ghi rõ
+trong `configs/profiles/workflow_update.yaml` ("Không được nói workflow update không khả thi dựa
+trên benchmark Quantum 30 mã, vì benchmark đó sai flow").
+
+Mỗi run phải gắn đúng `profile_id` (`demo_fast` hoặc `workflow_update`); không được trộn số liệu
+của hai profile trong cùng một so sánh/báo cáo. `workflow_update` chỉ được dùng làm bằng chứng
+UAT/baseline chính thức sau khi qua đủ 3 approval gate (`data_gate`, `scenario_gate`,
+`product_gate`) — chi tiết governance, ai duyệt gì: `configs/profiles/README.md`.
 
 ---
 

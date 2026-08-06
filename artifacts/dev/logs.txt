@@ -1,0 +1,45 @@
+2026-08-05 13:56:42,781 | qshield.run_20260805_135642.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-05 19:21:09,140 | qshield.run_20260805_192108.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-05 19:21:29,904 | qshield.run_20260805_192108.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-05 19:21:32,066 | qshield.run_20260805_192131.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-05 19:30:33,825 | qshield.run_20260805_193033.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-05 19:30:54,264 | qshield.run_20260805_193033.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-05 19:30:56,254 | qshield.run_20260805_193056.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-05 19:33:03,818 | qshield.run_20260805_193303.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-05 19:33:23,664 | qshield.run_20260805_193303.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-05 19:33:41,727 | qshield.run_20260805_193341.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-06 20:01:16,746 | qshield.run_20260806_200116.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-06 20:01:37,616 | qshield.run_20260806_200116.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-06 20:01:44,596 | qshield.run_20260806_200144.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-06 20:13:20,318 | qshield.run_20260806_201320.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-06 20:13:41,630 | qshield.run_20260806_201320.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-06 20:13:41,732 | qshield.run_20260806_201341.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-06 20:17:02,196 | qshield.run_20260806_201701.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-06 20:17:22,885 | qshield.run_20260806_201701.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-06 20:17:22,982 | qshield.run_20260806_201722.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-06 20:29:35,061 | qshield.run_20260806_202935.risk | ERROR | Risk effects failed: [risk.input] artifacts/dev/scenarios/stress_scenarios.npz: shape=(5000, 20, 8); expected (500, 20, 8).
+2026-08-06 20:51:23,702 | qshield.run_20260806_205123.quantum | WARNING | lambda_1=1.000000 lambda_2=1.000000 P=0.047333 là PROVISIONAL (suggest_penalty, chưa Phúc/Ngọc duyệt — plan.md câu hỏi 3). Run này là NON_BASELINE_RUN.
+2026-08-06 20:51:23,702 | qshield.run_20260806_205123.quantum | INFO | Chạy verify/consistency trước khi tin bất kỳ kết quả QAOA nào (quy tắc 15)...
+2026-08-06 20:51:23,816 | qshield.run_20260806_205123.quantum | INFO | verify/consistency PASS trên toàn bộ 256 bitstring.
+2026-08-06 20:51:23,816 | qshield.run_20260806_205123.quantum | INFO | Exact: best_feasible=01010100 energy=-0.009483 (duyệt 256 trạng thái)
+2026-08-06 20:51:23,817 | qshield.run_20260806_205123.quantum | WARNING | configs/quantum.yaml: qaoa.seeds chưa đăng ký — dùng tạm [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (PROVISIONAL, plan.md câu hỏi 4). Run này là NON_BASELINE_RUN.
+2026-08-06 20:52:34,167 | qshield.run_20260806_205123.quantum | INFO | QAOA: chạy xong 10 seed.
+2026-08-06 20:52:34,210 | qshield.run_20260806_205123.quantum | INFO | True CVaR (qshield_risk.evaluate): before=0.110973 after=0.101575 (improves_cvar)
+2026-08-06 20:54:24,891 | qshield.run_20260806_205424.pipeline | INFO | Bắt đầu pipeline — run_id=None, mock=False, 5 chặng: data, regime, scenarios, risk, optimize
+2026-08-06 20:54:24,892 | qshield.run_20260806_205424.pipeline | INFO | [1/5] Data (qshield-data build)
+2026-08-06 20:54:53,277 | qshield.run_20260806_205424.pipeline | INFO | [2/5] Regime (qshield-ai regime)
+2026-08-06 20:54:55,095 | qshield.run_20260806_205454.regime | INFO | Feature frame: 2571 dòng, 2016-04-04 → 2026-07-30
+2026-08-06 20:55:16,363 | qshield.run_20260806_205454.regime | INFO | Champion seed=303, 2571 dòng regime đã ghi.
+2026-08-06 20:55:16,579 | qshield.run_20260806_205424.pipeline | INFO | [3/5] Scenarios (qshield-ai scenarios)
+2026-08-06 20:55:18,157 | qshield.run_20260806_205517.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-06 20:55:18,567 | qshield.run_20260806_205424.pipeline | INFO | [4/5] Risk (qshield-risk effects)
+2026-08-06 20:55:19,216 | qshield.run_20260806_205424.pipeline | INFO | [5/5] Optimize (qshield-quantum solve — QUBO + Exact/QAOA gộp)
+2026-08-06 20:55:20,537 | qshield.run_20260806_205520.quantum | WARNING | lambda_1=1.000000 lambda_2=1.000000 P=0.046774 là PROVISIONAL (suggest_penalty, chưa Phúc/Ngọc duyệt — plan.md câu hỏi 3). Run này là NON_BASELINE_RUN.
+2026-08-06 20:55:20,537 | qshield.run_20260806_205520.quantum | INFO | Chạy verify/consistency trước khi tin bất kỳ kết quả QAOA nào (quy tắc 15)...
+2026-08-06 20:55:20,638 | qshield.run_20260806_205520.quantum | INFO | verify/consistency PASS trên toàn bộ 256 bitstring.
+2026-08-06 20:55:20,639 | qshield.run_20260806_205520.quantum | INFO | Exact: best_feasible=01011000 energy=-0.009400 (duyệt 256 trạng thái)
+2026-08-06 20:55:20,639 | qshield.run_20260806_205520.quantum | WARNING | configs/quantum.yaml: qaoa.seeds chưa đăng ký — dùng tạm [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (PROVISIONAL, plan.md câu hỏi 4). Run này là NON_BASELINE_RUN.
+2026-08-06 20:56:35,451 | qshield.run_20260806_205520.quantum | INFO | QAOA: chạy xong 10 seed.
+2026-08-06 20:56:35,453 | qshield.run_20260806_205520.quantum | WARNING | QAOA KHÔNG thắng classical baseline (greedy theo g) — báo cáo trung thực theo CLAUDE.md quy tắc 18, không diễn giải có lợi cho QAOA.
+2026-08-06 20:56:35,460 | qshield.run_20260806_205520.quantum | INFO | True CVaR (qshield_risk.evaluate): before=0.110032 after=0.100704 (improves_cvar)
+2026-08-06 20:56:35,470 | qshield.run_20260806_205424.pipeline | INFO | Pipeline hoàn tất — toàn bộ 5 chặng PASS.

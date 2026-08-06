@@ -3,7 +3,8 @@
 
 Dựng QUBO từ `g/C/c` (thật hoặc `--mock` qua `fixtures.py`), chạy `verify/consistency` (BẮT BUỘC
 trước QAOA — CLAUDE.md quy tắc 15), `exact`, `QAOA` (≥10 seed), `benchmark`, rồi chấm lại bằng true
-CVaR (CLAUDE.md quy tắc 17 — BLOCKED tới khi `packages/risk` có thật, xem `plan.md` §1).
+CVaR qua `qshield_risk.evaluate()` (CLAUDE.md quy tắc 17). Cross-import `qshield_risk` là ngoại lệ
+DUY NHẤT được phép trong chiều phụ thuộc một chiều (CLAUDE.md quy tắc 11: `risk ← quantum`).
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import typer
 from qshield_contracts.config import Config
@@ -23,6 +25,8 @@ from qshield_contracts.runs import RunContext
 from qshield_contracts.schemas.optimization import QaoaResult, validate_qaoa_result
 from qshield_contracts.schemas.risk import ActionEffectsSchema, PairwiseEffectsSchema
 from qshield_contracts.validate import validate_or_raise
+from qshield_risk.evaluate import evaluate as risk_evaluate
+from qshield_risk.metrics import alpha_key as risk_alpha_key
 
 from qshield_quantum import fixtures
 from qshield_quantum.benchmark import build_benchmark
@@ -102,6 +106,44 @@ def _tickers(config: Config) -> list[str]:
     return [entry["ticker"] for entry in config["tickers"]]
 
 
+def _load_scenario_cube(paths: ArtifactPaths, tickers: list[str]) -> np.ndarray:
+    """Đọc lại scenario cube thật để chấm true CVaR (quy tắc 17) — validate ĐỘC LẬP với
+    `packages/risk` (CLAUDE.md quy tắc 12: validate ở mọi ranh giới module, không tin ngầm dữ liệu
+    chặng trước dù cùng đã PASS ở đó)."""
+    manifest_path = paths.for_stage(Stage.SCENARIOS, "scenario_manifest.json")
+    cube_path = paths.for_stage(Stage.SCENARIOS, "stress_scenarios.npz")
+    if not manifest_path.exists() or not cube_path.exists():
+        raise typer.BadParameter(
+            f"Chưa có {manifest_path} / {cube_path} — chạy `qshield-ai scenarios` trước."
+        )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("gate_status") != "PASS":
+        raise typer.BadParameter(
+            f"{manifest_path}: gate_status={manifest.get('gate_status')!r}; cần PASS để dùng làm "
+            "true CVaR."
+        )
+    manifest_tickers = list(manifest.get("ticker_order", []))
+    if manifest_tickers != tickers:
+        raise typer.BadParameter(
+            f"{manifest_path}: ticker_order={manifest_tickers} không khớp configs "
+            f"tickers={tickers}."
+        )
+    with np.load(cube_path, allow_pickle=False) as data:
+        if "scenarios" not in data.files:
+            raise typer.BadParameter(f"{cube_path}: thiếu key 'scenarios'.")
+        cube = np.asarray(data["scenarios"], dtype=float)
+    expected_shape = (
+        int(manifest["num_scenarios"]),
+        int(manifest["horizon_days"]),
+        len(tickers),
+    )
+    if cube.shape != expected_shape:
+        raise typer.BadParameter(
+            f"{cube_path}: shape={cube.shape}; expected {expected_shape} (theo chính manifest)."
+        )
+    return cube
+
+
 def _resolved_penalty(cfg: Config, g, C, c) -> tuple[float, float, float, bool]:
     """Đọc `lambda_1`/`lambda_2`/`P` từ config; nếu `null` (TBD-006, chưa Phúc/Ngọc duyệt) thì tự
     suy ra PROVISIONAL bằng `suggest_penalty` — không phải số đoán mò, xem `plan.md` câu hỏi 3.
@@ -147,11 +189,16 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
         risk_dir = paths.stage_dir(Stage.RISK)
         action_effects_path = risk_dir / "action_effects.csv"
         pairwise_effects_path = risk_dir / "pairwise_effects.csv"
-        if not action_effects_path.exists() or not pairwise_effects_path.exists():
+        baseline_path = risk_dir / "baseline_risk.json"
+        missing = [
+            p
+            for p in (action_effects_path, pairwise_effects_path, baseline_path)
+            if not p.exists()
+        ]
+        if missing:
             typer.echo(
-                f"✗ Chưa có {action_effects_path} / {pairwise_effects_path} — "
-                "packages/risk chưa chạy (hoặc chưa implement, xem plan.md §1). "
-                "Dùng --mock để chạy thử với dữ liệu giả.",
+                f"✗ Chưa có {missing} — packages/risk chưa chạy "
+                "(`qshield-risk effects`). Dùng --mock để chạy thử với dữ liệu giả.",
                 err=True,
             )
             raise typer.Exit(code=1)
@@ -165,9 +212,7 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
             PairwiseEffectsSchema,
             context="qshield_quantum:input.pairwise_effects",
         )
-        baseline = (
-            None  # TODO: đọc baseline_risk.json thật khi packages/risk có (plan.md §1)
-        )
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
 
     g, c = action_effects_to_arrays(action_effects_df, tickers)
     C = pairwise_to_matrix(pairwise_effects_df, tickers)
@@ -280,14 +325,41 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
         true_cvar_before = float("nan")
         true_cvar_after = float("nan")
         logger.warning(
-            "Chưa chấm lại bằng true CVaR (packages/risk.evaluate chưa có, hoặc --mock) — "
+            "Chạy --mock: không có scenario cube/baseline thật để chấm true CVaR — "
             "true_cvar_before/after = NaN, KHÔNG dùng làm bằng chứng baseline."
         )
     else:
-        # BLOCKED tới khi packages/risk.evaluate có thật — xem plan.md §1.
-        raise NotImplementedError(
-            "qshield_risk.evaluate chưa implement — không chấm lại được true CVaR (quy tắc 17)."
+        scenario_cube = _load_scenario_cube(paths, tickers)
+        bits = [int(b) for b in winning_bitstring]
+        risk_eval = risk_evaluate(
+            bits,
+            scenario_cube,
+            tickers,
+            weights=baseline["portfolio_weights"],
+            cash_weight=float(baseline["cash_weight"]),
+            config=cfg,
         )
+        primary_key = risk_alpha_key(alpha)
+        true_cvar_before = risk_eval.before.cvar[primary_key]
+        true_cvar_after = risk_eval.after.cvar[primary_key]
+        logger.info(
+            "True CVaR (qshield_risk.evaluate): before=%.6f after=%.6f (%s)",
+            true_cvar_before,
+            true_cvar_after,
+            risk_eval.recommendation_status,
+        )
+        if risk_eval.constraint_violations:
+            logger.warning(
+                "qshield_risk.evaluate báo vi phạm ràng buộc: %s",
+                risk_eval.constraint_violations,
+            )
+        if not risk_eval.improves_primary_cvar:
+            logger.warning(
+                "Nghiệm KHÔNG cải thiện true CVaR (before=%.6f, after=%.6f) — báo cáo trung thực "
+                "theo CLAUDE.md quy tắc 18, không diễn giải có lợi.",
+                true_cvar_before,
+                true_cvar_after,
+            )
 
     qaoa_result = QaoaResult(
         bitstring=winning_bitstring,
