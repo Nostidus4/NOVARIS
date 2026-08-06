@@ -26,7 +26,16 @@ Execute these steps sequentially. If a step fails, attempt to auto-remediate. If
 - Upgrade pip: `python -m pip install -U pip`
 - Install the ecosystem: `pip install -U vnstock>=4.0.5 vnai>=2.5.6`
 
-### 4. API Key Configuration
+### 4. Jupyter Notebook Integration (Local Only)
+- If the user is running locally (not Google Colab) and mentions Jupyter, Cursor Notebook, or Windsurf Notebook, you must register the `.venv` as an `ipykernel` so the IDE can detect the libraries.
+- Execute:
+  ```bash
+  python -m pip install ipykernel
+  python -m ipykernel install --user --name=vnstock-venv --display-name "Python (Vnstock)"
+  ```
+- Instruct the user to select the **Python (Vnstock)** kernel in their Notebook.
+
+### 5. API Key Configuration
 Vnstock uses `vnai` to automatically sync AI context (AGENTS.md) and skills into the `.agents/` directory when authenticated.
 - Check if the user provided an API Key in their prompt.
 - If provided, configure it silently via Python:
@@ -38,7 +47,7 @@ Vnstock uses `vnai` to automatically sync AI context (AGENTS.md) and skills into
 - If NOT provided, ask the user to provide their API Key from `vnstocks.com/settings`.
 - **Note:** Do not manually create `AGENTS.md`. It will sync automatically upon successful authentication.
 
-### 5. Verification & Handoff
+### 6. Verification & Handoff
 - Create a temporary script `test_vnstock.py`:
   ```python
   from vnstock import Reference

@@ -13,6 +13,34 @@ Data → Regime → Scenarios → Risk → QUBO → Exact/QAOA → CVaR after he
 
 ---
 
+## Profile: `demo_fast` vs `workflow_update`
+
+**2026-08-06 — team đã thống nhất chốt `workflow_update` làm baseline sản phẩm chính thức.**
+Repo có hai profile khai báo tường minh ở `configs/profiles/` — không được trộn số liệu của hai
+profile trong cùng một báo cáo/so sánh.
+
+| | `demo_fast` | `workflow_update` |
+|---|---|---|
+| Trạng thái | `NON_BASELINE_RUN` — chỉ để demo/debug | `BASELINE_TARGET` — baseline sản phẩm/UAT sau khi owner duyệt |
+| Universe | 8 mã cố định | 30 mã VN30 snapshot |
+| Risk candidate | Cả 8 mã đưa thẳng vào Quantum | Risk chọn **dynamic top 10** từ 30 mã |
+| Hành động | 1 mức: giảm 20% | 4 mức: 0/10/20/30% |
+| QUBO | 8 bit, chọn đúng K=3 | 20 bit (10 mã × 2 bit) |
+| Rerank/polish sau QAOA | Không có trong phạm vi này | Bắt buộc (owner: Phúc) |
+
+**Toàn bộ code hiện tại trong `packages/*` (kể cả phần đã hiện thực ở `packages/quantum` và
+`packages/pipeline`) vẫn đang chạy theo scope `demo_fast`** — chưa bắt kịp baseline vừa chốt.
+`workflow_update` giờ là đích chính thức (không còn là "thiết kế gốc gác lại"), nhưng code cho 30
+mã/top-10/20-bit/4-mức-hành-động/rerank-polish **chưa được viết** — đây là phần việc còn lại của cả
+5 package (`data`, `ai`, `risk`, `quantum`, `pipeline`), không phải chỉ đổi config.
+Đừng lấy số chạy `--mock`/8-mã hiện tại để tuyên bố đã đạt `workflow_update`.
+
+Chi tiết đầy đủ, governance, ai duyệt gì trước khi công bố: `configs/profiles/README.md`,
+`configs/profiles/demo_fast.yaml`, `configs/profiles/workflow_update.yaml`. Bối cảnh lịch sử vì
+sao có hai scope: `docs/limitations.md` §1.
+
+---
+
 ## Vừa clone repo về? Làm theo đúng thứ tự này
 
 ### Bước 0 — Yêu cầu công cụ
@@ -171,6 +199,11 @@ khóa đã được điền sẵn; giá trị chưa chốt để `null` kèm com
 | `scenarios.yaml` | S=500, H=20, block=5 |
 | `risk.yaml` | α=0.95 — phí, spread, liquidity penalty: `TODO` |
 | `quantum.yaml` | K=3, p=1, shots=1024 — λ₁, λ₂, P: `TODO` |
+| `profiles/` | Contract cấp cao `demo_fast.yaml`/`workflow_update.yaml` — xem mục "Profile" phía trên |
+
+Các file trên (`universe.yaml` → `quantum.yaml`) là config **module**, đang được code đọc trực
+tiếp và **khớp scope `demo_fast`**. `configs/profiles/*.yaml` không phải config module — đó là
+contract cấp cao để không lẫn lộn số liệu giữa hai hướng phát triển (xem mục "Profile" ở trên).
 
 Đổi chế độ artifact trong `base.yaml`:
 
@@ -195,6 +228,7 @@ QSHIELD/
 ├── backend/           # FastAPI — chỉ đọc artifact
 ├── frontend/          # Next.js + Tailwind
 ├── configs/           # toàn bộ tham số
+│   └── profiles/      # contract demo_fast vs workflow_update — xem mục "Profile" ở trên
 ├── data/              # dữ liệu (gitignore, trừ metadata/)
 ├── artifacts/         # output pipeline
 ├── reports/           # báo cáo cho người đọc
