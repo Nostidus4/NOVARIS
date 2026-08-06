@@ -117,7 +117,14 @@ _REGIME_ORDER = (
 
 
 def _resolve_run_id(config: Config) -> str | None:
-    """`dev` dùng đường dẫn cố định (không cần run_id); `runs` bắt buộc có id trước khi dựng."""
+    """`dev` dùng đường dẫn cố định (không cần run_id); `runs` bắt buộc có id trước khi dựng.
+
+    Nếu config có khóa `run_id` (do `packages/pipeline` tiêm vào khi chạy cả chuỗi — xem
+    `qshield_pipeline/run_context.py`), dùng NGUYÊN giá trị đó thay vì tự sinh — để mọi chặng
+    trong cùng một lần chạy pipeline chia sẻ đúng một run_id (docs/perf/2026-08-04-pipeline-
+    timing.md §6)."""
+    if config.get("run_id"):
+        return str(config["run_id"])
     mode = ArtifactMode(str(config.get("artifacts", {}).get("mode", "dev")))
     if mode == ArtifactMode.DEV:
         return None
