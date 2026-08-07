@@ -1,0 +1,9 @@
+{
+  "stage": "quantum",
+  "profile_id": "workflow_update_downstream",
+  "gate_status": "PASS",
+  "mode": "top10_four_level_actions",
+  "evaluated_states": 1048576,
+  "qaoa_seed_count": 0,
+  "candidate_pool_size": 20
+}

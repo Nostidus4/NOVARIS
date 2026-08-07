@@ -1,0 +1,74 @@
+{
+  "status": "NON_BASELINE_RUN",
+  "NON_FINAL_CONFIG": true,
+  "meta": {
+    "kind": "synthetic_frustrated_sibling",
+    "seed": 20260807,
+    "dimension": 10,
+    "linear_scale_from_real": 0.023742373014302834,
+    "quad_scale_factor_vs_real_approx": 179.1877208626629,
+    "cardinality_target": 5,
+    "cardinality_penalty": 0.0712271190429085,
+    "source_real_qubo": "artifacts_bench/warm_start_run/qubo_model.json",
+    "disclaimer": "NOT the production cash-hedge QUBO. Solver bakeoff only. Do not mix with workflow_update true-CVaR claims."
+  },
+  "landscape": {
+    "states": 1024,
+    "global_optimum_bitstring": "0010011110",
+    "global_optimum_energy": -0.09046067846518491,
+    "global_optimum_hamming_weight": 5,
+    "all_ones_energy": 1.7609323771903436,
+    "all_ones_is_optimum": false,
+    "all_zeros_energy": 1.7806779760727125,
+    "local_minima_count": 232,
+    "energy_gap_top2": 0.01037078477276654,
+    "lin_over_quad_ratio": 10.031146605932834
+  },
+  "exact": {
+    "best_feasible_bitstring": "0010011110",
+    "best_feasible_energy": -0.09046067846518491,
+    "evaluated_states": 1024,
+    "runtime_seconds": 0.0024840419937390834
+  },
+  "classical_weak": {
+    "bitstring": "0010011110",
+    "energy": -0.09046067846518491,
+    "restarts": 4,
+    "runtime_seconds": 0.0007207919989014044,
+    "optimality_gap": 0.0
+  },
+  "classical_strong": {
+    "bitstring": "0010011110",
+    "energy": -0.09046067846518491,
+    "restarts": 64,
+    "runtime_seconds": 0.0061013329977868125,
+    "optimality_gap": 0.0
+  },
+  "qaoa": {
+    "seeds": {
+      "101": {
+        "bitstring": "0010011110",
+        "energy": -0.09046067846518491,
+        "feasible": true,
+        "success_prob": 0.0001373291015625,
+        "feasibility_rate": 0.00579833984375,
+        "runtime_seconds": 288.9768757080019,
+        "warm_start_used": false
+      }
+    },
+    "winning_bitstring": "0010011110",
+    "winning_energy": -0.09046067846518491,
+    "runtime_seconds_total": 288.9772651670064,
+    "shots": 256,
+    "maxiter": 30,
+    "warm_start": false,
+    "optimality_gap": 0.0
+  },
+  "comparison": {
+    "qaoa_beats_classical_weak": false,
+    "qaoa_beats_classical_strong": false,
+    "qaoa_matches_exact": true,
+    "classical_strong_matches_exact": true,
+    "caveat": "Synthetic frustrated sibling \u2014 not production true-CVaR evidence. No quantum-advantage claim (simulator StatevectorSampler)."
+  }
+}

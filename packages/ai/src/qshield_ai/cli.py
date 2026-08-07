@@ -9,6 +9,7 @@ chuẩn cho `RunContext` (quy tắc 13). `print` chỉ được dùng ở đây.
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -105,6 +106,8 @@ _FEATURE_COLUMNS = {
     "correlation_column": CORR_FEATURE,
 }
 _MOCK_DAYS = 900
+_DEFAULT_PROFILE = Path("configs/profiles/workflow_update.yaml")
+_DEFAULT_OVERRIDE = Path("configs/provisional/workflow_update_downstream.yaml")
 # Thứ tự cố định ⇒ mỗi regime nhận một seed lệch xác định, tái lập được giữa các lần chạy: đổi
 # thứ tự là đổi cube sinh ra, nên tuple này được viết tường minh chứ không lấy theo thứ tự khai
 # báo của enum. Dựng từ thành viên `RegimeName` (không phải literal chuỗi) để đổi tên nhãn ở
@@ -114,6 +117,22 @@ _REGIME_ORDER = (
     RegimeName.VOLATILE.value,
     RegimeName.STRESS.value,
 )
+
+
+def _load_cli_config(
+    config: str,
+    profile: str | None = None,
+    override: str | None = None,
+) -> Config:
+    """Load base config, or deep-merge profile + Decision override when flags are set."""
+    base = Path(config)
+    if profile is not None or override is not None:
+        return Config.load_profiled(
+            base,
+            Path(profile) if profile else _DEFAULT_PROFILE,
+            Path(override) if override else _DEFAULT_OVERRIDE,
+        )
+    return Config.load(base)
 
 
 def _resolve_run_id(config: Config) -> str | None:
@@ -133,6 +152,36 @@ def _resolve_run_id(config: Config) -> str | None:
 
 def _tickers(config: Config) -> list[str]:
     return [entry["ticker"] for entry in config["tickers"]]
+
+
+def _regime_corr_tickers(config: Config, returns: pd.DataFrame) -> list[str]:
+    """Tickers dùng cho ``mean_pairwise_corr_60d`` — phải có dữ liệu trong cửa sổ train.
+
+    Universe 30 mã có cold-start (vd. VPL từ 2026-03) làm panel đủ N chỉ còn vài chục ngày
+    ``test``, khiến scaler không fit được (CLAUDE.md quy tắc 4). Corr feature chỉ dùng các mã đã
+    xuất hiện trong ``split==train``; cube scenarios vẫn giữ đủ universe qua ``_tickers``.
+    """
+    universe = _tickers(config)
+    if "split" not in returns.columns:
+        return universe
+    train = returns.loc[returns["split"] == "train"]
+    present = set(train["ticker"].astype(str))
+    selected = [ticker for ticker in universe if ticker in present]
+    excluded = [ticker for ticker in universe if ticker not in present]
+    if len(selected) < 2:
+        raise ValueError(
+            "Không đủ ticker có dữ liệu train để tính mean_pairwise_corr_60d "
+            f"(giữ={selected}, loại={excluded})."
+        )
+    if excluded:
+        logging.getLogger(__name__).warning(
+            "Regime corr panel loại %d ticker cold-start/không có train: %s. "
+            "Scenarios vẫn dùng đủ %d mã universe.",
+            len(excluded),
+            excluded,
+            len(universe),
+        )
+    return selected
 
 
 def _load_inputs(config: Config, *, mock: bool) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -159,6 +208,16 @@ def regime(
     config: str = typer.Option(
         "configs/base.yaml", "--config", help="Đường dẫn config"
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Optional profile YAML; with --override uses Config.load_profiled",
+    ),
+    override: str | None = typer.Option(
+        None,
+        "--override",
+        help="Optional Decision-package / provisional override YAML",
+    ),
     mock: bool = typer.Option(
         False,
         "--mock",
@@ -166,7 +225,7 @@ def regime(
     ),
 ) -> None:
     """Huấn luyện/suy luận Gaussian HMM → regime_daily.parquet (3 xác suất trạng thái/ngày)."""
-    cfg = Config.load(Path(config))
+    cfg = _load_cli_config(config, profile, override)
     paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
     context = RunContext(cfg, paths)
     logger = context.logger("regime")
@@ -181,10 +240,11 @@ def regime(
 
     market_columns = list(cfg["features"]["market_columns"])
     feature_names = [*market_columns, CORR_FEATURE]
+    corr_tickers = _regime_corr_tickers(cfg, returns)
     raw_frame = build_feature_frame(
         market,
         returns,
-        tickers=_tickers(cfg),
+        tickers=corr_tickers,
         market_columns=market_columns,
         corr_window=int(cfg["features"]["corr_window"]),
     )
@@ -404,6 +464,16 @@ def scenarios(
     config: str = typer.Option(
         "configs/base.yaml", "--config", help="Đường dẫn config"
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Optional profile YAML; with --override uses Config.load_profiled",
+    ),
+    override: str | None = typer.Option(
+        None,
+        "--override",
+        help="Optional Decision-package / provisional override YAML",
+    ),
     mock: bool = typer.Option(
         False,
         "--mock",
@@ -417,7 +487,7 @@ def scenarios(
     ),
 ) -> None:
     """Sinh kịch bản stress bằng regime-conditioned moving-block bootstrap → stress_scenarios."""
-    cfg = Config.load(Path(config))
+    cfg = _load_cli_config(config, profile, override)
     paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
     context = RunContext(cfg, paths)
     logger = context.logger("scenarios")

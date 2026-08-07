@@ -27,9 +27,9 @@ QSHIELD/
 ├── data/                  # dữ liệu thô & đã xử lý (gitignore)
 ├── artifacts/             # output pipeline
 ├── reports/               # báo cáo cho người đọc
-├── notebooks/             # thử nghiệm
+├── notebooks/             # thử nghiệm (chuỗi 00…06)
 ├── docs/                  # scope, kiến trúc, runbook, cấu trúc thư mục (Structure.md — file này)
-└── tests/                 # test tích hợp & E2E
+└── artifacts_bench/       # bakeoff QAOA (không trộn với artifacts/dev)
 ```
 
 Nguyên tắc: **`packages/` chứa toàn bộ trí tuệ của hệ thống. `backend/` và `frontend/` chỉ là lớp
@@ -47,7 +47,7 @@ tại (phần lớn còn là scaffold — file `.py` rỗng chỉ có một dòn
 
 | Thư mục | Có gì bên trong (hiện tại) | Nhiệm vụ |
 |---|---|---|
-| `configs/` | 7 file `.yaml` (`base`, `universe`, `data`, `regime`, `scenarios`, `risk`, `quantum`) + `uat/` (3 kịch bản). Tham số đã khóa đã điền sẵn; phần chưa chốt để `null` kèm `TODO(Tên người)`. | Nơi **duy nhất** chứa tham số của toàn hệ thống — không hard-code trong code. |
+| `configs/` | 7 file `.yaml` (`base`, `universe`, `data`, `regime`, `scenarios`, `risk`, `quantum`) + `uat/` (3 kịch bản) + `profiles/` (`demo_fast.yaml`, `workflow_update.yaml`, `README.md`). Tham số đã khóa đã điền sẵn; phần chưa chốt để `null` kèm `TODO(Tên người)`. | Nơi **duy nhất** chứa tham số của toàn hệ thống — không hard-code trong code. `profiles/` là contract cấp cao: `workflow_update` (2026-08-06, team chốt làm baseline chính thức — 30 mã/top-10/20-bit) vs `demo_fast` (8 mã, code hiện tại đang chạy scope này, chưa bắt kịp baseline) — xem `README.md` gốc mục "Profile" và `docs/limitations.md` §1. |
 | `packages/` | 6 package Python độc lập (`contracts`, `data`, `ai`, `risk`, `quantum`, `pipeline`), mỗi package có `src/` + `tests/`. | Chứa **toàn bộ trí tuệ của hệ thống**: từ đọc dữ liệu thô đến giải QUBO. Không biết gì về web/HTTP. |
 | ├─ `packages/contracts/` | `schemas/`, `mocks/`, `config.py`, `paths.py`, `runs.py`, `validate.py`, `enums.py` | Hợp đồng dữ liệu dạng code — mọi package khác phụ thuộc vào đây (xem `docs/architecture/data_contracts.md`). |
 | ├─ `packages/data/` | `sources/`, `clean/`, `quality/`, `returns.py`, `features.py`, `split.py`, `manifest.py` | Thu thập, làm sạch, tạo feature và version hóa dữ liệu. |
@@ -60,9 +60,8 @@ tại (phần lớn còn là scaffold — file `.py` rỗng chỉ có một dòn
 | `data/` | `raw/`, `interim/`, `processed/`, `metadata/` — hiện chỉ có `.gitkeep`, chưa có dữ liệu thật | Dữ liệu giá/khối lượng qua từng giai đoạn xử lý (bị gitignore, trừ `metadata/`). |
 | `artifacts/` | `dev/` (đường dẫn cố định), `runs/run_YYYYMMDD_HHMM/` (có version) — hiện rỗng | Output của pipeline: regime, scenarios, risk, optimization theo từng `run_id`. |
 | `reports/` | `uat/` — hiện rỗng | Báo cáo cho người đọc: data quality report, benchmark, model card, UAT report. |
-| `notebooks/` | `exploration/`, `validation/`, `benchmarks/` — hiện rỗng | Notebook thử nghiệm; theo `CLAUDE.md`, **không được** chứa core logic — chỉ gọi lại hàm trong `packages/`. |
-| `docs/` | `Structure.md` (file này), `limitations.md`, `product/` (6 file), `architecture/` (2 file), `runbook/` (3 file) | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook vận hành. |
-| `tests/` | `contracts/`, `integration/`, `e2e/` | Test tích hợp & end-to-end xuyên nhiều package; unit test nằm trong từng `packages/*/tests/`. |
+| `notebooks/` | `exploration/` chuỗi `00`…`06` + `README.md` | Notebook thử nghiệm; **không** chứa core logic — chỉ gọi CLI/`packages/` (xem `notebooks/README.md`). |
+| `docs/` | `README.md`, `Structure.md`, `limitations.md`, `benchmark_plan.md`, `product/`, `architecture/`, `runbook/`, `perf/`, `handoffs/`, `archive/` | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook, bằng chứng đo, handoff, archive. |
 | File gốc | `pyproject.toml` (uv workspace root), `uv.lock` (1 lockfile chung), `README.md`, `CLAUDE.md`, `main.py`, `.python-version`, `.gitignore` | Cấu hình workspace và hai tài liệu bắt buộc đọc trước khi code. |
 
 ---
@@ -298,22 +297,11 @@ Từ ngày 4, mọi số lên slide phải truy được về một `run_id`.
 
 ```
 notebooks/
-├── exploration/   # tò mò dữ liệu, thử ý tưởng trước khi viết thành hàm chính thức
-├── validation/     # chạy một hàm trong packages/ với input mẫu, xem output có hợp lý không
-└── benchmarks/      # so sánh QAOA vs exact vs classical, vẽ biểu đồ cho báo cáo/pitch
+└── exploration/   # chuỗi 00…06 workflow_update + narrative QAOA (xem notebooks/README.md)
 ```
 
-Cả ba thư mục hiện chỉ có `.gitkeep` — chưa có notebook nào. `jupyterlab` và `ipykernel` đã nằm sẵn
-trong `dev` dependency-group của `pyproject.toml` gốc, nên chỉ cần `uv run jupyter lab` là dùng
-được ngay, không cần cài thêm.
-
-**Dùng khi nào**
-
-| Thư mục | Câu hỏi nó trả lời | Ví dụ |
-|---|---|---|
-| `exploration/` | "Dữ liệu này trông như thế nào?" | Vẽ phân phối return của 8 mã, xem thử outlier |
-| `validation/` | "Hàm tôi vừa viết trong `packages/` chạy đúng không?" | Gọi `qshield_risk.metrics.cvar(...)` với vài mảng loss mẫu, so sánh bằng mắt với tính tay |
-| `benchmarks/` | "QAOA so với exact/classical thế nào?" | Đọc `qaoa_result.json` của nhiều run, vẽ optimality gap theo seed |
+**Dùng khi nào:** tái lập timing từng chặng, smoke profile/override, vẽ scaling/depth cho slide.
+Chi tiết file: `notebooks/README.md`.
 
 **Ranh giới bắt buộc — không được vi phạm**
 
@@ -328,7 +316,7 @@ trong `dev` dependency-group của `pyproject.toml` gốc, nên chỉ cần `uv 
 
 **Notebook khác `pytest` chỗ nào**
 
-| | `notebooks/` | `packages/*/tests/`, `tests/` |
+| | `notebooks/` | `packages/*/tests/`, `backend/tests/` |
 |---|---|---|
 | Ai đọc kết quả | Người, tự mắt xem có hợp lý không | Máy, tự động qua `assert` |
 | Chạy khi nào | Thủ công, lúc đang code/khám phá | Mỗi lần trước khi commit/mở PR (`uv run pytest`) |

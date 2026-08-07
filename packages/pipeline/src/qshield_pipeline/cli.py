@@ -15,7 +15,12 @@ from pathlib import Path
 
 import typer
 
-from qshield_pipeline.run import StageError, run_all
+from qshield_pipeline.run import (
+    StageError,
+    run_all,
+    run_downstream,
+    run_workflow_update,
+)
 
 app = typer.Typer(help="Q-SHIELD end-to-end pipeline CLI.")
 
@@ -59,6 +64,81 @@ def run_all_command(
         raise typer.Exit(code=1) from exc
 
     typer.echo(f"[pipeline] OK — toàn bộ 5 chặng PASS (run_id={run_id or 'dev'}).")
+
+
+@app.command(name="downstream")
+def run_downstream_command(
+    config: str = typer.Option(
+        "configs/base.yaml", "--config", help="Base config path"
+    ),
+    profile: str = typer.Option(
+        "configs/profiles/workflow_update.yaml",
+        "--profile",
+        help="Product profile path",
+    ),
+    override: str = typer.Option(
+        "configs/provisional/workflow_update_downstream.yaml",
+        "--override",
+        help="Explicit NON_BASELINE override path",
+    ),
+    mock: bool = typer.Option(
+        False, "--mock", help="Use deterministic current eight-ticker scenario fixture"
+    ),
+) -> None:
+    """Run Risk selection/sampling → generic Quantum → true rerank/local polishing."""
+    try:
+        run_id = run_downstream(Path(config), Path(profile), Path(override), mock=mock)
+    except (StageError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(
+        "[pipeline/downstream] OK — NON_BASELINE_RUN 3 chặng PASS "
+        f"(run_id={run_id or 'dev'})."
+    )
+
+
+@app.command(name="workflow-update")
+def run_workflow_update_command(
+    config: str = typer.Option(
+        "configs/base.yaml", "--config", help="Base config path"
+    ),
+    profile: str = typer.Option(
+        "configs/profiles/workflow_update.yaml",
+        "--profile",
+        help="Product profile path",
+    ),
+    override: str = typer.Option(
+        "configs/provisional/workflow_update_downstream.yaml",
+        "--override",
+        help="Explicit NON_BASELINE override path",
+    ),
+    run_data: bool = typer.Option(
+        False,
+        "--run-data",
+        help="Also fetch/rebuild Data; default reuses the current 30-ticker Data artifacts",
+    ),
+    quantum_mode: str = typer.Option(
+        "exact",
+        "--quantum-mode",
+        help="exact = safe fallback; qaoa = explicitly monitored NON_FINAL QAOA run",
+    ),
+) -> None:
+    """Run Regime → Scenarios → Risk top-10 → Quantum → rerank/polish → true-benchmark."""
+    try:
+        run_id = run_workflow_update(
+            Path(config),
+            Path(profile),
+            Path(override),
+            run_data=run_data,
+            quantum_mode=quantum_mode,
+        )
+    except (StageError, ValueError) as exc:
+        typer.echo(f"✗ {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(
+        "[pipeline/workflow-update] OK — NON_BASELINE_RUN "
+        f"(run_id={run_id or 'dev'}, quantum_mode={quantum_mode})."
+    )
 
 
 if __name__ == "__main__":
