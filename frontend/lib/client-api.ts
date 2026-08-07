@@ -3,7 +3,9 @@
 const DEFAULT_API = "http://127.0.0.1:8000";
 
 export function clientApiBase(): string {
-  return process.env.NEXT_PUBLIC_QSHIELD_API_URL ?? DEFAULT_API;
+  // Chuỗi rỗng (secret CI chưa set) không phải URL hợp lệ — fallback về default.
+  const configured = process.env.NEXT_PUBLIC_QSHIELD_API_URL?.trim();
+  return configured ? configured.replace(/\/+$/, "") : DEFAULT_API;
 }
 
 export type SyncResponse = {
