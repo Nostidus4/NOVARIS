@@ -130,12 +130,19 @@ jobs:
 
           echo "GITHUB_PAGES=true"
           echo "NEXT_BASE_PATH='${BASE:-<empty/root>}'"
-          echo "QSHIELD_API_URL='${API:-<none — offline HTML>}'"
-          echo "NEXT_PUBLIC_QSHIELD_API_URL='${PUBLIC_API:-<none>}'"
+          if [[ -z "${API}" ]]; then
+            echo "QSHIELD_API_URL=<chưa set> → build ra HTML offline (banner 'Backend chưa sẵn sàng')."
+            echo "  Muốn có số liệu: thêm secret QSHIELD_API_URL trỏ tới API công khai rồi chạy lại."
+          else
+            echo "QSHIELD_API_URL đã set → fetch lúc build, timeout 15s/route, lỗi thì fallback offline."
+          fi
+          echo "NEXT_PUBLIC_QSHIELD_API_URL='${PUBLIC_API:-<none — nút Sync/Optimize sẽ không gọi được>}'"
 
       - name: Lint
         run: npm run lint
 
+      # `frontend/lib/api.ts` coi chuỗi rỗng là "chưa cấu hình" và bỏ qua fetch,
+      # nên secret trống không còn làm static export treo 60s/route như trước.
       - name: Build static export
         env:
           GITHUB_PAGES: "true"
