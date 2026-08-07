@@ -1,18 +1,29 @@
-# Nguyễn Đỗ Minh Anh - 8 mã và tỷ trọng danh mục mẫu — khóa theo TBD-001, duyệt: Nguyễn Thị Ánh Ngọc.
+# Nguyễn Đỗ Minh Anh - Universe Register (30 mã VN30) và tỷ trọng danh mục mẫu. Duyệt: Nguyễn Thị
+# Ánh Ngọc.
 #
-# PROVISIONAL (NON_BASELINE_RUN, xem CLAUDE.md/product_requirements.md PR-CFG-006): 8 mã dưới đây
-# là lựa chọn tạm để packages/data chạy được end-to-end trong lúc phát triển. Đây KHÔNG phải danh
-# sách đã được Data Owner (Nguyễn Đỗ Minh Anh) và Product Owner (Nguyễn Thị Ánh Ngọc) phê duyệt
-# chính thức — README/CLAUDE.md chỉ khóa CON SỐ "8 mã", chưa khóa TÊN mã cụ thể ở tài liệu nguồn
-# nào. Trước khi dùng cho UAT/demo thật, phải thay bằng danh sách đã duyệt và xóa comment này.
+# Cập nhật 2026-08-07: CLAUDE.md mục "Đóng băng phạm vi" đã bỏ giới hạn 8 mã khỏi danh sách đóng
+# băng từ 2026-08-06 — `workflow_update` (xem `configs/profiles/workflow_update.yaml`,
+# `expected_input_tickers: 30`) là baseline chính thức, dùng ĐỦ 30 mã VN30 cho Data/AI/Risk (Risk
+# mới chọn dynamic top-10 trước khi vào Quantum — `packages/data` KHÔNG tự cắt xuống 10, chỉ ingest
+# đủ 30). `demo_fast` (8 mã) vẫn giữ nguyên cho debug nhanh, không đọc file này theo nghĩa "khoá 8
+# mã" nữa — xem `configs/profiles/demo_fast.yaml` nếu cần tái tạo scope cũ.
 #
-# 8 mã chọn tạm (con của 30 mã VN30 trong universe gốc, đại diện ngân hàng/BĐS/tiêu dùng/thép/
-# công nghệ, có 1 mã multi-exchange = ACB để vẫn kiểm thử được đường DNSE):
+# `ticker_list_status: TBD_001` (xem `configs/profiles/workflow_update.yaml`): danh sách 30 mã dưới
+# đây port nguyên trạng từ `CLEAN.ipynb` Cell 8 (best-effort, chưa phải bản Data Owner + Product
+# Owner phê duyệt chính thức) — trước UAT/demo thật phải thay bằng Universe Registry đã duyệt.
+#
+# `exchange_periods` (bắt buộc — `registry._UNIVERSE_COLUMNS`, đọc bởi
+# `quality/price_limits.py` cho DQ-007): lịch sử sàn máy đọc được, dùng resolve biên độ dao động
+# theo ngày. Ngày chuyển sàn của 6 mã multi-exchange đã verify qua nguồn tin thật (không chỉ suy ra
+# từ ước lượng tháng/năm trong notebook) — ACB 2020-12-01 (đã có trong universe.yaml cũ), BSR
+# 2025-01-17, GVR 2020-03-17, LPB 2020-11-09, SHB 2021-10-11, VIB 2020-11-02. LƯU Ý: notebook gốc
+# ghi SHB "HNX→HOSE 2020-10" — SAI, ngày thật là 2021-10-11 (verify qua tinnhanhchungkhoan.vn/SHB
+# công bố thông tin chính thức); đã sửa lại `exchange_history`/`exchange_periods` cho đúng ở đây.
 
-# Số mã universe đã khóa (CLAUDE.md: "8 mã") — dùng làm invariant độc lập cho
-# quality.checks.check_universe_count, tách khỏi len(tickers) để bắt được trường hợp ai đó lỡ
-# thêm/xóa ticker trong danh sách dưới mà quên cập nhật số đã khóa.
-expected_ticker_count: 8
+# Số mã universe — invariant độc lập cho quality.checks.check_universe_count, tách khỏi
+# len(tickers) để bắt được trường hợp ai đó lỡ thêm/xóa ticker trong danh sách dưới mà quên cập
+# nhật số này.
+expected_ticker_count: 30
 
 tickers:
   - ticker: ACB
@@ -28,60 +39,33 @@ tickers:
         from: "2020-12-01"
     data_source: dnse
     notes: ""
+  - ticker: BID
+    yahoo_symbol: BID.VN
+    company_name: "BIDV"
+    first_trading_date: "2014-01-24"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: BSR
+    yahoo_symbol: BSR.VN
+    company_name: "Lọc hoá dầu Bình Sơn"
+    first_trading_date: "2018-03-01"
+    exchange_current: HOSE
+    exchange_history: "UPCOM→HOSE 2025-01"
+    exchange_periods:
+      - exchange: UPCOM
+        until: "2025-01-16"
+      - exchange: HOSE
+        from: "2025-01-17"
+    data_source: dnse
+    notes: "Chuyển sàn verify qua HOSE/BSR công bố chính thức 17/1/2025."
   - ticker: CTG
     yahoo_symbol: CTG.VN
     company_name: "VietinBank"
     first_trading_date: "2009-07-16"
-    exchange_current: HOSE
-    exchange_history: "-"
-    exchange_periods:
-      - exchange: HOSE
-    data_source: yahoo
-    notes: ""
-  - ticker: VCB
-    yahoo_symbol: VCB.VN
-    company_name: "Vietcombank"
-    first_trading_date: "2009-06-30"
-    exchange_current: HOSE
-    exchange_history: "-"
-    exchange_periods:
-      - exchange: HOSE
-    data_source: yahoo
-    notes: ""
-  - ticker: HPG
-    yahoo_symbol: HPG.VN
-    company_name: "Hoà Phát"
-    first_trading_date: "2007-11-15"
-    exchange_current: HOSE
-    exchange_history: "-"
-    exchange_periods:
-      - exchange: HOSE
-    data_source: yahoo
-    notes: ""
-  - ticker: VIC
-    yahoo_symbol: VIC.VN
-    company_name: "Vingroup"
-    first_trading_date: "2007-09-19"
-    exchange_current: HOSE
-    exchange_history: "-"
-    exchange_periods:
-      - exchange: HOSE
-    data_source: yahoo
-    notes: ""
-  - ticker: MWG
-    yahoo_symbol: MWG.VN
-    company_name: "Thế Giới Di Động"
-    first_trading_date: "2014-07-14"
-    exchange_current: HOSE
-    exchange_history: "-"
-    exchange_periods:
-      - exchange: HOSE
-    data_source: yahoo
-    notes: ""
-  - ticker: VNM
-    yahoo_symbol: VNM.VN
-    company_name: "Vinamilk"
-    first_trading_date: "2006-01-19"
     exchange_current: HOSE
     exchange_history: "-"
     exchange_periods:
@@ -98,8 +82,274 @@ tickers:
       - exchange: HOSE
     data_source: yahoo
     notes: ""
+  - ticker: GAS
+    yahoo_symbol: GAS.VN
+    company_name: "PV GAS"
+    first_trading_date: "2012-05-21"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: GVR
+    yahoo_symbol: GVR.VN
+    company_name: "Tập đoàn Cao su VN"
+    first_trading_date: "2018-03-21"
+    exchange_current: HOSE
+    exchange_history: "UPCOM→HOSE 2020-03"
+    exchange_periods:
+      - exchange: UPCOM
+        until: "2020-03-16"
+      - exchange: HOSE
+        from: "2020-03-17"
+    data_source: dnse
+    notes: "Chuyển sàn verify: lễ niêm yết HOSE 17/3/2020."
+  - ticker: HDB
+    yahoo_symbol: HDB.VN
+    company_name: "HDBank"
+    first_trading_date: "2018-01-05"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: HPG
+    yahoo_symbol: HPG.VN
+    company_name: "Hoà Phát"
+    first_trading_date: "2007-11-15"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: LPB
+    yahoo_symbol: LPB.VN
+    company_name: "LPBank"
+    first_trading_date: "2017-10-05"
+    exchange_current: HOSE
+    exchange_history: "UPCOM→HOSE 2020-11"
+    exchange_periods:
+      - exchange: UPCOM
+        until: "2020-11-08"
+      - exchange: HOSE
+        from: "2020-11-09"
+    data_source: dnse
+    notes: "Chuyển sàn verify: phiên đầu tiên trên HOSE 09/11/2020 (chấp thuận niêm yết 14/10/2020)."
+  - ticker: MBB
+    yahoo_symbol: MBB.VN
+    company_name: "MBBank"
+    first_trading_date: "2011-11-01"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: MSN
+    yahoo_symbol: MSN.VN
+    company_name: "Masan Group"
+    first_trading_date: "2009-11-05"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: MWG
+    yahoo_symbol: MWG.VN
+    company_name: "Thế Giới Di Động"
+    first_trading_date: "2014-07-14"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: PLX
+    yahoo_symbol: PLX.VN
+    company_name: "Petrolimex"
+    first_trading_date: "2017-04-21"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: SAB
+    yahoo_symbol: SAB.VN
+    company_name: "Sabeco"
+    first_trading_date: "2016-12-06"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: SHB
+    yahoo_symbol: SHB.VN
+    company_name: "SHBank"
+    first_trading_date: "2009-04-20"
+    exchange_current: HOSE
+    exchange_history: "HNX→HOSE 2021-10"
+    exchange_periods:
+      - exchange: HNX
+        until: "2021-10-10"
+      - exchange: HOSE
+        from: "2021-10-11"
+    data_source: dnse
+    notes: "SỬA so với ước lượng gốc trong CLEAN.ipynb (ghi nhầm 2020-10) — ngày thật 11/10/2021, verify qua công bố thông tin chính thức SHB/HOSE."
+  - ticker: SSB
+    yahoo_symbol: SSB.VN
+    company_name: "SeABank"
+    first_trading_date: "2021-03-24"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: SSI
+    yahoo_symbol: SSI.VN
+    company_name: "SSI Securities"
+    first_trading_date: "2007-10-29"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: STB
+    yahoo_symbol: STB.VN
+    company_name: "Sacombank"
+    first_trading_date: "2006-07-12"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: TCB
+    yahoo_symbol: TCB.VN
+    company_name: "Techcombank"
+    first_trading_date: "2018-06-04"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: TPB
+    yahoo_symbol: TPB.VN
+    company_name: "TPBank"
+    first_trading_date: "2018-04-19"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VCB
+    yahoo_symbol: VCB.VN
+    company_name: "Vietcombank"
+    first_trading_date: "2009-06-30"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VHM
+    yahoo_symbol: VHM.VN
+    company_name: "Vinhomes"
+    first_trading_date: "2018-05-17"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VIB
+    yahoo_symbol: VIB.VN
+    company_name: "VIB"
+    first_trading_date: "2017-01-09"
+    exchange_current: HOSE
+    exchange_history: "UPCOM→HOSE 2020-11"
+    exchange_periods:
+      - exchange: UPCOM
+        until: "2020-11-01"
+      - exchange: HOSE
+        from: "2020-11-02"
+    data_source: dnse
+    notes: "Chuyển sàn verify: chấp thuận niêm yết 16/10/2020, giao dịch đầu tháng 11/2020 (ngày chính xác trong tháng — best-effort)."
+  - ticker: VIC
+    yahoo_symbol: VIC.VN
+    company_name: "Vingroup"
+    first_trading_date: "2007-09-19"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VJC
+    yahoo_symbol: VJC.VN
+    company_name: "Vietjet Air"
+    first_trading_date: "2017-02-28"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VNM
+    yahoo_symbol: VNM.VN
+    company_name: "Vinamilk"
+    first_trading_date: "2006-01-19"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VPB
+    yahoo_symbol: VPB.VN
+    company_name: "VPBank"
+    first_trading_date: "2017-08-17"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
+  - ticker: VPL
+    yahoo_symbol: VPL.VN
+    company_name: "VPL (placeholder — verify)"
+    first_trading_date: "2025-01-01"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: "Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production trong CLEAN.ipynb)."
+  - ticker: VRE
+    yahoo_symbol: VRE.VN
+    company_name: "Vincom Retail"
+    first_trading_date: "2017-11-06"
+    exchange_current: HOSE
+    exchange_history: "-"
+    exchange_periods:
+      - exchange: HOSE
+    data_source: yahoo
+    notes: ""
 
-# Tỷ trọng danh mục mẫu — equal-weight 8 mã, tổng = 1.0 (bất biến CLAUDE.md quy tắc 6).
+# PROVISIONAL — tỷ trọng danh mục mẫu cho packages/risk, hiện vẫn equal-weight TRÊN SUBSET 8 MÃ CŨ
+# (chưa đồng bộ với 30 mã ở `tickers` phía trên). Theo `configs/profiles/workflow_update.yaml`,
+# Risk (owner Liễu Hoài Phúc) sẽ tự chọn dynamic top-10 từ 30 mã (`risk.candidate_selection`) —
+# không phải một danh mục equal-weight tĩnh — nên việc cập nhật key này thuộc phạm vi packages/risk,
+# không phải packages/data. Không tự ý đổi ở đây.
 sample_portfolio_weights:
   ACB: 0.125
   CTG: 0.125
@@ -110,5 +360,5 @@ sample_portfolio_weights:
   VNM: 0.125
   FPT: 0.125
 
-# Ngày snapshot dùng để khóa danh sách 8 mã tạm này.
+# Ngày snapshot dùng để khóa danh sách 30 mã.
 snapshot_date: "2026-08-03"
