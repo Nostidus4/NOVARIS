@@ -84,36 +84,96 @@ class FileOptimizeJobRepository:
 def _result_to_dict(result: OptimizeResult) -> dict[str, Any]:
     return {
         "bitstring": result.bitstring,
-        "k_actions": result.k_actions,
-        "chosen_actions": result.chosen_actions,
         "requested_solver": result.requested_solver,
         "actual_solver": result.actual_solver,
         "exact_energy": result.exact_energy,
-        "qaoa_energy_by_seed": result.qaoa_energy_by_seed,
+        "classical_energy": result.classical_energy,
         "optimality_gap": result.optimality_gap,
-        "feasibility_rate": result.feasibility_rate,
-        "true_cvar_before": result.true_cvar_before,
-        "true_cvar_after": result.true_cvar_after,
+        "qaoa_beats_classical": result.qaoa_beats_classical,
+        "runtime_seconds": result.runtime_seconds,
         "shots": result.shots,
         "backend": result.backend,
-        "runtime_seconds": result.runtime_seconds,
+        "fallback_reason": result.fallback_reason,
+        "profile_id": result.profile_id,
+        "qubo_hash": result.qubo_hash,
+        "true_cvar_before": result.true_cvar_before,
+        "true_cvar_after": result.true_cvar_after,
+        "source_artifact": result.source_artifact,
     }
 
 
 def _result_from_dict(payload: dict[str, Any]) -> OptimizeResult:
+    # Backward-compatible with older job JSON that still has demo_fast fields.
+    if "source_artifact" not in payload and "k_actions" in payload:
+        return OptimizeResult(
+            bitstring=str(payload["bitstring"]),
+            requested_solver=str(payload.get("requested_solver") or "qaoa"),
+            actual_solver=str(payload.get("actual_solver") or "qaoa"),
+            exact_energy=float(payload["exact_energy"]),
+            classical_energy=None,
+            optimality_gap=(
+                None
+                if payload.get("optimality_gap") is None
+                else float(payload["optimality_gap"])
+            ),
+            qaoa_beats_classical=False,
+            runtime_seconds=float(payload.get("runtime_seconds") or 0.0),
+            shots=(None if payload.get("shots") is None else int(payload["shots"])),
+            backend=str(payload.get("backend") or "StatevectorSampler"),
+            fallback_reason=None,
+            profile_id=None,
+            qubo_hash=None,
+            true_cvar_before=(
+                None
+                if payload.get("true_cvar_before") is None
+                else float(payload["true_cvar_before"])
+            ),
+            true_cvar_after=(
+                None
+                if payload.get("true_cvar_after") is None
+                else float(payload["true_cvar_after"])
+            ),
+            source_artifact="legacy_qaoa_result.json",
+        )
     return OptimizeResult(
-        bitstring=payload["bitstring"],
-        k_actions=payload["k_actions"],
-        chosen_actions=payload["chosen_actions"],
-        requested_solver=payload["requested_solver"],
-        actual_solver=payload["actual_solver"],
-        exact_energy=payload["exact_energy"],
-        qaoa_energy_by_seed=payload["qaoa_energy_by_seed"],
-        optimality_gap=payload["optimality_gap"],
-        feasibility_rate=payload["feasibility_rate"],
-        true_cvar_before=payload["true_cvar_before"],
-        true_cvar_after=payload["true_cvar_after"],
-        shots=payload["shots"],
-        backend=payload["backend"],
-        runtime_seconds=payload["runtime_seconds"],
+        bitstring=str(payload["bitstring"]),
+        requested_solver=str(payload["requested_solver"]),
+        actual_solver=str(payload["actual_solver"]),
+        exact_energy=float(payload["exact_energy"]),
+        classical_energy=(
+            None
+            if payload.get("classical_energy") is None
+            else float(payload["classical_energy"])
+        ),
+        optimality_gap=(
+            None
+            if payload.get("optimality_gap") is None
+            else float(payload["optimality_gap"])
+        ),
+        qaoa_beats_classical=bool(payload.get("qaoa_beats_classical", False)),
+        runtime_seconds=float(payload["runtime_seconds"]),
+        shots=None if payload.get("shots") is None else int(payload["shots"]),
+        backend=str(payload["backend"]),
+        fallback_reason=(
+            None
+            if payload.get("fallback_reason") is None
+            else str(payload["fallback_reason"])
+        ),
+        profile_id=(
+            None if payload.get("profile_id") is None else str(payload["profile_id"])
+        ),
+        qubo_hash=(
+            None if payload.get("qubo_hash") is None else str(payload["qubo_hash"])
+        ),
+        true_cvar_before=(
+            None
+            if payload.get("true_cvar_before") is None
+            else float(payload["true_cvar_before"])
+        ),
+        true_cvar_after=(
+            None
+            if payload.get("true_cvar_after") is None
+            else float(payload["true_cvar_after"])
+        ),
+        source_artifact=str(payload["source_artifact"]),
     )

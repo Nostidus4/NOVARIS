@@ -3,7 +3,8 @@
 **Status:** ADOPTED FOR IMPLEMENTATION — mọi run sinh ra dưới quyết định này đều là
 `NON_BASELINE_RUN` cho tới khi owner tương ứng ở §3 phê duyệt.
 
-**Owner:** Nguyễn Anh Tú (AI/ML). **Supersedes:** một phần `ai-scope-decision-record-v0.1.md`.
+**Owner:** Nguyễn Anh Tú (AI/ML). **Supersedes:** một phần
+`docs/archive/ai-scope-decision-record-v0.1.md`.
 
 ## 1. Vì sao có v0.2
 

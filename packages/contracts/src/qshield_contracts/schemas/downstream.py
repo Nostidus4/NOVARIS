@@ -21,6 +21,15 @@ from qshield_contracts.enums import SolverKind
 _PROFILE_STATUSES = {"NON_BASELINE_RUN", "BASELINE_TARGET"}
 _SOLVER_STATUSES = {"completed", "failed", "timeout"}
 _SAMPLE_KINDS = {"intercept", "main_effect", "pairwise_effect", "validation", "random"}
+_GATE_IDS = {
+    "data_gate",
+    "scenario_gate",
+    "product_gate",
+    "surrogate_gate",
+    "solver_gate",
+}
+_GATE_STATUSES = {"PASS", "WARN", "FAIL", "PENDING", "EXCEPTION"}
+_BENCHMARK_SOLVERS = {"exact", "qaoa", "classical"}
 
 
 @dataclass(frozen=True)
@@ -406,6 +415,11 @@ class FinalRecommendation:
     turnover: float
     constraints_passed: bool
     warnings: list[str] = field(default_factory=list)
+    # TL-018 — materiality of true-CVaR improvement after cost
+    materiality_threshold: float = 0.01
+    true_cvar_relative_reduction: float | None = None
+    materiality_met: bool | None = None
+    improvement_claim_allowed: bool | None = None
 
 
 def validate_final_recommendation(recommendation: FinalRecommendation) -> None:
@@ -473,3 +487,154 @@ def validate_final_recommendation(recommendation: FinalRecommendation) -> None:
         )
     if recommendation.transaction_cost < 0.0 or recommendation.turnover < 0.0:
         raise ValueError("transaction_cost and turnover must be non-negative.")
+    if recommendation.materiality_threshold <= 0.0:
+        raise ValueError("materiality_threshold must be positive.")
+    if recommendation.true_cvar_relative_reduction is not None:
+        expected_met = (
+            recommendation.true_cvar_relative_reduction
+            >= recommendation.materiality_threshold
+        )
+        if (
+            recommendation.materiality_met is not None
+            and recommendation.materiality_met != expected_met
+        ):
+            raise ValueError(
+                "materiality_met does not match true_cvar_relative_reduction vs threshold."
+            )
+        if recommendation.improvement_claim_allowed is True and not expected_met:
+            raise ValueError(
+                "improvement_claim_allowed requires materiality_met "
+                f"(relative reduction >= {recommendation.materiality_threshold})."
+            )
+
+
+@dataclass(frozen=True)
+class GateVerdict:
+    """Sign-off / quality verdict for a named approval or validation gate."""
+
+    gate_id: str
+    status: str
+    owner: str
+    metrics: dict[str, float] = field(default_factory=dict)
+    signed_at: str | None = None
+    exception_disclosure: str | None = None
+    notes: list[str] = field(default_factory=list)
+
+
+def validate_gate_verdict(verdict: GateVerdict) -> None:
+    if verdict.gate_id not in _GATE_IDS:
+        raise ValueError(
+            f"Unsupported gate_id={verdict.gate_id!r}; expected one of {sorted(_GATE_IDS)}."
+        )
+    if verdict.status not in _GATE_STATUSES:
+        raise ValueError(
+            f"Unsupported gate status={verdict.status!r}; "
+            f"expected one of {sorted(_GATE_STATUSES)}."
+        )
+    if not verdict.owner.strip():
+        raise ValueError("gate verdict owner is required.")
+    if verdict.status == "EXCEPTION" and not (
+        verdict.exception_disclosure and verdict.exception_disclosure.strip()
+    ):
+        raise ValueError("EXCEPTION gate status requires exception_disclosure.")
+
+
+@dataclass(frozen=True)
+class SolverManifest:
+    """Registered solver settings that must travel with GATE-08 BenchmarkReport."""
+
+    shots: int
+    registered_seeds: list[int]
+    reps: int
+    optimizer: str
+    maxiter: int
+    backend: str
+    package_versions: dict[str, str]
+    warm_start: bool
+    seed_status: dict[str, str] = field(default_factory=dict)
+    NON_FINAL_CONFIG: bool = False
+
+
+@dataclass(frozen=True)
+class BenchmarkReport:
+    """Contract for exact + QAOA + classical comparison on one QUBO (TL-015, G1/G3/G11)."""
+
+    provenance: ArtifactProvenance
+    qubo_hash: str
+    candidate_order_hash: str
+    solver_manifest: SolverManifest
+    requested_solver: str
+    actual_solver: str
+    exact_best_energy: float
+    qaoa_best_energy: float | None
+    classical_best_energy: float | None
+    success_prob: float | None = None
+    feasible_rate: float | None = None
+    optimality_gap: float | None = None
+    energy_stats: dict[str, float] = field(default_factory=dict)
+    runtime_seconds: dict[str, float] = field(default_factory=dict)
+    peak_memory_mb: float | None = None
+    reference_hardware: dict[str, Any] = field(default_factory=dict)
+    fallback_reason: str | None = None
+    caveats: list[str] = field(default_factory=list)
+
+
+def validate_benchmark_report(report: BenchmarkReport) -> None:
+    """Reject benchmark payloads that mix hashes, profiles, or incomplete solver provenance."""
+    validate_provenance(report.provenance)
+    if not report.qubo_hash or not report.candidate_order_hash:
+        raise ValueError("benchmark report hashes are required.")
+    if report.requested_solver not in _BENCHMARK_SOLVERS:
+        raise ValueError(f"Unsupported requested_solver={report.requested_solver!r}.")
+    if report.actual_solver not in _BENCHMARK_SOLVERS:
+        raise ValueError(f"Unsupported actual_solver={report.actual_solver!r}.")
+    manifest = report.solver_manifest
+    if manifest.shots <= 0 or manifest.reps <= 0 or manifest.maxiter <= 0:
+        raise ValueError("solver_manifest shots/reps/maxiter must be positive.")
+    if len(manifest.registered_seeds) < 1:
+        raise ValueError("solver_manifest.registered_seeds must be non-empty.")
+    if not manifest.optimizer.strip() or not manifest.backend.strip():
+        raise ValueError("solver_manifest optimizer and backend are required.")
+    if report.requested_solver != report.actual_solver and not (
+        report.fallback_reason and report.fallback_reason.strip()
+    ):
+        raise ValueError(
+            "actual_solver differs from requested_solver — fallback_reason is required."
+        )
+    if report.success_prob is not None and not 0.0 <= report.success_prob <= 1.0:
+        raise ValueError("success_prob must be in [0, 1].")
+    if report.feasible_rate is not None and not 0.0 <= report.feasible_rate <= 1.0:
+        raise ValueError("feasible_rate must be in [0, 1].")
+    for key, value in report.runtime_seconds.items():
+        if value < 0.0:
+            raise ValueError(f"runtime_seconds[{key!r}] must be non-negative.")
+    if report.peak_memory_mb is not None and report.peak_memory_mb < 0.0:
+        raise ValueError("peak_memory_mb must be non-negative.")
+
+
+def validate_transaction_cost_excludes_liquidity(config: dict[str, Any]) -> None:
+    """TL-008 shape check: liquidity is a separate objective component, not a txn fee add-on.
+
+    Accepts either flat Decision-package keys (provisional override) or nested ``risk.*``.
+    """
+    txn = config.get("transaction_cost")
+    if not isinstance(txn, dict):
+        txn = (config.get("risk") or {}).get("transaction_cost")
+    if not isinstance(txn, dict):
+        raise TypeError("transaction_cost block is required for TL-008 validation.")
+    for key in ("fee", "spread"):
+        if txn.get(key) is None:
+            raise ValueError(f"transaction_cost.{key} must be set (TL-007).")
+    objective = config.get("financial_objective")
+    if not isinstance(objective, dict):
+        objective = (config.get("risk") or {}).get("financial_objective")
+    if not isinstance(objective, dict):
+        raise TypeError("financial_objective block is required for TL-008 validation.")
+    components = objective.get("components") or {}
+    if "transaction_cost" not in components or "liquidity_penalty" not in components:
+        raise ValueError(
+            "financial_objective.components must list transaction_cost and "
+            "liquidity_penalty separately (TL-008)."
+        )
+    if components["transaction_cost"] is components.get("liquidity_penalty"):
+        raise ValueError("transaction_cost and liquidity_penalty must be distinct.")

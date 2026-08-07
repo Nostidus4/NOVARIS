@@ -19,6 +19,9 @@ def get_benchmark_endpoint(
     if dto is None:
         raise HTTPException(
             status_code=404,
-            detail="Chưa có benchmark.json — chạy `qshield-quantum solve` trước.",
+            detail=(
+                "Chưa có workflow_benchmark.json / benchmark.json — chạy "
+                "`qshield-quantum workflow --exact-only` (hoặc solve demo_fast) trước."
+            ),
         )
     return dto

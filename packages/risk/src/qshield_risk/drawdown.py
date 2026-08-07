@@ -19,7 +19,9 @@ def drawdown_paths(
     if not np.isfinite(wealth).all():
         raise ValueError("[risk.drawdown] wealth_paths contain NaN or infinite values.")
     if not np.isfinite(initial_nav) or initial_nav <= 0.0:
-        raise ValueError(f"[risk.drawdown] initial_nav must be positive, got {initial_nav!r}.")
+        raise ValueError(
+            f"[risk.drawdown] initial_nav must be positive, got {initial_nav!r}."
+        )
 
     initial = np.full((wealth.shape[0], 1), float(initial_nav))
     with_initial = np.concatenate((initial, wealth), axis=1)

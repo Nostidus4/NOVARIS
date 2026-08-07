@@ -233,9 +233,11 @@ QSHIELD/
 ├── artifacts/         # output pipeline
 ├── reports/           # báo cáo cho người đọc
 ├── docs/              # scope, kiến trúc, runbook, limitations, disclaimer
-└── tests/             # test tích hợp (unit test nằm trong từng package)
+├── notebooks/         # chuỗi exploration 00…06 (không chứa core logic)
+└── artifacts_bench/   # bakeoff QAOA — tách khỏi artifacts/dev
 ```
 
+Unit/integration test nằm trong `packages/*/tests/` và `backend/tests/` (`uv run pytest`).
 Chi tiết từng thư mục, có gì bên trong, ai phụ trách: `docs/Structure.md` (đặc biệt mục 1.1).
 Quy tắc kỹ thuật bất biến: `CLAUDE.md`. Kiến trúc pipeline & hợp đồng dữ liệu:
 `docs/architecture/`.

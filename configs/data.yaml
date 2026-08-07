@@ -9,16 +9,12 @@ frequency: daily  # đã khóa — CLAUDE.md: "dữ liệu ngày"
 source: yahoo_dnse_vnstock
 
 date_range:
-  # PROVISIONAL — dùng tạm cùng mốc thời gian đã áp dụng cho thiết kế 30-mã (mvp_scope.md §8.3) để
-  # có thể chạy pipeline end-to-end trong lúc phát triển phạm vi 8-mã. CHƯA được Data Owner duyệt
-  # riêng cho phạm vi 8-mã đã khóa — phải xác nhận lại trước khi dùng làm số liệu UAT/demo chính thức.
-  #
-  # "2 đồng hồ" (CLEAN.ipynb): market-level (HMM regime, packages/ai) train dài hơn asset-level
-  # (scenarios/CVaR/QUBO) vì asset-level cần coverage tốt hơn giữa các mã trong universe đã chốt.
-  # validation/test dùng CHUNG cho cả hai tầng.
+  # Decision-package TL-003 (2026-08-07): asset_train_start=2016-01-01, test_end=2026-07-31.
+  # "2 đồng hồ": market-level (HMM) và asset-level dùng chung validation/test; market train
+  # vẫn bắt đầu 2016-01-01. Khi đổi range phải tạo data_version mới.
   market_train_start: "2016-01-01"
   market_train_end: "2022-12-31"
-  asset_train_start: "2018-07-02"
+  asset_train_start: "2016-01-01"
   asset_train_end: "2022-12-31"
   validation_start: "2023-01-01"
   validation_end: "2023-12-31"

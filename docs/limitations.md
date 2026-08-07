@@ -7,21 +7,18 @@ bố miễn trừ trách nhiệm dành cho người dùng cuối.
 
 ---
 
-## 1. Code hiện tại (`demo_fast`) chưa bằng baseline sản phẩm chính thức (`workflow_update`)
+## 1. Code hiện tại: `workflow_update` đã có đường chạy NON_BASELINE; `demo_fast` vẫn riêng
 
-**Cập nhật 2026-08-06:** team đã thống nhất chốt `docs/product/mvp_scope.md` /
-`docs/product/product_requirements.md` — universe 30 mã VN30, Risk chọn động top 10 ứng viên, mã
-hóa 20 bit (2 bit/mã), 4 mức hành động (0/10/20/30%), 2.000–5.000 kịch bản — làm **baseline sản
-phẩm chính thức**, hình thức hóa thành `configs/profiles/workflow_update.yaml`
-(`status: BASELINE_TARGET`). Đây không còn là "thiết kế gốc tạm gác lại" — đây là đích mọi package
-phải build tới.
+**Cập nhật 2026-08-07:** Decision-package đã map vào
+`configs/provisional/workflow_update_downstream.yaml` + `configs/profiles/workflow_update.yaml`.
+Có đường CLI/pipeline `workflow_update` (30 → top-10 → 20-bit → exact-fallback → rerank/polish →
+true-benchmark) và dashboard đọc `/workflow/summary`. **Đây vẫn là `NON_BASELINE_RUN`** cho đến khi
+đủ 3 approval gate (`data_gate`, `scenario_gate`, `product_gate`) — không dùng làm bằng chứng UAT.
 
-Do ràng buộc 7 ngày / 5 người, `packages/*` **hiện tại** (bao gồm `packages/quantum` và
-`packages/pipeline` đã hiện thực) mới chỉ chạy đúng phạm vi rút gọn `demo_fast`
-(`configs/profiles/demo_fast.yaml`, `status: NON_BASELINE_RUN`) — dùng để có một đường chạy
-đầu-cuối sớm, KHÔNG phải baseline để đánh giá sản phẩm:
+`demo_fast` (`configs/profiles/demo_fast.yaml`) giữ cho debug/smoke nhanh; **không trộn số liệu**
+hai profile trong cùng báo cáo.
 
-| Thông số | `workflow_update` (baseline chính thức) | `demo_fast` (code hiện tại) |
+| Thông số | `workflow_update` (đích chính thức) | `demo_fast` (debug) |
 |---|---|---|
 | Universe | 30 mã VN30 | 8 mã |
 | Số ứng viên Quantum | Top 10 (Risk chọn động) | Cả 8 mã (không có bước chọn candidate) |
@@ -29,18 +26,16 @@ Do ràng buộc 7 ngày / 5 người, `packages/*` **hiện tại** (bao gồm `
 | Mức hành động | 0% / 10% / 20% / 30% | Một mức duy nhất: giảm 20% vị thế |
 | Số kịch bản | 2.000 (dev) / 5.000 (final) | 500 |
 | Horizon | 20 ngày | 20 ngày |
-| Rerank + local polishing (±5pp) | Bắt buộc (owner Phúc) | Không có |
+| Rerank + local polishing (±5pp) | Có (`rerank-polish`) | Không |
+| True-CVaR benchmark (G8) | Có (`benchmark-true`) | Qua `solve` demo path |
 
-**Khi đọc bất kỳ số liệu nào từ hệ thống hôm nay, phải hiểu đó là kết quả trên `demo_fast` (8 mã,
-K=3, giảm 20%), không phải trên baseline `workflow_update`.** Không được dùng số `demo_fast` để
-tuyên bố đã đạt hoặc đánh giá tính khả thi của `workflow_update` — đây là quy tắc phát triển ghi rõ
-trong `configs/profiles/workflow_update.yaml` ("Không được nói workflow update không khả thi dựa
-trên benchmark Quantum 30 mã, vì benchmark đó sai flow").
+**Khi đọc số liệu:** mọi artifact `workflow_update` hiện tại gắn `NON_BASELINE_RUN` /
+`NON_FINAL_CONFIG` (QAOA 20-qubit timeout → fallback exact). Không tuyên bố quantum advantage.
+`demo_fast` không được dùng để đánh giá tính khả thi của `workflow_update`.
 
-Mỗi run phải gắn đúng `profile_id` (`demo_fast` hoặc `workflow_update`); không được trộn số liệu
-của hai profile trong cùng một so sánh/báo cáo. `workflow_update` chỉ được dùng làm bằng chứng
-UAT/baseline chính thức sau khi qua đủ 3 approval gate (`data_gate`, `scenario_gate`,
-`product_gate`) — chi tiết governance, ai duyệt gì: `configs/profiles/README.md`.
+Mỗi run phải gắn đúng `profile_id`; `workflow_update` chỉ được dùng làm bằng chứng UAT/baseline
+sau khi qua đủ 3 gate — chi tiết: `configs/profiles/README.md`,
+`docs/handoffs/decision_package_config_map.md`.
 
 ---
 
@@ -86,6 +81,14 @@ UAT/baseline chính thức sau khi qua đủ 3 approval gate (`data_gate`, `scen
   surrogate khớp kém với hàm mục tiêu thật, nghiệm "exact" trên QUBO vẫn có thể không tối ưu về tài
   chính — đây chính là lý do bắt buộc phải re-rank bằng true objective.
 - QAOA chạy trên số seed hữu hạn (baseline ≥ 10); không được cherry-pick seed tốt nhất để báo cáo.
+- **QAOA chưa hoàn tất được một seed nào ở scope baseline 20 qubit** trên `StatevectorSampler`; run
+  20-bit hiện chỉ có exact + classical, artifact ghi `actual_solver=exact` kèm `fallback_reason`.
+  Đo ở scope hạ xuống 10 qubit (`configs/provisional/qaoa_benchmark_10bit.yaml`, `NON_BASELINE_RUN`)
+  cho thấy QAOA chỉ đạt nghiệm tối ưu khi **warm-start từ chính nghiệm exact** — bỏ warm-start thì
+  lệch 2,03% energy, success probability bằng 0 trên 1.024 shot, và runtime/seed tăng từ 4,0s lên
+  337,2s. Số liệu đầy đủ: `docs/perf/2026-08-07-qaoa-solver-benchmark.md`.
+- **Kết quả QAOA có warm-start không phải bằng chứng độc lập** về năng lực solver, vì warm-start cần
+  exact giải xong trước. Khi báo cáo phải nêu rõ seed nào dùng warm-start.
 
 ## 5. Giới hạn tài chính và hành động phòng vệ
 

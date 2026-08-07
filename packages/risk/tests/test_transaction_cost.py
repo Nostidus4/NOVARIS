@@ -8,7 +8,9 @@ def test_transaction_cost_breakdown_by_hand() -> None:
     assert costs.fee == pytest.approx(0.00025)
     assert costs.spread == pytest.approx(0.0005)
     assert costs.liquidity_penalty == pytest.approx(0.000125)
-    assert costs.total == pytest.approx(0.000875)
+    # TL-008: total cash txn cost excludes liquidity
+    assert costs.total == pytest.approx(0.00075)
+    assert costs.cash_cost == pytest.approx(0.00075)
 
 
 def test_negative_rate_or_notional_is_rejected() -> None:

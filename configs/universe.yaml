@@ -345,20 +345,42 @@ tickers:
     data_source: yahoo
     notes: ""
 
-# PROVISIONAL — tỷ trọng danh mục mẫu cho packages/risk, hiện vẫn equal-weight TRÊN SUBSET 8 MÃ CŨ
-# (chưa đồng bộ với 30 mã ở `tickers` phía trên). Theo `configs/profiles/workflow_update.yaml`,
-# Risk (owner Liễu Hoài Phúc) sẽ tự chọn dynamic top-10 từ 30 mã (`risk.candidate_selection`) —
-# không phải một danh mục equal-weight tĩnh — nên việc cập nhật key này thuộc phạm vi packages/risk,
-# không phải packages/data. Không tự ý đổi ở đây.
+# Equal-weight 30 mã — cập nhật 2026-08-07 theo Decision-package / TL-001 (universe đã 30).
+# Đây là danh mục mẫu để Risk/Quantum chạy end-to-end; Risk vẫn chọn dynamic top-10 từ
+# eligibility. Tổng = 1.0 trong tolerance 1e-8. Portfolio UAT riêng nằm ở configs/uat/*.yaml.
 sample_portfolio_weights:
-  ACB: 0.125
-  CTG: 0.125
-  VCB: 0.125
-  HPG: 0.125
-  VIC: 0.125
-  MWG: 0.125
-  VNM: 0.125
-  FPT: 0.125
+  ACB: 0.0333333333
+  BID: 0.0333333333
+  BSR: 0.0333333333
+  CTG: 0.0333333333
+  FPT: 0.0333333333
+  GAS: 0.0333333333
+  GVR: 0.0333333333
+  HDB: 0.0333333333
+  HPG: 0.0333333333
+  LPB: 0.0333333333
+  MBB: 0.0333333333
+  MSN: 0.0333333333
+  MWG: 0.0333333333
+  PLX: 0.0333333333
+  SAB: 0.0333333333
+  SHB: 0.0333333333
+  SSB: 0.0333333333
+  SSI: 0.0333333333
+  STB: 0.0333333333
+  TCB: 0.0333333333
+  TPB: 0.0333333333
+  VCB: 0.0333333333
+  VHM: 0.0333333333
+  VIB: 0.0333333333
+  VIC: 0.0333333333
+  VJC: 0.0333333333
+  VNM: 0.0333333333
+  VPB: 0.0333333333
+  VPL: 0.0333333334
+  VRE: 0.0333333333
+
+sample_portfolio_cash_weight: 0.0
 
 # Ngày snapshot dùng để khóa danh sách 30 mã.
 snapshot_date: "2026-08-03"

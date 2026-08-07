@@ -175,7 +175,7 @@ Số liệu sau sửa khớp gần như tuyệt đối với phép thử phản 
 
 Test hồi quy: `packages/data/tests/test_corporate_actions.py` (8 test — back-adjust đúng ngày/hệ
 số, không đụng cột thô, return sau sửa ≈0, ticker/entry không khớp bị bỏ qua an toàn, lỗi input rõ
-ràng). `notebooks/exploration/data_exploration.ipynb` đã đồng bộ theo (bug cũ: gọi
+ràng). `notebooks/exploration/01_data_workflow_update.ipynb` đã đồng bộ theo (bug cũ: gọi
 `run_all_checks()` thiếu tham số `price_limit_violations` — đã sửa, đã chạy thử
 `jupyter nbconvert --execute` full end-to-end thành công.
 

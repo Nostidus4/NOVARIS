@@ -126,3 +126,40 @@ def test_sampler_rerank_and_polish_use_same_true_objective() -> None:
     assert polished.actions[
         "final_weight"
     ].sum() + polished.polished_objective.trade.cash_weight == (pytest.approx(1.0))
+
+
+def test_liquidity_not_double_counted_in_objective() -> None:
+    """TL-008: transaction_cost component is fee+spread; liquidity is separate."""
+    cube, tickers, weights = _inputs()
+    cfg = _config()
+    cfg["transaction_cost"] = {
+        "fee": 0.01,
+        "spread": 0.01,
+        "liquidity_penalty": 0.05,
+    }
+    cfg["financial_objective"] = {
+        "components": {name: {"weight": 1.0, "scale": 1.0} for name in COMPONENT_NAMES}
+    }
+    result = financial_objective([0.30, 0.0, 0.0], cube, tickers, weights, 0.0, cfg)
+    gross = weights["T0"] * 0.30
+    assert result.components["transaction_cost"].raw == pytest.approx(gross * 0.02)
+    assert result.components["liquidity_penalty"].raw == pytest.approx(gross * 0.05)
+    assert result.trade.costs.total == pytest.approx(gross * 0.02)
+
+
+def test_materiality_and_rerank_top_n() -> None:
+    from qshield_risk.rerank import materiality_from_cvar
+
+    assert materiality_from_cvar(0.10, 0.088)["materiality_met"] is True
+    assert materiality_from_cvar(0.10, 0.0995)["improvement_claim_allowed"] is False
+
+    cube, tickers, weights = _inputs()
+    cfg = _config()
+    cfg["reranking"] = {"top_distinct_feasible": 1}
+    pool = [
+        {"bitstring": "1000", "qubo_energy": -1.0, "feasible": True},
+        {"bitstring": "1101", "qubo_energy": 1.0, "feasible": True},
+        {"bitstring": "0000", "qubo_energy": 0.0, "feasible": True},
+    ]
+    reranked = rerank_candidates(pool, cube, tickers, weights, 0.0, tickers[:2], cfg)
+    assert len(reranked) == 1

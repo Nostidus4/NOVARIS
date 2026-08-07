@@ -42,12 +42,10 @@ def run_job(
 ) -> None:
     """Chạy nền — gọi từ `BackgroundTasks` của router `optimize.py`.
 
-    ⚠️ Chưa dùng `OptimizeJobRequestDTO.weights` để tính lại risk cho danh mục tuỳ ý — hiện
-    `qshield-quantum solve` đọc `action_effects.csv`/`pairwise_effects.csv` đã có sẵn trên đĩa
-    (từ lần `qshield-risk effects` gần nhất, danh mục mẫu trong `configs/universe.yaml`), CHƯA
-    re-price theo danh mục người dùng gửi lên trong request. Muốn làm đủ (validate portfolio →
-    risk effects → quantum solve theo ĐÚNG danh mục request) là việc mở rộng sau, không phải thiếu
-    sót ở bước này — ghi rõ để không hiểu nhầm request `weights` hiện có tác dụng.
+    ⚠️ `OptimizeJobRequestDTO.weights` chưa re-price Risk theo danh mục request. Job hiện gọi
+    `qshield-quantum workflow --exact-only` trên handoff packages (`candidate_top10` /
+    `qubo_objective_samples` / `risk_summary`) đã có trên đĩa. Muốn optimize đúng danh mục user
+    gửi lên cần thêm bước prepare-workflow theo weights — mở rộng sau.
     """
     job = job_repo.get(job_id)
     if job is None:

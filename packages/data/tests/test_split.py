@@ -6,7 +6,7 @@ from qshield_data.split import apply_splits, assign_split
 _SPLITS_CONFIG = {
     "market_train_start": "2016-01-01",
     "market_train_end": "2022-12-31",
-    "asset_train_start": "2018-07-02",
+    "asset_train_start": "2016-01-01",
     "asset_train_end": "2022-12-31",
     "validation_start": "2023-01-01",
     "validation_end": "2023-12-31",
@@ -19,12 +19,8 @@ _SPLITS_CONFIG = {
     "level,dt,expected",
     [
         ("market", "2016-01-01", "train"),  # đầu train market
-        (
-            "asset",
-            "2016-06-01",
-            "out_of_scope",
-        ),  # trước asset train start dù trong market train
-        ("asset", "2018-07-02", "train"),  # đầu train asset
+        ("asset", "2016-06-01", "train"),
+        ("asset", "2016-01-01", "train"),  # đầu train asset (TL-003)
         ("market", "2023-06-15", "validation"),
         ("asset", "2025-01-01", "test"),
         ("market", "2027-01-01", "out_of_scope"),  # sau test_end

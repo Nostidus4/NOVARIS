@@ -30,7 +30,9 @@ def validate_alpha(alpha: float) -> float:
     """Return a finite confidence level strictly inside the open interval ``(0, 1)``."""
     value = float(alpha)
     if not np.isfinite(value) or not 0.0 < value < 1.0:
-        raise ValueError(f"[risk.metrics] alpha must be finite and in (0, 1), got {alpha!r}.")
+        raise ValueError(
+            f"[risk.metrics] alpha must be finite and in (0, 1), got {alpha!r}."
+        )
     return value
 
 
@@ -48,7 +50,9 @@ def conditional_value_at_risk(
     values = _validated_losses(losses)
     var = value_at_risk(values, alpha)
     tail = values[values >= var]
-    if tail.size == 0:  # Defensive: mathematically impossible for a finite non-empty sample.
+    if (
+        tail.size == 0
+    ):  # Defensive: mathematically impossible for a finite non-empty sample.
         raise ValueError(f"[risk.metrics] no tail observations found at alpha={alpha}.")
     return var, float(tail.mean()), int(tail.size)
 
@@ -66,6 +70,7 @@ class RiskMetrics:
     ``worst_scenario_max_drawdown`` is the most negative running-peak drawdown across every path,
     and ``expected_horizon_return`` is the mean terminal simple return across scenarios.
     """
+
     expected_horizon_return: float
     worst_scenario_max_drawdown: float
     var: dict[str, float]
@@ -101,7 +106,9 @@ def risk_metrics_from_wealth(
     if not np.isfinite(wealth).all():
         raise ValueError("[risk.metrics] wealth_paths contain NaN or infinite values.")
     if not np.isfinite(initial_nav) or initial_nav <= 0.0:
-        raise ValueError(f"[risk.metrics] initial_nav must be positive, got {initial_nav!r}.")
+        raise ValueError(
+            f"[risk.metrics] initial_nav must be positive, got {initial_nav!r}."
+        )
 
     levels = tuple(dict.fromkeys(validate_alpha(level) for level in confidence_levels))
     if not levels:
