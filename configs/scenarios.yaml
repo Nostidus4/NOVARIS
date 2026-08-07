@@ -1,6 +1,15 @@
-# Nguyễn Anh Tú - S=500 kịch bản, H=20 ngày, block=5.
+# Nguyễn Anh Tú - S=2000 kịch bản (dev), H=20 ngày, block=5.
 
-num_scenarios: 500   # đã khóa — CLAUDE.md: "500 kịch bản × 20 ngày"
+# TL-005: development dùng 2.000 kịch bản; final baseline ưu tiên 5.000. Chỉ được chốt final trong
+# khoảng 2.000–4.999 nếu 5.000 không đáp ứng runtime/RAM/gate stability, và khi đó report phải ghi
+# `num_scenarios`, lý do chọn, benchmark runtime/RAM, verdict Scenario Gate và limitation. Không so
+# sánh hai run với S khác nhau nếu không ghi rõ S — `scenario_manifest.json` đã emit trường này.
+#
+# Chi phí thời gian KHÔNG phải là lý do giữ S thấp: đo ở docs/perf/2026-08-04-pipeline-timing.md §3
+# cho thấy 500 → 5.000 chỉ tốn thêm ~1 giây ở N=8. Benchmark cho universe 30 mã (TL-001) chưa chạy —
+# `qshield-ai scenarios` giữ 6 cube trong RAM cùng lúc (simple + log × 3 regime), nên RAM mới là ràng
+# buộc cần đo trước khi nâng lên 5.000 cho final.
+num_scenarios: 2000
 horizon_days: 20      # đã khóa — CLAUDE.md
 block_length: 5       # đã khóa — docs/Structure.md: "moving-block bootstrap, block 5 → 20 ngày"
 

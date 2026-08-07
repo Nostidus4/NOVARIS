@@ -1,4 +1,5 @@
-# Đỗ Ngọc Tân - schema stress_scenarios.npz: tensor (500, 20, 8). Phối hợp Nguyễn Anh Tú.
+# Đỗ Ngọc Tân - schema stress_scenarios.npz: tensor (num_scenarios, 20, n_assets).
+# Phối hợp Nguyễn Anh Tú.
 """Schema `stress_scenarios.npz` — SPEC ĐI TRƯỚC, `packages/ai/scenarios/` còn là scaffold.
 
 Tensor `(num_scenarios, horizon_days, n_assets)`, không phải bảng — không dùng pandera. Kèm
@@ -20,7 +21,7 @@ class ScenarioMetadata:
     seed: int
     regime_conditioned_on: str  # giá trị của RegimeName tại ngày sinh kịch bản
     block_length: int
-    num_scenarios: int  # 500 (phạm vi đã khóa)
+    num_scenarios: int  # TL-005: dev 2.000, final ưu tiên 5.000 (2.000–4.999 cần lý do)
     horizon_days: int  # 20 (phạm vi đã khóa)
     n_assets: int  # 8 (phạm vi đã khóa)
     validation: dict[str, float]  # mean/std/quantile/skew/kurtosis/tail_coverage

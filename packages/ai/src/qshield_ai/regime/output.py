@@ -46,8 +46,10 @@ _LABEL_ORDER = (
     RegimeName.STRESS.value,
 )
 
+# Chỉ những quyết định CÒN treo. Một mục đã chốt mà vẫn nằm đây khiến artifact tự khai sai trạng
+# thái và người đọc report đi hỏi lại một câu đã có đáp án.
+# Đã gỡ: IN-PO-01 (số kịch bản) — TL-005 chốt dev 2.000, final ưu tiên 5.000.
 UNRESOLVED_DECISIONS = (
-    "IN-PO-01 (S=500 vs 2000/5000)",
     "IN-PO-02 (tư cách bằng chứng của fallback)",
     "IN-RISK-01 (đơn vị return của cube)",
     "IN-RISK-02 (ngày đánh giá t)",

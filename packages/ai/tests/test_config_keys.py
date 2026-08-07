@@ -79,7 +79,10 @@ def test_scenario_seed_is_not_shadowed_by_base(config: Config) -> None:
 
 
 def test_scenario_keys(config: Config) -> None:
-    assert config["num_scenarios"] == 500
+    # TL-005: dev 2.000, final baseline ưu tiên 5.000, chỉ được chốt final trong 2.000–4.999 kèm
+    # lý do + benchmark. Kiểm tra khoảng thay vì một giá trị cứng để không phải sửa test mỗi lần
+    # đổi S hợp lệ, nhưng vẫn chặn việc tụt về 500 (giá trị đã bị TL-005 thay thế).
+    assert 2000 <= config["num_scenarios"] <= 5000
     assert config["horizon_days"] == 20
     assert config["block_length"] == 5
     assert "evaluation_date" in config
