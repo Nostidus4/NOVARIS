@@ -10,6 +10,14 @@ wheels/
 .venv
 .DS_Store
 
+# Artifact root tạm của benchmark solver: scenario cube copy sang đây chỉ để chạy scope 10-bit.
+# Bằng chứng cần giữ nằm ở artifacts_bench/{warm_start_run,no_warm_start_run,stress_run,narrative_run}/*.
+artifacts_bench/dev/
+
+# Local notebook / matplotlib caches (created when executing exploration notebooks)
+.mplconfig/
+.ipython/
+
 # Secrets — không bao giờ commit
 .env
 .env.local

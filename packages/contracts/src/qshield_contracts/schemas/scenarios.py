@@ -1,11 +1,11 @@
-# Đỗ Ngọc Tân - schema stress_scenarios.npz: tensor (500, 20, 8). Phối hợp Nguyễn Anh Tú.
-"""Schema `stress_scenarios.npz` — SPEC ĐI TRƯỚC, `packages/ai/scenarios/` còn là scaffold.
+# Đỗ Ngọc Tân - schema stress_scenarios.npz: tensor (S, H, N). Phối hợp Nguyễn Anh Tú.
+"""Schema `stress_scenarios.npz` + sidecar metadata.
 
 Tensor `(num_scenarios, horizon_days, n_assets)`, không phải bảng — không dùng pandera. Kèm
-`ScenarioMetadata` (sidecar, thường ghi cùng file `.json` cạnh `.npz`) để biết seed, regime điều
-kiện hóa, và kết quả validation battery (mean/std/quantile/skew/kurtosis/tail coverage — CLAUDE.md
-quy tắc 15 "Chạy verify trước khi tin" áp dụng tương tự cho scenarios: không tin tensor nếu chưa có
-`validation` đi kèm).
+`ScenarioMetadata` (sidecar JSON) để biết seed, regime điều kiện hóa và validation battery.
+
+`num_scenarios` theo profile: demo_fast thường 500; workflow_update dev 2000 / final 5000
+(Decision-package TL-005). `n_assets` theo universe/eligibility tại evaluation date (8 hoặc 30).
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ class ScenarioMetadata:
     seed: int
     regime_conditioned_on: str  # giá trị của RegimeName tại ngày sinh kịch bản
     block_length: int
-    num_scenarios: int  # 500 (phạm vi đã khóa)
-    horizon_days: int  # 20 (phạm vi đã khóa)
-    n_assets: int  # 8 (phạm vi đã khóa)
+    num_scenarios: int
+    horizon_days: int  # 20 (đã khóa)
+    n_assets: int
     validation: dict[str, float]  # mean/std/quantile/skew/kurtosis/tail_coverage
 
 

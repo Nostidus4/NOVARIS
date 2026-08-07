@@ -23,3 +23,9 @@ qshield-contracts = { workspace = true, editable = true }
 qshield-risk = { workspace = true, editable = true }
 qshield-quantum = { workspace = true, editable = true }
 qshield-pipeline = { workspace = true, editable = true }
+
+[tool.ruff.lint.flake8-bugbear]
+# `param: T = Depends(get_x)` là idiom BẮT BUỘC của FastAPI (không phải mutable-default-argument
+# footgun mà B008 nhắm tới — FastAPI tự resolve lại Depends() mỗi request). Không dùng `# noqa`
+# rải rác ở từng router.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Path"]

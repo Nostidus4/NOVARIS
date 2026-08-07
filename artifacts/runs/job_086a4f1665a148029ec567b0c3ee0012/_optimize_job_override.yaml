@@ -1,0 +1,4 @@
+extends: /Users/mac/Documents/QSHIELD/configs/provisional/workflow_update_downstream.yaml
+artifacts:
+  mode: runs
+run_id: job_086a4f1665a148029ec567b0c3ee0012

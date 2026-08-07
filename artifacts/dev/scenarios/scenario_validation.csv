@@ -1,0 +1,19 @@
+target_regime,reference_windows,small_sample,metric,scenario_value,reference_value,statistic,threshold_low,threshold_high,verdict,note
+normal,9,True,mean_abs_diff,-0.0039964577170823416,-0.004655890604458723,0.0006594328873763813,,0.001,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,std_ratio,0.018125323783800384,0.019229859440132013,0.942561428502878,0.8,1.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,skew_abs_diff,-0.3261412262892366,-0.35779971669538174,0.03165849040614516,,1.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,kurtosis_abs_diff,1.8866704287570006,1.7636379902298995,0.1230324385271011,,5.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,q05_rel_error,-0.034685557987889984,-0.03789087371139638,0.08459334424221356,,0.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,q95_rel_error,0.02178735418490723,0.025595547188963723,0.14878341830091868,,0.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,autocorr_abs_diff,-0.04623374185625044,-0.06820090785861549,0.02196716600236505,,0.1,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,corr_mean_abs_diff,0.3450012413552273,0.3597271946108825,0.014725953255655178,,0.1,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+normal,9,True,tail_coverage_ratio,0.13660514924289646,0.10452973471220711,1.3068544526492856,0.5,2.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,66,False,mean_abs_diff,0.0005288341114144257,0.0006397179891461714,0.00011088387773174567,,0.001,PASS,
+volatile,66,False,std_ratio,0.02166968922530534,0.020387612112077538,1.0628851042574183,0.8,1.25,PASS,
+volatile,66,False,skew_abs_diff,0.3771996511390748,0.5623941184566481,0.18519446731757333,,1.0,PASS,
+volatile,66,False,kurtosis_abs_diff,1.9301438838088214,2.303665827978841,0.3735219441700197,,5.0,PASS,
+volatile,66,False,q05_rel_error,-0.03197430463251408,-0.028737609767356797,0.1126292301746633,,0.25,PASS,
+volatile,66,False,q95_rel_error,0.04074272120043634,0.03904666389690257,0.043436676383211074,,0.25,PASS,
+volatile,66,False,autocorr_abs_diff,-0.05007686311575743,-0.0724645925674897,0.02238772945173227,,0.1,PASS,
+volatile,66,False,corr_mean_abs_diff,0.29301719481082084,0.23069219256364087,0.06232500224717996,,0.1,PASS,
+volatile,66,False,tail_coverage_ratio,0.055601741523525636,0.03301884194351863,1.683939782583437,0.5,2.0,PASS,

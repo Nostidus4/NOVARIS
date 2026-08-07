@@ -90,3 +90,85 @@ def test_build_benchmark_raises_on_empty_seed_dict() -> None:
             penalty=1.0,
             k_actions=1,
         )
+
+
+def test_build_generic_benchmark_allows_empty_qaoa_when_non_final() -> None:
+    from qshield_quantum.benchmark import build_generic_benchmark
+    from qshield_quantum.formulation.surrogate import QuadraticSurrogate
+    from qshield_quantum.solvers.exact import ExactCandidate, GenericExactResult
+
+    model = QuadraticSurrogate(
+        Q=np.zeros((2, 2)),
+        linear=np.array([0.1, -0.2]),
+        constant=0.0,
+        residual_sum_squares=0.0,
+        rank=2,
+        sample_count=4,
+    )
+    exact = GenericExactResult(
+        best_feasible_bitstring="01",
+        best_feasible_energy=-0.2,
+        best_overall_bitstring="01",
+        best_overall_energy=-0.2,
+        top_feasible_candidates=(ExactCandidate(bitstring="01", energy=-0.2),),
+        evaluated_states=4,
+        feasible_states=1,
+    )
+    bench = build_generic_benchmark(
+        exact,
+        {},
+        model=model,
+        allow_non_final=True,
+        NON_FINAL_CONFIG=True,
+        requested_solver="qaoa",
+        actual_solver="exact",
+        fallback_reason="QAOA skipped",
+        classical_restarts=4,
+        classical_seed=0,
+    )
+    assert bench["qaoa_seed_count"] == 0
+    assert bench["actual_solver"] == "exact"
+    assert bench["requested_solver"] == "qaoa"
+    assert bench["success_prob"] is None
+    assert "classical_bitstring" in bench
+
+
+def test_build_generic_benchmark_one_seed_non_final() -> None:
+    from qshield_quantum.benchmark import build_generic_benchmark
+    from qshield_quantum.formulation.surrogate import QuadraticSurrogate
+    from qshield_quantum.solvers.exact import ExactCandidate, GenericExactResult
+
+    model = QuadraticSurrogate(
+        Q=np.zeros((2, 2)),
+        linear=np.array([0.1, -0.2]),
+        constant=0.0,
+        residual_sum_squares=0.0,
+        rank=2,
+        sample_count=4,
+    )
+    exact = GenericExactResult(
+        best_feasible_bitstring="01",
+        best_feasible_energy=-0.2,
+        best_overall_bitstring="01",
+        best_overall_energy=-0.2,
+        top_feasible_candidates=(ExactCandidate(bitstring="01", energy=-0.2),),
+        evaluated_states=4,
+        feasible_states=1,
+    )
+    qaoa = {
+        101: _seed_result(101, "01", -0.2, True),
+    }
+    bench = build_generic_benchmark(
+        exact,
+        qaoa,
+        model=model,
+        minimum_seeds=1,
+        allow_non_final=True,
+        classical_restarts=4,
+        classical_seed=0,
+    )
+    assert bench["n_seeds_total"] == 1
+    assert bench["success_prob"] == pytest.approx(0.5)
+    assert "best" in bench["energy_stats"]
+    assert bench["requested_solver"] == "qaoa"
+    assert bench["actual_solver"] == "qaoa"

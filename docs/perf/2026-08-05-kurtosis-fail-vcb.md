@@ -145,11 +145,39 @@ Validation Gate đã làm đúng việc của nó như tuyến phòng thủ **cu
 
 | Việc | Chủ sở hữu | Trạng thái |
 |---|---|---|
-| **Phát hiện** — cổng chặn biến động vượt biên độ sàn ở chặng data | Nguyễn Anh Tú (`ai`) đề xuất, `data` duyệt | branch `fix/data-quality-price-limit-check` |
-| **Sửa** — điều chỉnh sự kiện VCB 2025-03-03 (lấy adjustment factor hoặc đổi nguồn) | **Nguyễn Đỗ Minh Anh (`packages/data`)** | chưa bắt đầu |
+| **Phát hiện** — cổng chặn biến động vượt biên độ sàn ở chặng data | Nguyễn Anh Tú (`ai`) đề xuất, `data` duyệt | ✅ Xong — đã merge (`db38ee6`, `500a30b`, `1c39455`, `61ef99a`, `16aa20e`), `check_price_limit` (DQ-007) chạy thật trong `qshield-data quality` |
+| **Sửa** — điều chỉnh sự kiện VCB 2025-03-03 (lấy adjustment factor hoặc đổi nguồn) | **Nguyễn Đỗ Minh Anh (`packages/data`)** | ✅ Xong — xem §9 |
 
 Hai việc **tách rời có chủ ý**. Phát hiện là rẻ, tổng quát, và chặn cả lớp lỗi này về sau. Sửa là
 phần khó — cần nguồn adjustment factor — và thuộc về người sở hữu chặng data.
+
+## 9. Kết quả sau khi sửa (2026-08-06)
+
+Hệ số điều chỉnh (1,4950) lấy trực tiếp từ bằng chứng đã có trong §2 của doc này — không cần nguồn
+mới. Đăng ký thủ công (không suy diễn tự động, đúng CLAUDE.md quy tắc 5) trong
+`configs/data.yaml["corporate_actions"]`, áp dụng qua
+`qshield_data.clean.corporate_actions.apply_registered_adjustments()`: back-adjust `adjusted_close`
+của mọi phiên VCB **trước** 2025-03-03 theo `1/1,4950` — không đụng `open/high/low/close/volume` thô.
+
+Chạy lại full `qshield-data build` + `qshield-ai scenarios --force` trên dữ liệu thật
+(`configs/base.yaml`):
+
+| | Trước sửa | Sau sửa |
+|---|---|---|
+| DQ-007 (`price_limit_violations.csv`) | 24 dòng | **23 dòng** — VCB 2025-03-03 không còn |
+| `volatile / kurtosis_abs_diff` (cube) | 45,49 | **4,40** |
+| `volatile / kurtosis_abs_diff` (reference) | 29,25 | **4,29** |
+| `volatile / kurtosis_abs_diff` verdict | **FAIL** (statistic 16,25 > ngưỡng 5,0) | **PASS** (statistic 0,113) |
+| Toàn bộ 27 metric scenario validation | 26 PASS / 1 FAIL | **27 PASS / 0 FAIL** |
+
+Số liệu sau sửa khớp gần như tuyệt đối với phép thử phản chứng đã dự đoán ở §5 (kurtosis cube dự
+đoán 4,40, đo thật 4,40) — xác nhận back-adjustment đúng cách, không phải trùng hợp.
+
+Test hồi quy: `packages/data/tests/test_corporate_actions.py` (8 test — back-adjust đúng ngày/hệ
+số, không đụng cột thô, return sau sửa ≈0, ticker/entry không khớp bị bỏ qua an toàn, lỗi input rõ
+ràng). `notebooks/exploration/01_data_workflow_update.ipynb` đã đồng bộ theo (bug cũ: gọi
+`run_all_checks()` thiếu tham số `price_limit_violations` — đã sửa, đã chạy thử
+`jupyter nbconvert --execute` full end-to-end thành công.
 
 Lưu ý cho người làm phát hiện: ngưỡng ±7% cho ra **36/21.088 dòng** vượt (0,171%), trong đó chỉ
 VCB 2025-03-03 là bất khả thi thật sự. Phần còn lại nằm khoảng 8–14% và cần soi từng dòng — ACB

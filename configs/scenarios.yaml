@@ -1,6 +1,10 @@
-# Nguyễn Anh Tú - S=500 kịch bản, H=20 ngày, block=5.
+# Nguyễn Anh Tú - S kịch bản, H=20 ngày, block=5.
+#
+# Decision-package TL-005 (2026-08-07): Development mặc định 2.000; final baseline ưu tiên 5.000.
+# User yêu cầu chạy 5.000 — giữ S=5000 và ghi rõ trong manifest/report. Nếu runtime/RAM/gate
+# không ổn định, được phép hạ 2.000–4.999 với disclosure (không so sánh run khác S nếu không ghi rõ).
 
-num_scenarios: 500   # đã khóa — CLAUDE.md: "500 kịch bản × 20 ngày"
+num_scenarios: 5000
 horizon_days: 20      # đã khóa — CLAUDE.md
 block_length: 5       # đã khóa — docs/Structure.md: "moving-block bootstrap, block 5 → 20 ngày"
 

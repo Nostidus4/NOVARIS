@@ -1,0 +1,186 @@
+# Deploy NOVARIS Q-SHIELD console → GitHub Pages
+#
+# URL sau khi bật Pages (project site):
+#   https://nostidus4.github.io/NOVARIS/
+#
+# ──────────────────────────────────────────────────────────────────────────
+# Bật một lần trên GitHub (Settings của repo NOVARIS):
+#
+# 1. Settings → Pages
+#    - Source: GitHub Actions   ← bắt buộc, không chọn "Deploy from a branch"
+#
+# 2. Settings → Actions → General
+#    - Workflow permissions: Read and write permissions
+#      (hoặc để Restricted + workflow này đã khai `permissions: pages: write`)
+#
+# 3. (Tuỳ chọn) Settings → Secrets and variables → Actions
+#    | Name                         | Khi nào cần                                      |
+#    |------------------------------|--------------------------------------------------|
+#    | QSHIELD_API_URL              | Bake data vào HTML lúc build (API public)        |
+#    | NEXT_PUBLIC_QSHIELD_API_URL  | Nút Sync / Run optimize gọi API từ trình duyệt   |
+#    | NEXT_BASE_PATH               | Override basePath (mặc định /NOVARIS); "" = root |
+#
+# 4. Backend nếu public: thêm CORS origin `https://nostidus4.github.io`
+#    (đã có sẵn trong backend/src/qshield_api/main.py) hoặc
+#    QSHIELD_CORS_ORIGINS=https://your-custom-domain.com
+#
+# ──────────────────────────────────────────────────────────────────────────
+# Lưu ý quan trọng:
+#
+# - GitHub Pages CHỈ serve file tĩnh. Không chạy FastAPI / Node server.
+# - `next build` với GITHUB_PAGES=true → output: "export" → thư mục frontend/out.
+# - Server Components fetch API **một lần lúc CI build**. Không có API lúc build
+#   → trang vẫn deploy được nhưng hiện banner "Backend chưa sẵn sàng".
+# - Muốn console có số liệu: set secret QSHIELD_API_URL trỏ API công khai trước
+#   khi chạy workflow, hoặc rebuild sau khi API online.
+# - Nút ghi (Sync / Optimize) cần NEXT_PUBLIC_QSHIELD_API_URL + CORS đúng origin.
+#
+# Trigger: push lên main/master, hoặc bấm "Run workflow" thủ công.
+
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      # Chỉ rebuild khi frontend (hoặc chính workflow này) đổi — tiết kiệm phút Actions
+      - "frontend/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+    inputs:
+      base_path:
+        description: 'NEXT_BASE_PATH (để trống = /NOVARIS; nhập "/" hoặc "" nếu custom domain / user site)'
+        required: false
+        default: ""
+      api_url:
+        description: "QSHIELD_API_URL tạm cho lần chạy này (override secret nếu điền)"
+        required: false
+        default: ""
+
+# Hủy deploy cũ nếu push liên tiếp — tránh race ghi Pages
+concurrency:
+  group: pages-${{ github.repository }}
+  cancel-in-progress: true
+
+# token mặc định của GITHUB_TOKEN quá hẹp cho Pages; khai tường minh
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build static console
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve build environment
+        id: env
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # basePath: input > secret > mặc định /NOVARIS
+          BASE="${{ github.event.inputs.base_path }}"
+          if [[ -z "${BASE}" ]]; then
+            BASE="${{ secrets.NEXT_BASE_PATH }}"
+          fi
+          if [[ -z "${BASE}" ]]; then
+            BASE="/NOVARIS"
+          fi
+          # Cho phép nhập "/" hoặc "root" để deploy ở root domain
+          if [[ "${BASE}" == "/" || "${BASE}" == "root" ]]; then
+            BASE=""
+          fi
+
+          API="${{ github.event.inputs.api_url }}"
+          if [[ -z "${API}" ]]; then
+            API="${{ secrets.QSHIELD_API_URL }}"
+          fi
+
+          PUBLIC_API="${{ secrets.NEXT_PUBLIC_QSHIELD_API_URL }}"
+          if [[ -z "${PUBLIC_API}" && -n "${API}" ]]; then
+            PUBLIC_API="${API}"
+          fi
+
+          {
+            echo "base_path=${BASE}"
+            echo "api_url=${API}"
+            echo "public_api_url=${PUBLIC_API}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "GITHUB_PAGES=true"
+          echo "NEXT_BASE_PATH='${BASE:-<empty/root>}'"
+          echo "QSHIELD_API_URL='${API:-<none — offline HTML>}'"
+          echo "NEXT_PUBLIC_QSHIELD_API_URL='${PUBLIC_API:-<none>}'"
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build static export
+        env:
+          GITHUB_PAGES: "true"
+          NEXT_BASE_PATH: ${{ steps.env.outputs.base_path }}
+          QSHIELD_API_URL: ${{ steps.env.outputs.api_url }}
+          NEXT_PUBLIC_QSHIELD_API_URL: ${{ steps.env.outputs.public_api_url }}
+          # Tránh telemetry làm chậm / nhiễu log CI
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
+
+      - name: Prepare Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d out || { echo "::error::frontend/out không tồn tại — static export thất bại"; exit 1; }
+
+          # GH Pages bỏ qua thư mục bắt đầu bằng _ nếu Jekyll chạy.
+          # Next có thể sinh _next/ — .nojekyll tắt Jekyll.
+          touch out/.nojekyll
+
+          # 404.html: một số project copy index; App Router với trailingSlash
+          # đã có từng route/index.html. Giữ file này nếu sau này thêm SPA fallback.
+          if [[ ! -f out/404.html && -f out/index.html ]]; then
+            cp out/index.html out/404.html
+          fi
+
+          echo "Artifact tree (top):"
+          find out -maxdepth 2 -type f | head -40
+          echo "Size:"
+          du -sh out
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/out
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

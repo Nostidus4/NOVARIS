@@ -1,0 +1,89 @@
+{
+  "run_id": "job_eae747c801ab46b098ffa2fda55f3a4d",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-decision-package-v3",
+  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
+  "candidate_order_hash": "f6aa77efe6a238ba974a08a94ee1d93a439584df11b3ebcb2a7d5ffccc78b6b9",
+  "qubo_hash": "c34782afa6366957cf3ebcaa5d79994a1947dbfa16fed003706eb79c2349b282",
+  "NON_FINAL_CONFIG": true,
+  "qaoa_config": {
+    "seeds": [
+      101
+    ],
+    "shots": 128,
+    "maxiter": 10,
+    "warm_start": false
+  },
+  "solver_manifest": {
+    "shots": 128,
+    "registered_seeds": [
+      101
+    ],
+    "reps": 1,
+    "optimizer": "COBYLA",
+    "maxiter": 10,
+    "backend": "StatevectorSampler",
+    "package_versions": {
+      "python": "3.14.3",
+      "qiskit": "2.5.1",
+      "qiskit_algorithms": "0.4.0",
+      "qiskit_optimization": "0.7.0",
+      "numpy": "2.2.6"
+    },
+    "warm_start": false,
+    "seed_status": {
+      "101": "timeout"
+    },
+    "NON_FINAL_CONFIG": true
+  },
+  "reference_hardware": {
+    "label": "team_benchmark_reference",
+    "note": "Fill cpu/ram/os when recording GATE-08 numbers on one machine.",
+    "cpu": null,
+    "ram_gb": null,
+    "os": null
+  },
+  "stage_timings_seconds": {
+    "fit_surrogate": 0.0039905419980641454,
+    "verify_consistency": 2.2807469999970635,
+    "verify_checked_states": 4098.0,
+    "exact": 37.86870683300367,
+    "qaoa_total": 0.0,
+    "classical_benchmark": 0.5627351670118514,
+    "total": 40.71617954201065
+  },
+  "winning_seed": null,
+  "winning_bitstring": "11111111111111111111",
+  "winning_energy": 0.6289068154030706,
+  "winning_is_feasible": true,
+  "n_seeds_feasible": 0,
+  "n_seeds_total": 0,
+  "qaoa_seed_count": 0,
+  "exact_best_bitstring": "11111111111111111111",
+  "exact_best_energy": 0.6289068154030706,
+  "exact_evaluated_states": 1048576,
+  "qaoa_optimality_gap": null,
+  "optimality_gap": null,
+  "mean_feasibility_rate": null,
+  "feasible_rate": null,
+  "mean_success_prob": null,
+  "max_success_prob": null,
+  "success_prob": null,
+  "energy_stats": {},
+  "classical_bitstring": "11111111111111111111",
+  "classical_energy": 0.6289068154030706,
+  "classical_gap": 0.0,
+  "qaoa_beats_classical": false,
+  "warm_start_seeds": 0,
+  "runtime_seconds_total": 0.0,
+  "runtime_seconds": {
+    "exact": 37.86870683300367,
+    "qaoa": 0.0,
+    "classical": 0.5627351670118514
+  },
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA skipped/timeout in NON_FINAL_CONFIG",
+  "caveat": "NON_FINAL_CONFIG exact fallback; no QAOA result and no quantum advantage claim."
+}

@@ -1,0 +1,122 @@
+{
+  "run_id": "run_20260807_160938",
+  "profile_id": "qaoa_benchmark_10bit",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "qaoa-benchmark-10bit-v1",
+  "config_hash": "04b61692732bf10a018d2abf2766febd69ef6c0715433463c646bdaa7366abf5",
+  "candidate_order_hash": "3c10a747b9b45e68b4154fd42ad5404b3c3fbf0aa10af001cb6026411c9975bb",
+  "qubo_hash": "2e50ce079c4711f69efe1ec9b21d696308301b63c6aa3a65a3588aacff85a181",
+  "NON_FINAL_CONFIG": true,
+  "qaoa_config": {
+    "seeds": [
+      101,
+      202,
+      303,
+      404,
+      505,
+      606,
+      707,
+      808,
+      909,
+      1001
+    ],
+    "shots": 1024,
+    "maxiter": 200,
+    "warm_start": false
+  },
+  "solver_manifest": {
+    "shots": 1024,
+    "registered_seeds": [
+      101,
+      202,
+      303,
+      404,
+      505,
+      606,
+      707,
+      808,
+      909,
+      1001
+    ],
+    "reps": 1,
+    "optimizer": "COBYLA",
+    "maxiter": 200,
+    "backend": "StatevectorSampler",
+    "package_versions": {
+      "python": "3.14.3",
+      "qiskit": "2.5.1",
+      "qiskit_algorithms": "0.4.0",
+      "qiskit_optimization": "0.7.0",
+      "numpy": "2.2.6"
+    },
+    "warm_start": false,
+    "seed_status": {
+      "101": "completed",
+      "202": "timeout",
+      "303": "timeout",
+      "404": "timeout",
+      "505": "timeout",
+      "606": "timeout",
+      "707": "timeout",
+      "808": "timeout",
+      "909": "timeout",
+      "1001": "timeout"
+    },
+    "NON_FINAL_CONFIG": true
+  },
+  "reference_hardware": {
+    "label": "team_benchmark_reference",
+    "note": "Fill cpu/ram/os when recording GATE-08 numbers on one machine.",
+    "cpu": null,
+    "ram_gb": null,
+    "os": null
+  },
+  "stage_timings_seconds": {
+    "fit_surrogate": 0.0011969159968430176,
+    "verify_consistency": 0.4395968750031898,
+    "verify_checked_states": 1024.0,
+    "exact": 0.03616474999580532,
+    "qaoa_seed_101": 337.242985416,
+    "qaoa_total": 337.2559249170008,
+    "classical_benchmark": 0.14055816701147705,
+    "total": 337.8734416250081
+  },
+  "winning_seed": 101,
+  "winning_bitstring": "1101111111",
+  "winning_energy": 0.8683401548149131,
+  "winning_is_feasible": true,
+  "n_seeds_feasible": 1,
+  "n_seeds_total": 1,
+  "qaoa_seed_count": 1,
+  "exact_best_bitstring": "1111111111",
+  "exact_best_energy": 0.8510740587522637,
+  "exact_evaluated_states": 1024,
+  "qaoa_optimality_gap": 0.020287419038435672,
+  "optimality_gap": 0.020287419038435672,
+  "mean_feasibility_rate": 0.00164794921875,
+  "feasible_rate": 0.00164794921875,
+  "mean_success_prob": 0.0,
+  "max_success_prob": 0.0,
+  "success_prob": 0.0,
+  "energy_stats": {
+    "best": 0.8683401548149131,
+    "median": 0.8683401548149131,
+    "worst": 0.8683401548149131,
+    "std": 0.0
+  },
+  "classical_bitstring": "1111111111",
+  "classical_energy": 0.8510740587522637,
+  "classical_gap": 0.0,
+  "qaoa_beats_classical": false,
+  "warm_start_seeds": 0,
+  "runtime_seconds_total": 337.242985416,
+  "runtime_seconds": {
+    "exact": 0.03616474999580532,
+    "qaoa": 337.242985416,
+    "classical": 0.14055816701147705
+  },
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA seed timeout (300s) on seed=101 (runtime=337.2s); stopped 9 remaining seeds",
+  "caveat": "Statevector simulation is not quantum hardware and this benchmark does not establish quantum advantage."
+}

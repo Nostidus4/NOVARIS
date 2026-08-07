@@ -1,9 +1,26 @@
-# Đỗ Ngọc Tân - tùy chọn — khởi tạo warm-start cho QAOA.
-"""ĐỂ TRỐNG có chủ đích ở vòng đầu (`plan.md` câu hỏi 2).
+# Đỗ Ngọc Tân - optional warm-start QAOA for the generic workflow branch.
+"""Construct Qiskit's continuous-relaxation warm-start wrapper when available."""
 
-`configs/quantum.yaml` có dòng comment trích từ thiết kế PSS gốc ("Warm-start QAOA p=1 là cấu hình
-chính") nhưng đó là spec cho bài toán 20-bit/10-candidate — `docs/Structure.md` liệt kê file này là
-*"tùy chọn"* cho phạm vi đã khóa. Với 8 qubit, `solvers/qaoa.py` (QAOA p=1 thường, không warm-start)
-đã hội tụ đủ tốt trong benchmark ban đầu — chưa có lý do thêm độ phức tạp của warm-start (relaxation
-liên tục + mixer tùy biến). Viết file này SAU nếu benchmark cho thấy QAOA thường không đủ tốt.
-"""
+from __future__ import annotations
+
+from typing import Any
+
+from qiskit_algorithms import QAOA
+
+
+def make_warm_start_optimizer(qaoa: QAOA) -> Any | None:
+    """Return a p=1-compatible warm-start optimizer, or ``None`` on unsupported installs."""
+    try:
+        from qiskit_optimization.algorithms import (
+            SlsqpOptimizer,
+            WarmStartQAOAOptimizer,
+        )
+    except ImportError:
+        return None
+    return WarmStartQAOAOptimizer(
+        pre_solver=SlsqpOptimizer(),
+        relax_for_pre_solver=True,
+        qaoa=qaoa,
+        epsilon=0.25,
+        num_initial_solutions=1,
+    )

@@ -1,0 +1,82 @@
+{
+  "run_id": "run_20260807_155002",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-decision-package-v3",
+  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
+  "candidate_count": 10,
+  "bits_per_candidate": 2,
+  "total_decision_bits": 20,
+  "risk_coverage": 0.5863066087069677,
+  "underfilled": false,
+  "deviation": null,
+  "bit_mapping": {
+    "00": 0,
+    "10": 10,
+    "01": 20,
+    "11": 30
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "ticker": "MWG",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.009146419061559937
+    },
+    {
+      "rank": 2,
+      "ticker": "GVR",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.00880069164378749
+    },
+    {
+      "rank": 3,
+      "ticker": "BSR",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.008370482717600533
+    },
+    {
+      "rank": 4,
+      "ticker": "PLX",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.008335268998593956
+    },
+    {
+      "rank": 5,
+      "ticker": "GAS",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.008148834728332251
+    },
+    {
+      "rank": 6,
+      "ticker": "VRE",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.005721259398687956
+    },
+    {
+      "rank": 7,
+      "ticker": "SSI",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.0054745634360435095
+    },
+    {
+      "rank": 8,
+      "ticker": "HDB",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.005459872158255861
+    },
+    {
+      "rank": 9,
+      "ticker": "CTG",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.004972174103265463
+    },
+    {
+      "rank": 10,
+      "ticker": "BID",
+      "current_weight": 0.0333333333,
+      "candidate_score": 0.0049187865244588735
+    }
+  ],
+  "candidate_order_hash": "f6aa77efe6a238ba974a08a94ee1d93a439584df11b3ebcb2a7d5ffccc78b6b9"
+}

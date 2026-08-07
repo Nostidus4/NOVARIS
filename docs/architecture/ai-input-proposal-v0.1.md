@@ -6,7 +6,8 @@
 
 **Đối tượng đọc:** Minh Anh (Data), Tân (Contracts/Pipeline/Backend), Phúc (Risk), Ngọc (PO/duyệt config).
 
-**Căn cứ:** `docs/architecture/ai-scope-decision-record-v0.1.md` (DR v0.1),
+**Căn cứ:** `docs/archive/ai-scope-decision-record-v0.1.md` (DR v0.1, archived),
+`docs/architecture/ai-decisions-v0.2.md` (quyết định hiện hành),
 `packages/contracts/src/qshield_contracts/schemas/features.py` (Feature Contract v0.1),
 trạng thái repo tại commit `05d787e`.
 

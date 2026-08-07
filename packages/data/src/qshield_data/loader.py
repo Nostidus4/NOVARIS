@@ -33,18 +33,22 @@ def load_data(
 ) -> pd.DataFrame:
     """Đọc một bảng đã processed, lọc theo `split`/`date`/`tickers` nếu có.
 
-    `table == "universe"`: đọc snapshot `universe_asof_*.csv` mới nhất trong `data/metadata/`
-    (theo tên file, `YYYYMMDD` lớn nhất). Các bảng khác đọc từ `data/processed/<table>.parquet`.
+    `table == "universe"`: ưu tiên snapshot Data Gate `universe_30_asof_*.csv`, rồi mới fallback
+    alias legacy `universe_asof_*.csv`. Các bảng khác đọc từ `data/processed/<table>.parquet`.
 
     Raise `FileNotFoundError` nếu bảng chưa được sinh ra (chưa chạy `qshield-data` đến bước đó).
     """
     data_root = Path(data_root) if data_root is not None else Path("data")
 
     if table == "universe":
-        candidates = sorted((data_root / "metadata").glob("universe_asof_*.csv"))
+        metadata = data_root / "metadata"
+        candidates = sorted(metadata.glob("universe_30_asof_*.csv"))
+        if not candidates:
+            candidates = sorted(metadata.glob("universe_asof_*.csv"))
         if not candidates:
             raise FileNotFoundError(
-                f"Không tìm thấy universe_asof_*.csv trong {data_root / 'metadata'} "
+                "Không tìm thấy universe_30_asof_*.csv hoặc universe_asof_*.csv trong "
+                f"{metadata} "
                 "— đã chạy `qshield-data fetch` chưa?"
             )
         df = pd.read_csv(candidates[-1])

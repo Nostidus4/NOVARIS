@@ -1,0 +1,229 @@
+# Provisional / Decision-package development path for workflow_update downstream.
+# See configs/provisional/README.md. Status NON_BASELINE_RUN until data/scenario/product gates sign.
+
+profile:
+  id: workflow_update_downstream
+  parent_profile_id: workflow_update
+  status: NON_BASELINE_RUN
+  report_label: "Decision-package provisional — dynamic M=min(N_eligible,10)"
+  allowed_for:
+    - downstream_contract_development
+    - integration_smoke_test
+  not_allowed_for:
+    - final_uat_baseline
+    - product_claim_full_workflow
+    - quantum_advantage_claim
+
+provenance:
+  config_version: "workflow-update-decision-package-v3"
+  decision_package: "docs/handoffs/Decision-package.md"
+  decision_config_map: "docs/handoffs/decision_package_config_map.md"
+  required_fields:
+    - run_id
+    - profile_id
+    - profile_status
+    - config_version
+    - config_hash
+  require_candidate_order_hash_from_qubo_onward: true
+  require_qubo_hash_from_solver_onward: true
+
+# Runtime dimensions resolve dynamically from candidates when possible.
+# Handoff hiện tại đã chọn đủ top-10 → 20-bit / 211 samples (Decision-package target).
+runtime:
+  candidate_count: 10
+  bits_per_candidate: 2
+  total_decision_bits: 20
+  action_levels_pct: [0, 10, 20, 30]
+  structured_sample_count: 211
+  structured_design:
+    intercept: 1
+    main_effects: 20
+    pairwise_effects: 190
+  baseline_target:
+    candidate_count: 10
+    total_decision_bits: 20
+    structured_sample_count: 211
+
+# TL-005 — user chọn chạy final-tier 5000 scenarios
+num_scenarios: 5000
+horizon_days: 20
+block_length: 5
+
+# TL-007 / TL-008 / TL-009
+weight_sum_tolerance: 0.00000001
+maximum_reduction: 0.30
+target_cash_increment: 0.10
+transaction_cost:
+  fee: 0.0015
+  spread: 0.0010
+  # liquidity_penalty kept for CostRates API but MUST NOT be double-counted in objective:
+  # fee+spread = transaction_cost component; liquidity = separate objective component (TL-008).
+  liquidity_penalty: 0.0005
+# TL-007 — sensitivity grid (Phúc chạy low/base/high; base = Decision-package)
+cost_sensitivity:
+  low:
+    fee: 0.0010
+    spread: 0.0005
+    liquidity_penalty: 0.0003
+  base:
+    fee: 0.0015
+    spread: 0.0010
+    liquidity_penalty: 0.0005
+  high:
+    fee: 0.0020
+    spread: 0.0015
+    liquidity_penalty: 0.0008
+
+# TL-011 — ưu tiên giảm CVaR trước cash target
+financial_objective:
+  priority: cvar_first
+  components:
+    cvar: {weight: 1.0, scale: 0.10}
+    return_sacrifice: {weight: 0.25, scale: 0.05}
+    transaction_cost: {weight: 0.25, scale: 0.01}
+    turnover: {weight: 0.05, scale: 0.20}
+    liquidity_penalty: {weight: 0.25, scale: 0.01}
+    cash_budget_deviation: {weight: 0.35, scale: 0.10}
+
+# TL-010
+candidate_selection:
+  output_filename: candidate_top10.csv
+  output_candidates: 10
+  underfilled: true
+  deterministic_order_required: true
+  exclude_ineligible_before_ranking: true
+  exclude_zero_weight_before_ranking: true
+  tie_break:
+    - marginal_cvar_reduction_desc
+    - transaction_cost_asc
+  score_weights:
+    marginal_10: 1.0
+    marginal_20: 1.0
+    marginal_30: 1.0
+    baseline_contribution: 1.0
+    transaction_cost: 1.0
+    liquidity_penalty: 1.0
+
+objective_sampling:
+  policy_version: "decision-package-structured-v2"
+
+# TL-016 / TL-017 / TL-018
+reranking:
+  top_distinct_feasible: 20
+  tie_break:
+    - true_objective_asc
+    - true_cvar_asc
+    - transaction_cost_asc
+
+local_polishing:
+  zero_action_lock: true
+  max_adjustment_pp: 5
+  final_reduction_bounds_pct: [0, 30]
+
+materiality:
+  true_cvar_relative_reduction_min: 0.01
+  rule: "improvement only if true CVaR falls by >=1% relative after cost"
+
+quantum_constraints: {}
+
+# TL-012
+quantum:
+  mode: top10_four_level_actions
+  input_candidates: 10
+  action_levels_pct: [0, 10, 20, 30]
+  bit_encoding:
+    bits_per_asset: 2
+    asset_count: 10
+    total_decision_bits: 20
+    mapping:
+      "00": 0
+      "10": 10
+      "01": 20
+      "11": 30
+    exact_reference_states: 1048576
+  qaoa:
+    p: 1
+    shots: 1024
+    optimizer: COBYLA
+    optimizer_maxiter: 200
+    min_seeds: 10
+    warm_start: true
+    seeds: [101, 202, 303, 404, 505, 606, 707, 808, 909, 1001]
+    # First timed end-to-end on 20-bit uses reduced seeds; artifact marks NON_FINAL_CONFIG.
+    # 20-qubit warm-start + maxiter=50 stalled >15min/seed — smoke uses 1 seed, no warm-start.
+    final_config: false
+    NON_FINAL_CONFIG: true
+    dev_mode:
+      enabled: true
+      reduced_seeds: [101]
+      reduced_shots: 128
+      reduced_maxiter: 10
+      disable_warm_start: true
+
+# TL-013 — performance budget (máy reference nhóm; timeout per-seed + tổng)
+performance_budget:
+  reference_hardware:
+    label: "team_benchmark_reference"
+    note: "Fill cpu/ram/os when recording GATE-08 numbers on one machine."
+    cpu: null
+    ram_gb: null
+    os: null
+  exact_timeout_seconds: 3600
+  qaoa_seed_timeout_seconds: 600
+  qaoa_total_timeout_seconds: 7200
+  classical_timeout_seconds: 600
+
+# TL-015 — benchmark integrity expectations (contract-side)
+benchmark:
+  require_same_qubo_hash: true
+  require_same_profile_id: true
+  solvers: [exact, qaoa, classical]
+  registered_seed_count: 10
+  report_true_cvar_rerank: true
+
+# TL-014 — PROVISIONAL numeric thresholds; ask owners via
+# docs/handoffs/surrogate_gate_thresholds_ask.md before baseline.
+surrogate_validation:
+  status: PROVISIONAL_PENDING_OWNER
+  ask_doc: docs/handoffs/surrogate_gate_thresholds_ask.md
+  thresholds:
+    mae_max: 0.02
+    rmse_max: 0.03
+    spearman_min: 0.70
+    top_k: 20
+    top_k_recall_min: 0.60
+    feasible_rate_min: 0.05
+    seed_stability_min: 0.50
+  on_fail: hard_stop_for_baseline_exception_only_for_analysis
+
+encoding:
+  mapping:
+    "00": 0
+    "10": 10
+    "01": 20
+    "11": 30
+  candidate_order_filename: candidate_order.json
+
+artifacts:
+  risk_summary: risk_summary.json
+  objective_samples: objective_samples.parquet
+  qubo_model: qubo_model.json
+  exact_result: exact_solution.json
+  qaoa_result: qaoa_results.json
+  reranked_candidates: reranked_candidates.csv
+  final_recommendation: final_recommendation.json
+  workflow_benchmark: workflow_benchmark.json
+  true_benchmark: true_benchmark.json
+
+gates:
+  surrogate_validation_required_before_solver: true
+  exact_reference_required: true
+  rerank_by_true_cvar_required: true
+  local_polishing_required: true
+  zero_action_lock: true
+
+disclosures:
+  - "NON_BASELINE_RUN until data_gate + scenario_gate + product_gate are signed (TL-019)."
+  - "Surrogate thresholds are PROVISIONAL — see docs/handoffs/surrogate_gate_thresholds_ask.md."
+  - "Liquidity penalty is a separate objective component from fee+spread (TL-008)."
+  - "Dynamic underfill M=min(N_eligible,10) is allowed without fake tickers (TL-020)."
