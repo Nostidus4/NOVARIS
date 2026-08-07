@@ -49,3 +49,20 @@
 #   nếu `NEXT_PUBLIC_QSHIELD_API_URL` trỏ đúng và CORS mở.
 # - Không commit `.env` chứa secret; chỉ dùng GitHub Secrets.
 #
+# ---------------------------------------------------------------------------
+# Troubleshooting
+# ---------------------------------------------------------------------------
+#
+# **"Failed to build /overview ... took more than 60 seconds" (retry 3 lần rồi fail)**
+#
+# Server Component gọi API lúc build. Nếu `QSHIELD_API_URL` là chuỗi rỗng thì
+# `fetch("/console/overview")` thành URL tương đối và treo cả build.
+# `frontend/lib/api.ts` xử lý sẵn: chuỗi rỗng = chưa cấu hình → bỏ qua fetch,
+# và mọi fetch có timeout 15s. Nếu vẫn gặp, kiểm tra secret có khoảng trắng thừa.
+#
+# Tái hiện tại máy:
+#
+#   cd frontend
+#   GITHUB_PAGES=true QSHIELD_API_URL= npm run build      # phải xong ~10s, HTML offline
+#   GITHUB_PAGES=true QSHIELD_API_URL=http://127.0.0.1:8000 npm run build   # bake số liệu
+#
