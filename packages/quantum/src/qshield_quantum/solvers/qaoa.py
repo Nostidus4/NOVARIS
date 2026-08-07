@@ -150,8 +150,12 @@ def solve_qaoa(
     reps: int = 1,
     warm_start: bool = False,
     candidate_pool_size: int = 20,
+    minimum_seeds: int = 10,
 ) -> dict[int, QaoaSeedResult]:
     """Chạy TOÀN BỘ seed, trả `{seed: QaoaSeedResult}` đầy đủ — kể cả seed cho kết quả tệ.
+
+    Final/baseline runs keep ``minimum_seeds=10``. ``NON_FINAL_CONFIG`` may lower it, but must
+    still run every seed in the provided list without cherry-picking.
 
     ⚠️ **Bẫy kỹ thuật đã verify** (qua `sample`/profiling, không phải suy đoán): qiskit 2.x
     (`qiskit_algorithms.QAOA` + `MinimumEigenOptimizer`) tạo nhiều đối tượng `CircuitData` (Rust,
@@ -162,10 +166,12 @@ def solve_qaoa(
     đúng trạng thái cũ) tránh được việc này — đối tượng vẫn được giải phóng qua refcounting bình
     thường, chỉ tắt phần thu gom chu trình định kỳ. Không phải bug của package này.
     """
-    if len(seeds) < 10:
+    if minimum_seeds < 1:
+        raise ValueError("minimum_seeds must be >= 1.")
+    if len(seeds) < minimum_seeds:
         raise ValueError(
-            f"Chỉ có {len(seeds)} seed, cần tối thiểu 10 (CLAUDE.md quy tắc 18 / "
-            "docs/limitations.md §4: không cherry-pick seed)."
+            f"Chỉ có {len(seeds)} seed, cần tối thiểu {minimum_seeds} "
+            "(CLAUDE.md quy tắc 18 / docs/limitations.md §4: không cherry-pick seed)."
         )
     was_enabled = gc.isenabled()
     gc.disable()

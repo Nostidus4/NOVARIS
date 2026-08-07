@@ -16,6 +16,7 @@ class CostRates:
     Rates are decimal fractions, not percentages. Production values must come from Config; this
     class deliberately provides no financial defaults.
     """
+
     fee: float
     spread: float
     liquidity_penalty: float
@@ -29,7 +30,8 @@ class CostRates:
 
     @property
     def total_rate(self) -> float:
-        return self.fee + self.spread + self.liquidity_penalty
+        """Cash transaction-cost rate (fee + spread). Liquidity is not included (TL-008)."""
+        return self.fee + self.spread
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> CostRates:
@@ -50,12 +52,21 @@ class CostRates:
 
 @dataclass(frozen=True)
 class CostBreakdown:
-    """Fee, spread and liquidity costs in raw decimal pre-trade NAV units."""
+    """Fee, spread (cash txn cost) and liquidity penalty in pre-trade NAV units.
+
+    ``total`` is fee+spread only (TL-008). ``liquidity_penalty`` stays separate for objective
+    scoring and must not be deducted again as if it were a second cash cost.
+    """
+
     gross_sales: float
     fee: float
     spread: float
     liquidity_penalty: float
     total: float
+
+    @property
+    def cash_cost(self) -> float:
+        return self.total
 
     def to_dict(self) -> dict[str, float]:
         return asdict(self)
@@ -75,5 +86,5 @@ def transaction_costs(gross_sales: float, rates: CostRates) -> CostBreakdown:
         fee=fee,
         spread=spread,
         liquidity_penalty=liquidity,
-        total=fee + spread + liquidity,
+        total=fee + spread,
     )

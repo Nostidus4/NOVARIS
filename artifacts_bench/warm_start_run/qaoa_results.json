@@ -1,0 +1,1834 @@
+{
+  "run_id": "run_20260807_160837",
+  "profile_id": "qaoa_benchmark_10bit",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "qaoa-benchmark-10bit-v1",
+  "config_hash": "04b61692732bf10a018d2abf2766febd69ef6c0715433463c646bdaa7366abf5",
+  "candidate_order_hash": "3c10a747b9b45e68b4154fd42ad5404b3c3fbf0aa10af001cb6026411c9975bb",
+  "qubo_hash": "2e50ce079c4711f69efe1ec9b21d696308301b63c6aa3a65a3588aacff85a181",
+  "requested_solver": "qaoa",
+  "actual_solver": "qaoa",
+  "fallback_reason": null,
+  "seeds": {
+    "101": {
+      "seed": 101,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.012484550476074219,
+      "success_prob": 0.00494384765625,
+      "runtime_seconds": 4.019584708003094,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.00494384765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.000244140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.000644683837890625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.000858306884765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.000186920166015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.00016117095947265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "202": {
+      "seed": 202,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.01264190673828125,
+      "success_prob": 0.004540443420410156,
+      "runtime_seconds": 3.2532944999984466,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.004540443420410156,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0003814697265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.000858306884765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.00054931640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.00027561187744140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.0009164810180664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 0.00016117095947265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.000186920166015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "303": {
+      "seed": 303,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.011496543884277344,
+      "success_prob": 0.003208160400390625,
+      "runtime_seconds": 4.765168165991781,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.003208160400390625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0008020401000976562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.0010385513305664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.0008020401000976562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1110111111",
+          "energy": 0.8854951625230335,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "404": {
+      "seed": 404,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.015012741088867188,
+      "success_prob": 0.006103515625,
+      "runtime_seconds": 3.8009742080030264,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.006103515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0009765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.0007476806640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0007476806640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.0005044937133789062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.000244140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 0.00011539459228515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.00054931640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1110111111",
+          "energy": 0.8854951625230335,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "505": {
+      "seed": 505,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.012681961059570312,
+      "success_prob": 0.005802154541015625,
+      "runtime_seconds": 3.8855361659952905,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.005802154541015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0005044937133789062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.00027561187744140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.0003814697265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 0.00011539459228515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "606": {
+      "seed": 606,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.026210784912109375,
+      "success_prob": 0.015140533447265625,
+      "runtime_seconds": 3.3190445830114186,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.015140533447265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0013055801391601562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0012359619140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.0011682510375976562,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.000858306884765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.000644683837890625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.0010385513305664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 0.000244140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 0.00011539459228515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 0.000186920166015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.000308990478515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "707": {
+      "seed": 707,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.015230178833007812,
+      "success_prob": 0.006412506103515625,
+      "runtime_seconds": 4.034567790993606,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.006412506103515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.000186920166015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0006952285766601562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0007476806640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.0009765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 0.0001373291015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "808": {
+      "seed": 808,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.01646709442138672,
+      "success_prob": 0.006103515625,
+      "runtime_seconds": 4.400998750003055,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.006103515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.000858306884765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0010385513305664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.0005960464477539062,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.001102447509765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.00042057037353515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0007476806640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.00054931640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.000644683837890625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 0.00016117095947265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.0009164810180664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "909": {
+      "seed": 909,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.02838134765625,
+      "success_prob": 0.016117095947265625,
+      "runtime_seconds": 4.6885862089984585,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.016117095947265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.0003814697265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0012359619140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.0010385513305664062,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.0022897720336914062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.001102447509765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0006952285766601562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.0009765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 0.00011539459228515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 0.000186920166015625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.0009765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 0.00011539459228515625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    },
+    "1001": {
+      "seed": 1001,
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "feasible": true,
+      "feasibility_rate": 0.015888214111328125,
+      "success_prob": 0.007218360900878906,
+      "runtime_seconds": 4.255042040997068,
+      "samples": [
+        {
+          "bitstring": "1111111111",
+          "energy": 0.8510740587522637,
+          "probability": 0.007218360900878906,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011111",
+          "energy": 0.8670425015833555,
+          "probability": 0.00027561187744140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111101",
+          "energy": 0.8671993343994234,
+          "probability": 0.0011682510375976562,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110111",
+          "energy": 0.867275803057287,
+          "probability": 0.00054931640625,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111111",
+          "energy": 0.8679370682722432,
+          "probability": 0.00034427642822265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 0.000858306884765625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111101111",
+          "energy": 0.8827118712666253,
+          "probability": 0.0003814697265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 0.0005044937133789062,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111011",
+          "energy": 0.8828484820985997,
+          "probability": 0.000461578369140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011101",
+          "energy": 0.8831693032504416,
+          "probability": 0.00016117095947265625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111010111",
+          "energy": 0.8832518843584327,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 9.5367431640625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 6.103515625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101011111",
+          "energy": 0.884137551996592,
+          "probability": 4.673004150390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 7.724761962890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 0.00021457672119140625,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 3.4332275390625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111111",
+          "energy": 0.8850147784579827,
+          "probability": 2.384185791015625e-05,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": true
+    }
+  },
+  "candidate_pool": [
+    {
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 1,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111011111",
+      "energy": 0.8670425015833555,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 2,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111111101",
+      "energy": 0.8671993343994233,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 3,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1111110111",
+      "energy": 0.8672758030572869,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 4,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0111111111",
+      "energy": 0.8679370682722432,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 5,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101111111",
+      "energy": 0.8683401548149131,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 6,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111101111",
+      "energy": 0.8827118712666253,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 7,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 10,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111111110",
+      "energy": 0.8827538276610936,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 8,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 10
+      }
+    },
+    {
+      "bitstring": "1111111011",
+      "energy": 0.8828484820985997,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 9,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 10,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111011101",
+      "energy": 0.8831693032504416,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 10,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1111010111",
+      "energy": 0.8832518843584327,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 11,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111110101",
+      "energy": 0.8834010787044467,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 12,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "0111011111",
+      "energy": 0.8838979264721981,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 13,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0111111101",
+      "energy": 0.8840558442353749,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 14,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "0111110111",
+      "energy": 0.8841302762267398,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 15,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101011111",
+      "energy": 0.884137551996592,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 16,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101111101",
+      "energy": 0.8842780128381662,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 17,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1011111111",
+      "energy": 0.8843456162002444,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 18,
+      "actions_pct": {
+        "MWG": 10,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101110111",
+      "energy": 0.8843582302407729,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_303",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 19,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0101111111",
+      "energy": 0.8850147784579827,
+      "sources": [
+        "exact",
+        "qaoa_seed_1001",
+        "qaoa_seed_101",
+        "qaoa_seed_202",
+        "qaoa_seed_404",
+        "qaoa_seed_505",
+        "qaoa_seed_606",
+        "qaoa_seed_707",
+        "qaoa_seed_808",
+        "qaoa_seed_909"
+      ],
+      "rank": 20,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    }
+  ]
+}

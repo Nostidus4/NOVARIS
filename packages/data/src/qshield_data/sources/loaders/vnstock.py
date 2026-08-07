@@ -58,9 +58,9 @@ def download_ticker(
     Dùng cho các mã multi-exchange mà Yahoo `.VN` chỉ có data từ ngày lên HOSE. vnstock VCI cho
     phép lấy full history từ ngày niêm yết đầu tiên (kể cả HNX/UPCOM).
 
-    Trả về DataFrame index=date với schema giống hệt yfinance output:
-    `[Open, High, Low, Close, Adj Close, Volume]`. `Close = Adj Close` vì vnstock VCI trả về giá đã
-    điều chỉnh mặc định, không tách riêng như Yahoo.
+    Trả về DataFrame index=date với schema giống hệt yfinance output. VCI không trả field adjusted
+    riêng trong response này; bản demo dùng ``Close`` làm proxy nhưng gắn ``ADJ_UNVERIFIED`` và
+    không được dùng làm bằng chứng baseline (TL-002).
     """
     for attempt in range(max_retries):
         try:
@@ -71,7 +71,14 @@ def download_ticker(
             df = df.rename(columns=_RENAME)
             df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
             df = df.set_index("date")
+            logger.warning(
+                "vnstock/VCI %s không có field adjusted riêng: dùng Close làm proxy Adj Close "
+                "với flag ADJ_UNVERIFIED; không hợp lệ cho baseline TL-002.",
+                ticker,
+            )
             df["Adj Close"] = df["Close"]
+            df.attrs["adjusted_close_method"] = "CLOSE_PROXY_UNVERIFIED"
+            df.attrs["adjusted_close_evidence"] = "ADJ_UNVERIFIED"
             df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
             df.index.name = "date"
             return df

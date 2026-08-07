@@ -39,8 +39,13 @@ from qshield_risk.metrics import alpha_key
 from qshield_risk.objective import financial_objective
 from qshield_risk.paths import validate_scenario_cube
 from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_order
-from qshield_risk.rerank import polish_reductions, rerank_candidates
+from qshield_risk.rerank import (
+    materiality_from_cvar,
+    polish_reductions,
+    rerank_candidates,
+)
 from qshield_risk.sampling import sample_objective
+from qshield_risk.true_benchmark import build_true_benchmark
 
 app = typer.Typer(help="Q-SHIELD Risk Engine CLI.")
 
@@ -735,11 +740,31 @@ def rerank_polish(
                 }
             )
         primary_key = alpha_key(required_float(cfg, "cvar_alpha"))
+        cvar_before = polished.polished_objective.before.cvar[primary_key]
+        cvar_after = polished.polished_objective.after.cvar[primary_key]
+        materiality_cfg = cfg.get("materiality") or {}
+        materiality = materiality_from_cvar(
+            float(cvar_before),
+            float(cvar_after),
+            threshold=float(
+                materiality_cfg.get("true_cvar_relative_reduction_min", 0.01)
+            ),
+        )
+        warnings = [
+            "NON_BASELINE_RUN: underfilled/provisional downstream development evidence."
+        ]
+        if not materiality["materiality_met"]:
+            warnings.append(
+                "TL-018 materiality not met: true CVaR relative reduction "
+                f"< {materiality['materiality_threshold']:.0%} after cost — "
+                "no improvement claim / consider no-action fallback."
+            )
         final_payload = {
             **identity,
             "evaluation_date": manifest.get("evaluation_date"),
-            "requested_solver": "qaoa",
-            "actual_solver": "qaoa",
+            "requested_solver": str(qaoa_payload.get("requested_solver", "qaoa")),
+            "actual_solver": str(qaoa_payload.get("actual_solver", "qaoa")),
+            "fallback_reason": qaoa_payload.get("fallback_reason"),
             "candidate_order_hash": order_payload["candidate_order_hash"],
             "qubo_hash": model_payload.get("qubo_hash"),
             "candidate_count": len(ordered_tickers),
@@ -758,20 +783,20 @@ def rerank_polish(
             },
             "cvar_before": polished.polished_objective.before.cvar,
             "cvar_after": polished.polished_objective.after.cvar,
-            "true_cvar_before": polished.polished_objective.before.cvar[primary_key],
-            "true_cvar_after": polished.polished_objective.after.cvar[primary_key],
+            "true_cvar_before": cvar_before,
+            "true_cvar_after": cvar_after,
             "expected_return_before": polished.polished_objective.before.expected_horizon_return,
             "expected_return_after": polished.polished_objective.after.expected_horizon_return,
             "transaction_cost": polished.polished_objective.trade.costs.total,
+            "liquidity_penalty": polished.polished_objective.trade.costs.liquidity_penalty,
             "turnover": polished.polished_objective.trade.turnover,
             "objective_before_polish": polished.quantum_objective.value,
             "objective_after_polish": polished.polished_objective.value,
             "objective_improvement": polished.objective_improvement,
             "polishing_dependency": polished.polishing_dependency,
             "constraints_passed": not polished.polished_objective.constraint_violations,
-            "warnings": [
-                "NON_BASELINE_RUN: underfilled/provisional downstream development evidence."
-            ],
+            **materiality,
+            "warnings": warnings,
         }
         (risk_dir / "final_recommendation.json").write_text(
             json.dumps(final_payload, ensure_ascii=False, indent=2, default=str),
@@ -794,6 +819,116 @@ def rerank_polish(
     typer.echo(
         f"[risk/rerank] winner={bitstring} true_rank=1 -> "
         f"{risk_dir / 'final_recommendation.json'}"
+    )
+
+
+def _load_optional_json(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"[risk.input] invalid JSON in {path}: {exc}.") from exc
+    if not isinstance(payload, dict):
+        raise TypeError(f"[risk.input] {path} must contain a JSON object.")
+    return payload
+
+
+def _require_json(path: Path) -> dict[str, Any]:
+    payload = _load_optional_json(path)
+    if payload is None:
+        raise FileNotFoundError(f"[risk.input] missing file: {path}.")
+    return payload
+
+
+@app.command("benchmark-true")
+def benchmark_true(
+    config: str = typer.Option(
+        "configs/base.yaml", "--config", help="Base config path"
+    ),
+    profile: str = typer.Option(
+        "configs/profiles/workflow_update.yaml",
+        "--profile",
+        help="Product profile path",
+    ),
+    override: str = typer.Option(
+        "configs/provisional/workflow_update_downstream.yaml",
+        "--override",
+        help="Explicit NON_BASELINE override path",
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="Use deterministic mock scenarios for NON_BASELINE development",
+    ),
+) -> None:
+    """Score exact/QAOA/classical best bitstrings with the true financial objective (G8)."""
+    cfg = _load_workflow_config(config, profile, override)
+    paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
+    context = RunContext(cfg, paths)
+    logger = context.logger("risk_true_benchmark")
+    paths.ensure(Stage.RISK)
+    risk_dir = paths.stage_dir(Stage.RISK)
+    optimization_dir = paths.stage_dir(Stage.QUBO)
+    artifact_names = cfg.get("artifacts") or {}
+    true_name = str(artifact_names.get("true_benchmark", "true_benchmark.json"))
+    out_path = risk_dir / true_name
+    try:
+        identity = _workflow_identity(cfg, context)
+        cube, tickers, manifest, weights, cash_weight = _workflow_inputs(
+            cfg, paths, mock=mock
+        )
+        order_payload = _require_json(risk_dir / "candidate_order.json")
+        model_payload = _require_json(optimization_dir / "qubo_model.json")
+        exact_payload = _require_json(optimization_dir / "exact_solution.json")
+        qaoa_payload = _require_json(optimization_dir / "qaoa_results.json")
+        workflow_benchmark = _require_json(optimization_dir / "workflow_benchmark.json")
+        final_recommendation = _load_optional_json(
+            risk_dir / "final_recommendation.json"
+        )
+        payload = build_true_benchmark(
+            identity=identity,
+            scenarios=cube,
+            ticker_order=tickers,
+            weights=weights,
+            cash_weight=cash_weight,
+            config=cfg,
+            candidate_order_payload=order_payload,
+            qubo_model=model_payload,
+            exact_payload=exact_payload,
+            qaoa_payload=qaoa_payload,
+            workflow_benchmark=workflow_benchmark,
+            final_recommendation=final_recommendation,
+        )
+        payload["evaluation_date"] = manifest.get("evaluation_date")
+        payload["input_source"] = "mock" if mock else "real"
+        out_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+        context.write_metrics(
+            {
+                **identity,
+                "stage": "true_benchmark",
+                "gate_status": "PASS",
+                "qubo_hash": payload["qubo_hash"],
+                "requested_solver": payload["requested_solver"],
+                "actual_solver": payload["actual_solver"],
+                "financial_ranking": payload["financial_ranking"],
+                "solvers_available": {
+                    name: bool(entry.get("available"))
+                    for name, entry in payload["solvers"].items()
+                },
+            }
+        )
+    except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+        logger.error("Risk true-benchmark failed: %s", exc)
+        raise typer.BadParameter(str(exc)) from exc
+    ranking = ",".join(payload["financial_ranking"]) or "(none)"
+    typer.echo(
+        f"[risk/true-benchmark] ranking={ranking} "
+        f"requested={payload['requested_solver']} actual={payload['actual_solver']} "
+        f"-> {out_path}"
     )
 
 

@@ -26,10 +26,13 @@ from qshield_quantum.formulation.surrogate import (
     structured_samples_to_arrays,
 )
 from qshield_quantum.solvers.exact import GenericExactResult, solve_quadratic_exact
-from qshield_quantum.solvers.qaoa import QaoaSeedResult, solve_qaoa
+from qshield_quantum.solvers.qaoa import QaoaSeedResult, solve_qaoa_one_seed
 from qshield_quantum.verify.consistency import verify_quadratic_consistency
 
 FOUR_LEVEL_MODE = "top10_four_level_actions"
+
+# Counters share the timings dict for artifact convenience; they are not seconds.
+_NON_DURATION_TIMING_KEYS = frozenset({"verify_checked_states"})
 
 
 @dataclass(frozen=True)
@@ -41,6 +44,7 @@ class WorkflowQuantumResult:
     candidate_pool: tuple[dict[str, Any], ...]
     candidate_order: tuple[str, ...]
     target_column: str
+    stage_timings: dict[str, float]
 
 
 def validate_four_level_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
@@ -146,46 +150,196 @@ def run_four_level_workflow(
     candidate_pool_size: int = 20,
     verify: bool = True,
     warm_start: bool = True,
+    logger: Any | None = None,
+    verify_sample_size: int | None = None,
+    run_qaoa: bool = True,
+    allow_non_final: bool = False,
+    performance_budget: Mapping[str, Any] | None = None,
 ) -> WorkflowQuantumResult:
     """Fit, verify, exhaust, run QAOA, and benchmark a four-level handoff."""
+    import time
+
+    def _log(message: str, *args: object) -> None:
+        if logger is not None:
+            logger.info(message, *args)
+
+    timings: dict[str, float] = {}
     quantum = validate_four_level_profile(profile)
     expected = int(quantum["input_candidates"])
     order = candidate_order_from_handoff(candidates, expected_candidates=expected)
+    non_final = bool(
+        allow_non_final
+        or ((quantum.get("qaoa") or {}).get("NON_FINAL_CONFIG"))
+        or verify_sample_size is not None
+        or not run_qaoa
+    )
+    budget = dict(performance_budget or {})
+    seed_timeout = budget.get("qaoa_seed_timeout_seconds")
+    total_timeout = budget.get("qaoa_total_timeout_seconds")
+    seed_timeout_s = None if seed_timeout is None else float(seed_timeout)
+    total_timeout_s = None if total_timeout is None else float(total_timeout)
+
+    t0 = time.perf_counter()
     Z, targets, target_column = structured_samples_to_arrays(objective_samples, order)
     model = fit_quadratic_surrogate(Z, targets)
+    timings["fit_surrogate"] = time.perf_counter() - t0
+    _log("[timing] fit_surrogate=%.2fs", timings["fit_surrogate"])
+
     names = four_level_variable_names(order)
     if verify:
-        verify_quadratic_consistency(model, variable_names=names, chunk_size=chunk_size)
+        t0 = time.perf_counter()
+        verify_meta = verify_quadratic_consistency(
+            model,
+            variable_names=names,
+            chunk_size=chunk_size,
+            sample_size=verify_sample_size,
+        )
+        timings["verify_consistency"] = time.perf_counter() - t0
+        timings["verify_checked_states"] = float(verify_meta["checked_states"])
+        _log(
+            "[timing] verify_consistency=%.2fs checked=%s sampled=%s",
+            timings["verify_consistency"],
+            verify_meta["checked_states"],
+            verify_meta["sampled"],
+        )
 
     constraints = (risk_summary or {}).get("quantum_constraints", {})
     feasibility = make_four_level_feasibility(constraints)
+    t0 = time.perf_counter()
     exact = solve_quadratic_exact(
         model,
         feasibility=feasibility,
         chunk_size=chunk_size,
         top_n=candidate_pool_size,
     )
-    qp = build_quadratic_program(
-        model.Q, model.linear, model.constant, ticker_order=names
+    timings["exact"] = time.perf_counter() - t0
+    _log(
+        "[timing] exact=%.2fs states=%d",
+        timings["exact"],
+        exact.evaluated_states,
     )
-    qaoa = solve_qaoa(
-        qp,
-        seeds=seeds,
-        shots=shots,
-        maxiter=maxiter,
-        feasibility=feasibility,
-        reference_bitstring=exact.best_feasible_bitstring,
-        reps=int((quantum.get("qaoa", {}) or {}).get("p", 1)),
-        warm_start=warm_start,
-        candidate_pool_size=candidate_pool_size,
-    )
+
+    qaoa: dict[int, QaoaSeedResult] = {}
+    requested_solver = "qaoa"
+    actual_solver = "qaoa"
+    fallback_reason: str | None = None
+    t0 = time.perf_counter()
+    if run_qaoa:
+        qp = build_quadratic_program(
+            model.Q, model.linear, model.constant, ticker_order=names
+        )
+        reps = int((quantum.get("qaoa", {}) or {}).get("p", 1))
+        t_qaoa = time.perf_counter()
+        for seed in seeds:
+            elapsed_total = time.perf_counter() - t_qaoa
+            if total_timeout_s is not None and elapsed_total >= total_timeout_s:
+                fallback_reason = (
+                    f"QAOA total timeout ({total_timeout_s:.0f}s) after "
+                    f"{len(qaoa)}/{len(seeds)} seeds"
+                )
+                actual_solver = "exact"
+                _log("[timeout] %s", fallback_reason)
+                break
+            seed_result = solve_qaoa_one_seed(
+                qp,
+                seed=seed,
+                shots=shots,
+                maxiter=maxiter,
+                feasibility=feasibility,
+                reference_bitstring=exact.best_feasible_bitstring,
+                reps=reps,
+                warm_start=warm_start,
+                candidate_pool_size=candidate_pool_size,
+            )
+            qaoa[seed] = seed_result
+            timings[f"qaoa_seed_{seed}"] = float(seed_result.runtime_seconds)
+            _log(
+                "[timing] qaoa_seed_%s=%.2fs feasible=%s",
+                seed,
+                seed_result.runtime_seconds,
+                seed_result.feasible,
+            )
+            if (
+                seed_timeout_s is not None
+                and seed_result.runtime_seconds > seed_timeout_s
+            ):
+                remaining = [s for s in seeds if s not in qaoa]
+                fallback_reason = (
+                    f"QAOA seed timeout ({seed_timeout_s:.0f}s) on seed={seed} "
+                    f"(runtime={seed_result.runtime_seconds:.1f}s); "
+                    f"stopped {len(remaining)} remaining seeds"
+                )
+                actual_solver = "exact"
+                _log("[timeout] %s", fallback_reason)
+                break
+            elapsed_total = time.perf_counter() - t_qaoa
+            if total_timeout_s is not None and elapsed_total >= total_timeout_s:
+                remaining = [s for s in seeds if s not in qaoa]
+                fallback_reason = (
+                    f"QAOA total timeout ({total_timeout_s:.0f}s) after "
+                    f"{len(qaoa)}/{len(seeds)} seeds; stopped {len(remaining)} remaining"
+                )
+                actual_solver = "exact"
+                _log("[timeout] %s", fallback_reason)
+                break
+        timings["qaoa_total"] = time.perf_counter() - t_qaoa
+        _log(
+            "[timing] qaoa_total=%.2fs seeds_done=%d", timings["qaoa_total"], len(qaoa)
+        )
+        if not qaoa and fallback_reason is None:
+            fallback_reason = "QAOA produced no seed results"
+            actual_solver = "exact"
+        elif not any(result.feasible for result in qaoa.values()):
+            if fallback_reason is None:
+                fallback_reason = "QAOA produced no feasible seed"
+            actual_solver = "exact"
+    else:
+        fallback_reason = "QAOA skipped/timeout in NON_FINAL_CONFIG"
+        actual_solver = "exact"
+        timings["qaoa_total"] = 0.0
+
+    if not qaoa:
+        bench_minimum = 1
+    elif non_final:
+        bench_minimum = max(1, len(qaoa))
+    else:
+        bench_minimum = 10
+
+    t_classical = time.perf_counter()
     benchmark = build_generic_benchmark(
         exact,
         qaoa,
         model=model,
         feasibility=feasibility,
-        classical_seed=seeds[0],
+        classical_seed=seeds[0] if seeds else 0,
+        minimum_seeds=bench_minimum,
+        allow_non_final=non_final,
+        NON_FINAL_CONFIG=non_final,
+        requested_solver=requested_solver,
+        actual_solver=actual_solver,
+        fallback_reason=fallback_reason,
+        exact_runtime_seconds=timings.get("exact"),
     )
+    classical_elapsed = time.perf_counter() - t_classical
+    timings["classical_benchmark"] = classical_elapsed
+    runtime_block = dict(benchmark.get("runtime_seconds") or {})
+    runtime_block["classical"] = classical_elapsed
+    if "exact" not in runtime_block:
+        runtime_block["exact"] = float(timings.get("exact", 0.0))
+    if "qaoa" not in runtime_block:
+        runtime_block["qaoa"] = float(timings.get("qaoa_total", 0.0))
+    benchmark["runtime_seconds"] = runtime_block
+    _log("[timing] classical_benchmark=%.2fs", timings["classical_benchmark"])
+    timings["total"] = float(
+        sum(
+            v
+            for k, v in timings.items()
+            if not k.startswith("qaoa_seed_")
+            and k != "total"
+            and k not in _NON_DURATION_TIMING_KEYS
+        )
+    )
+
     pool = _merge_candidate_pool(exact, qaoa, order, candidate_pool_size)
     return WorkflowQuantumResult(
         model=model,
@@ -195,6 +349,7 @@ def run_four_level_workflow(
         candidate_pool=pool,
         candidate_order=tuple(order),
         target_column=target_column,
+        stage_timings=timings,
     )
 
 
