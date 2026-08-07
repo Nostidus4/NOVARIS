@@ -8,8 +8,8 @@
 số nào được duyệt tại thời điểm viết file này). Không có giá trị này thì `qshield_risk.evaluate`/
 `qshield_risk.costs.CostRates.from_config` raise ngay — backend không chạy được các endpoint
 `risk`/`optimize`. Ghi log CẢNH BÁO rõ ràng mỗi lần dùng số tạm — không âm thầm hợp thức hoá,
-đúng tinh thần đã áp dụng xuyên suốt ở các notebook `notebooks/exploration/{risk_effects,
-quantum_solve,pipeline_full_run}.ipynb`.
+đúng tinh thần đã áp dụng xuyên suốt ở các notebook
+`notebooks/exploration/0{3,4,5}_*_workflow*.ipynb`.
 """
 
 from __future__ import annotations
@@ -23,6 +23,8 @@ from qshield_contracts.config import Config
 logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG_PATH = Path("configs/base.yaml")
+DEFAULT_PROFILE_PATH = Path("configs/profiles/workflow_update.yaml")
+DEFAULT_OVERRIDE_PATH = Path("configs/provisional/workflow_update_downstream.yaml")
 
 # PROVISIONAL — KHÔNG phải số đã duyệt. Mức phí môi giới VN điển hình, chỉ để backend chạy được;
 # mọi baseline_risk/optimize sinh ra khi dùng số này phải hiểu là NON_BASELINE_RUN.
@@ -59,9 +61,17 @@ def apply_provisional_overrides(cfg: Config) -> Config:
 
 
 @lru_cache
-def get_config(config_path: str = str(DEFAULT_CONFIG_PATH)) -> Config:
+def get_config(
+    config_path: str = str(DEFAULT_CONFIG_PATH),
+    profile_path: str = str(DEFAULT_PROFILE_PATH),
+    override_path: str = str(DEFAULT_OVERRIDE_PATH),
+) -> Config:
     """Đọc + resolve config MỘT LẦN, cache lại — mọi request dùng chung, không đọc lại file mỗi
     request. Artifact trên đĩa (regime/scenarios/risk/optimize) vẫn đọc tươi mỗi request ở tầng
     `*_repository_impl.py`, chỉ CONFIG (tham số) mới cache."""
-    cfg = Config.load(Path(config_path))
+    cfg = Config.load_profiled(
+        Path(config_path),
+        Path(profile_path),
+        Path(override_path),
+    )
     return apply_provisional_overrides(cfg)

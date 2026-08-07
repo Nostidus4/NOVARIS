@@ -17,6 +17,7 @@ from qshield_api.domain.regime.repository import RegimeRepository
 from qshield_api.domain.risk.repository import RiskCalculator
 from qshield_api.domain.runs.repository import RunRepository
 from qshield_api.domain.scenarios.repository import ScenarioRepository
+from qshield_api.domain.workflow.repository import WorkflowRepository
 from qshield_api.infrastructure.calculation.qshield_risk_calculator import (
     QshieldRiskCalculator,
 )
@@ -30,6 +31,10 @@ from qshield_api.infrastructure.persistence.regime_repository_impl import (
 from qshield_api.infrastructure.persistence.run_repository_impl import FileRunRepository
 from qshield_api.infrastructure.persistence.scenario_repository_impl import (
     FileScenarioRepository,
+)
+from qshield_api.infrastructure.persistence.workflow_repository_impl import (
+    FileWorkflowRepository,
+    SupabaseWorkflowRepository,
 )
 from qshield_api.infrastructure.runner.subprocess_optimize_runner import (
     SubprocessOptimizeRunner,
@@ -66,6 +71,15 @@ def get_optimize_runner() -> OptimizeRunner:
 
 def get_benchmark_repository() -> BenchmarkRepository:
     return FileBenchmarkRepository(cfg=get_app_config())
+
+
+def get_file_workflow_repository() -> FileWorkflowRepository:
+    return FileWorkflowRepository(cfg=get_app_config())
+
+
+def get_workflow_repository() -> WorkflowRepository:
+    file_repo = get_file_workflow_repository()
+    return SupabaseWorkflowRepository(cfg=get_app_config(), file_repo=file_repo)
 
 
 def get_universe_tickers() -> list[str]:

@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Q-SHIELD Frontend
 
-## Getting Started
+NOVARIS Q-SHIELD Risk Intelligence Console (Next.js 15/16 + Tailwind 4).
 
-First, run the development server:
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# API (repo root)
+uv run uvicorn qshield_api.main:app --reload --port 8000
+
+# Frontend
+cd frontend && npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Environment:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `QSHIELD_API_URL` — server-side fetch (default `http://127.0.0.1:8000`).
+- `NEXT_PUBLIC_QSHIELD_API_URL` — browser-side fetch cho các nút ghi/chạy job. Cùng default.
+  Origin của frontend phải nằm trong `allow_origins` của CORS ở `backend/src/qshield_api/main.py`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pages
 
-## Learn More
+| Route | API |
+|---|---|
+| `/overview` | `GET /console/overview` |
+| `/data` | `GET /console/data` |
+| `/regime` | `GET /console/regime` |
+| `/scenarios` | `GET /console/scenarios` |
+| `/risk` | `GET /console/risk` |
+| `/quantum` | `GET /console/quantum` |
+| `/report` | `GET /console/report` |
+| layout shell | `GET /console/shell` |
 
-To learn more about Next.js, take a look at the following resources:
+## Nút có tác dụng gì
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Console không tính lại số tài chính (CLAUDE.md quy tắc 9/10). Mỗi nút chỉ làm đúng một việc:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Nút | Hành vi |
+|---|---|
+| Refresh (mọi trang) | `router.refresh()` — đọc lại artifact qua `/console/*` |
+| Sync to Supabase (Overview) | `POST /workflow/sync` — đẩy snapshot hiện tại lên database |
+| Run optimization (Quantum) | `POST /optimize/jobs` rồi poll `GET /optimize/jobs/{id}` |
+| Download package / Export (Report) | Ghi ra file JSON từ payload đang hiển thị |
+| Copy (log panel) | Chép các dòng log đang lọc vào clipboard |
+| Run selector (topbar) | Popover metadata lần chạy đang xem |
+| Theme toggle | Đổi sáng/tối, lưu vào `localStorage` |
 
-## Deploy on Vercel
+Bảng ở Risk / Quantum / Data / Scenarios sort + lọc + tìm kiếm phía client trên chính dữ liệu
+backend trả về; không có phép tính tài chính nào chạy ở đây.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+UI shell matches `NOVARIS_QSHIELD_Host3000.html`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy GitHub Pages
+
+Chi tiết đầy đủ: [`docs/deploy-github-pages.md`](../docs/deploy-github-pages.md).
+
+```bash
+# Build giống CI (sinh frontend/out, basePath /NOVARIS)
+cd frontend && npm run build:pages
+```
+
+Workflow: `.github/workflows/deploy-pages.yml` — push `main`/`master` hoặc Run workflow thủ công.
+Settings → Pages → Source = **GitHub Actions**.

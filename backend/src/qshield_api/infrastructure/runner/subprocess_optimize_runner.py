@@ -1,16 +1,9 @@
-# Đỗ Ngọc Tân - SubprocessOptimizeRunner — implement OptimizeRunner, BẮT BUỘC qua subprocess.
-"""Xem docs/architecture/backend_hexagonal_design.md §3-4 cho lý do bắt buộc subprocess và thiết
-kế cô lập output theo job.
+# Đỗ Ngọc Tân - SubprocessOptimizeRunner — gọi `qshield-quantum workflow --exact-only`.
+"""Cô lập mỗi job dưới `artifacts/runs/job_<id>/`, snapshot handoff Risk từ packages, rồi subprocess
+CLI quantum (tránh qiskit+pyarrow chung process với FastAPI).
 
-Tinh chỉnh so với thiết kế gốc (phát hiện khi viết code thật, không có trong doc thiết kế ban đầu):
-ép `artifacts.mode=runs` + `run_id=f"job_{job_id}"` cô lập đúng thư mục OUTPUT
-(`artifacts/runs/job_<id>/outputs/optimization/`), nhưng đồng thời cũng đổi luôn thư mục INPUT mà
-`qshield-quantum solve` đi tìm `action_effects.csv`/`pairwise_effects.csv`/`baseline_risk.json`
-(risk) và `stress_scenarios.npz`/`scenario_manifest.json` (scenarios) — hai thư mục đó KHÔNG tồn
-tại trong không gian `job_<id>` mới toanh. Phải COPY 5 file input đó từ vị trí thật (theo
-`artifacts.mode` gốc trong config, thường `dev`) sang không gian riêng của job trước khi chạy
-subprocess. Tác dụng phụ tốt: mỗi job tự chụp lại đúng input đã dùng, không bị ảnh hưởng nếu ai đó
-chạy lại `qshield-risk effects` trong lúc job đang chờ.
+Mặc định `--exact-only`: QAOA 20-qubit trên StatevectorSampler không hoàn tất trong budget demo;
+artifact ghi `actual_solver=exact` trung thực (CLAUDE.md quy tắc 18).
 """
 
 from __future__ import annotations
@@ -20,26 +13,36 @@ import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 import yaml
 from qshield_contracts.config import Config
 from qshield_contracts.enums import Stage
 from qshield_contracts.paths import ArtifactPaths
 
+from qshield_api.config import (
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_OVERRIDE_PATH,
+    DEFAULT_PROFILE_PATH,
+)
 from qshield_api.domain.optimize.entities import OptimizeResult
 
-_RISK_FILES = ("action_effects.csv", "pairwise_effects.csv", "baseline_risk.json")
-_SCENARIO_FILES = ("stress_scenarios.npz", "scenario_manifest.json")
-_SUBPROCESS_TIMEOUT_SECONDS = 180
+_RISK_WORKFLOW_FILES = (
+    "candidate_top10.csv",
+    "qubo_objective_samples.parquet",
+    "risk_summary.json",
+    "candidate_order.json",
+)
+_OPTIONAL_TRUE_BENCHMARK = "true_benchmark.json"
+_SUBPROCESS_TIMEOUT_SECONDS = 600
 
 
 class OptimizeRunFailedError(RuntimeError):
-    """`qshield-quantum solve` thoát với exit code khác 0 — kèm stderr để dễ tra."""
+    """`qshield-quantum workflow` thoát khác 0."""
 
 
 class OptimizeInputMissingError(RuntimeError):
-    """Chưa có đủ `action_effects.csv`/`pairwise_effects.csv`/`baseline_risk.json`/scenario cube —
-    chạy `qshield-risk effects` + `qshield-ai scenarios` trước khi gọi `POST /optimize/jobs`."""
+    """Thiếu handoff Risk do packages sinh — chạy prepare-workflow trước."""
 
 
 @dataclass(frozen=True)
@@ -48,21 +51,28 @@ class SubprocessOptimizeRunner:
 
     def run(self, job_id: str) -> OptimizeResult:
         source_paths = ArtifactPaths(self.cfg, run_id=None)
-
         run_id = f"job_{job_id}"
+
         job_cfg = dict(self.cfg)
         job_cfg["artifacts"] = {**dict(self.cfg.get("artifacts", {})), "mode": "runs"}
-        job_cfg["run_id"] = (
-            run_id  # `qshield_quantum.cli._resolve_run_id` đọc khoá này trước
-        )
+        job_cfg["run_id"] = run_id
         job_paths = ArtifactPaths(job_cfg, run_id=run_id)
 
         self._snapshot_inputs(source_paths, job_paths)
 
         job_paths.run_root.mkdir(parents=True, exist_ok=True)
-        resolved_config_path = job_paths.run_root / "_optimize_job_resolved_config.yaml"
-        resolved_config_path.write_text(
-            yaml.safe_dump(job_cfg, allow_unicode=True), encoding="utf-8"
+        override_path = job_paths.run_root / "_optimize_job_override.yaml"
+        override_path.write_text(
+            yaml.safe_dump(
+                {
+                    "extends": str(Path(DEFAULT_OVERRIDE_PATH).resolve()),
+                    "artifacts": {"mode": "runs"},
+                    "run_id": run_id,
+                },
+                allow_unicode=True,
+                sort_keys=False,
+            ),
+            encoding="utf-8",
         )
 
         result = subprocess.run(
@@ -70,68 +80,136 @@ class SubprocessOptimizeRunner:
                 sys.executable,
                 "-c",
                 "from qshield_quantum.cli import app; app()",
-                "solve",
+                "workflow",
                 "--config",
-                str(resolved_config_path),
+                str(Path(DEFAULT_CONFIG_PATH).resolve()),
+                "--profile",
+                str(Path(DEFAULT_PROFILE_PATH).resolve()),
+                "--override",
+                str(override_path),
+                "--exact-only",
+                "--no-warm-start",
             ],
             capture_output=True,
             text=True,
             timeout=_SUBPROCESS_TIMEOUT_SECONDS,
             check=False,
+            cwd=str(Path.cwd()),
         )
         if result.returncode != 0:
             raise OptimizeRunFailedError(
-                f"qshield-quantum solve (job={job_id}) thoát với exit code "
-                f"{result.returncode}: {result.stderr[-2000:]}"
+                f"qshield-quantum workflow (job={job_id}) exit={result.returncode}: "
+                f"{result.stderr[-2000:]}"
             )
 
-        result_path = job_paths.stage_dir(Stage.SOLVE) / "qaoa_result.json"
-        payload = json.loads(result_path.read_text(encoding="utf-8"))
-        return _payload_to_result(payload)
+        bench_path = job_paths.stage_dir(Stage.SOLVE) / "workflow_benchmark.json"
+        if not bench_path.exists():
+            raise OptimizeRunFailedError(
+                f"Missing {bench_path} after workflow job={job_id}."
+            )
+        payload = json.loads(bench_path.read_text(encoding="utf-8"))
+        true_before, true_after = self._optional_true_cvar(source_paths)
+        return _payload_to_result(
+            payload, true_before=true_before, true_after=true_after
+        )
 
     @staticmethod
     def _snapshot_inputs(source_paths: ArtifactPaths, job_paths: ArtifactPaths) -> None:
         risk_src = source_paths.stage_dir(Stage.RISK)
-        scenarios_src = source_paths.stage_dir(Stage.SCENARIOS)
         missing = [
-            risk_src / name for name in _RISK_FILES if not (risk_src / name).exists()
-        ] + [
-            scenarios_src / name
-            for name in _SCENARIO_FILES
-            if not (scenarios_src / name).exists()
+            risk_src / name
+            for name in _RISK_WORKFLOW_FILES
+            if not (risk_src / name).exists()
         ]
         if missing:
             raise OptimizeInputMissingError(
-                f"Thiếu input: {[str(p) for p in missing]} — chạy `qshield-risk effects` và "
-                "`qshield-ai scenarios` trước."
+                f"Thiếu Risk handoff: {[str(p) for p in missing]} — chạy "
+                "`qshield-risk prepare-workflow` (packages) trước."
             )
-
         risk_dst = job_paths.stage_dir(Stage.RISK)
-        scenarios_dst = job_paths.stage_dir(Stage.SCENARIOS)
         risk_dst.mkdir(parents=True, exist_ok=True)
-        scenarios_dst.mkdir(parents=True, exist_ok=True)
-        for name in _RISK_FILES:
+        for name in _RISK_WORKFLOW_FILES:
             shutil.copy2(risk_src / name, risk_dst / name)
-        for name in _SCENARIO_FILES:
-            shutil.copy2(scenarios_src / name, scenarios_dst / name)
+
+    @staticmethod
+    def _optional_true_cvar(
+        source_paths: ArtifactPaths,
+    ) -> tuple[float | None, float | None]:
+        path = source_paths.stage_dir(Stage.RISK) / _OPTIONAL_TRUE_BENCHMARK
+        if not path.exists():
+            return None, None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        baseline = payload.get("baseline") or {}
+        before = baseline.get("true_cvar")
+        solvers = payload.get("solvers") or {}
+        # Prefer actual_solver row, else exact.
+        actual = str(payload.get("actual_solver") or "exact")
+        row = solvers.get(actual) or solvers.get("exact") or {}
+        after = row.get("true_cvar")
+        return (
+            None if before is None else float(before),
+            None if after is None else float(after),
+        )
 
 
-def _payload_to_result(payload: dict) -> OptimizeResult:
+def _payload_to_result(
+    payload: dict,
+    *,
+    true_before: float | None,
+    true_after: float | None,
+) -> OptimizeResult:
+    exact_bits = str(
+        payload.get("exact_best_bitstring") or payload.get("winning_bitstring") or ""
+    )
+    exact_energy = float(
+        payload.get("exact_best_energy")
+        if payload.get("exact_best_energy") is not None
+        else payload.get("winning_energy") or 0.0
+    )
+    runtime = payload.get("runtime_seconds") or {}
+    if isinstance(runtime, dict) and runtime:
+        runtime_seconds = float(sum(float(v) for v in runtime.values()))
+    else:
+        timings = payload.get("stage_timings_seconds") or {}
+        runtime_seconds = float(timings.get("total") or 0.0)
+
+    qaoa_cfg = payload.get("qaoa_config") or {}
+    manifest = payload.get("solver_manifest") or {}
     return OptimizeResult(
-        bitstring=payload["bitstring"],
-        k_actions=payload["k_actions"],
-        chosen_actions=payload["chosen_actions"],
-        requested_solver=payload["requested_solver"],
-        actual_solver=payload["actual_solver"],
-        exact_energy=payload["exact_energy"],
-        qaoa_energy_by_seed={
-            str(k): v for k, v in payload["qaoa_energy_by_seed"].items()
-        },
-        optimality_gap=payload["optimality_gap"],
-        feasibility_rate=payload["feasibility_rate"],
-        true_cvar_before=payload["true_cvar_before"],
-        true_cvar_after=payload["true_cvar_after"],
-        shots=payload["shots"],
-        backend=payload["backend"],
-        runtime_seconds=payload["runtime_seconds"],
+        bitstring=str(payload.get("winning_bitstring") or exact_bits),
+        requested_solver=str(payload.get("requested_solver") or "qaoa"),
+        actual_solver=str(payload.get("actual_solver") or "exact"),
+        exact_energy=exact_energy,
+        classical_energy=(
+            None
+            if payload.get("classical_energy") is None
+            else float(payload["classical_energy"])
+        ),
+        optimality_gap=(
+            None
+            if payload.get("optimality_gap") is None
+            else float(payload["optimality_gap"])
+        ),
+        qaoa_beats_classical=bool(payload.get("qaoa_beats_classical", False)),
+        runtime_seconds=runtime_seconds,
+        shots=(
+            None
+            if qaoa_cfg.get("shots") is None and manifest.get("shots") is None
+            else int(qaoa_cfg.get("shots") or manifest.get("shots"))
+        ),
+        backend=str(manifest.get("backend") or "StatevectorSampler"),
+        fallback_reason=(
+            None
+            if payload.get("fallback_reason") is None
+            else str(payload["fallback_reason"])
+        ),
+        profile_id=(
+            None if payload.get("profile_id") is None else str(payload["profile_id"])
+        ),
+        qubo_hash=(
+            None if payload.get("qubo_hash") is None else str(payload["qubo_hash"])
+        ),
+        true_cvar_before=true_before,
+        true_cvar_after=true_after,
+        source_artifact="workflow_benchmark.json",
     )

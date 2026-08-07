@@ -1,0 +1,415 @@
+{
+  "run_id": "run_20260807_155034",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-decision-package-v3",
+  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
+  "candidate_order_hash": "f6aa77efe6a238ba974a08a94ee1d93a439584df11b3ebcb2a7d5ffccc78b6b9",
+  "qubo_hash": "17e39af0d73a935574d8cf952f7369f2765df340e1fe81b15f070b4d10e0db2d",
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA skipped/timeout in NON_FINAL_CONFIG",
+  "seeds": {},
+  "candidate_pool": [
+    {
+      "bitstring": "11111111111111111111",
+      "energy": 0.6289068154030706,
+      "sources": [
+        "exact"
+      ],
+      "rank": 1,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111101111111",
+      "energy": 0.6429921842796081,
+      "sources": [
+        "exact"
+      ],
+      "rank": 2,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 20,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111110111",
+      "energy": 0.643076082767976,
+      "sources": [
+        "exact"
+      ],
+      "rank": 3,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 20,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111011111",
+      "energy": 0.6431677091898489,
+      "sources": [
+        "exact"
+      ],
+      "rank": 4,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 20,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111111101",
+      "energy": 0.6442069884643167,
+      "sources": [
+        "exact"
+      ],
+      "rank": 5,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 20
+      }
+    },
+    {
+      "bitstring": "11110111111111111111",
+      "energy": 0.6457734786410159,
+      "sources": [
+        "exact"
+      ],
+      "rank": 6,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111011111111111",
+      "energy": 0.6462597116350658,
+      "sources": [
+        "exact"
+      ],
+      "rank": 7,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11011111111111111111",
+      "energy": 0.6467620155043623,
+      "sources": [
+        "exact"
+      ],
+      "rank": 8,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111101111111111111",
+      "energy": 0.6470419041983779,
+      "sources": [
+        "exact"
+      ],
+      "rank": 9,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "01111111111111111111",
+      "energy": 0.6472832333175622,
+      "sources": [
+        "exact"
+      ],
+      "rank": 10,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111110111111111",
+      "energy": 0.6473796038396109,
+      "sources": [
+        "exact"
+      ],
+      "rank": 11,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 20,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111110111111",
+      "energy": 0.6570149035213939,
+      "sources": [
+        "exact"
+      ],
+      "rank": 12,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 10,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111101110111",
+      "energy": 0.6571604557048728,
+      "sources": [
+        "exact"
+      ],
+      "rank": 13,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 20,
+        "HDB": 30,
+        "CTG": 20,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111101011111",
+      "energy": 0.6572506846307669,
+      "sources": [
+        "exact"
+      ],
+      "rank": 14,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 20,
+        "HDB": 20,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111111011",
+      "energy": 0.6572881716648704,
+      "sources": [
+        "exact"
+      ],
+      "rank": 15,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 10,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111010111",
+      "energy": 0.657340430488762,
+      "sources": [
+        "exact"
+      ],
+      "rank": 16,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 20,
+        "CTG": 20,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111111101111",
+      "energy": 0.6574394687000853,
+      "sources": [
+        "exact"
+      ],
+      "rank": 17,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 10,
+        "CTG": 30,
+        "BID": 30
+      }
+    },
+    {
+      "bitstring": "11111111111101111101",
+      "energy": 0.658261423694815,
+      "sources": [
+        "exact"
+      ],
+      "rank": 18,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 20,
+        "HDB": 30,
+        "CTG": 30,
+        "BID": 20
+      }
+    },
+    {
+      "bitstring": "11111111111111110101",
+      "energy": 0.6582905108155177,
+      "sources": [
+        "exact"
+      ],
+      "rank": 19,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 30,
+        "CTG": 20,
+        "BID": 20
+      }
+    },
+    {
+      "bitstring": "11111111111111011101",
+      "energy": 0.6584066756288305,
+      "sources": [
+        "exact"
+      ],
+      "rank": 20,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30,
+        "VRE": 30,
+        "SSI": 30,
+        "HDB": 20,
+        "CTG": 30,
+        "BID": 20
+      }
+    }
+  ]
+}

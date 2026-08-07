@@ -27,9 +27,9 @@ QSHIELD/
 ├── data/                  # dữ liệu thô & đã xử lý (gitignore)
 ├── artifacts/             # output pipeline
 ├── reports/               # báo cáo cho người đọc
-├── notebooks/             # thử nghiệm
+├── notebooks/             # thử nghiệm (chuỗi 00…06)
 ├── docs/                  # scope, kiến trúc, runbook, cấu trúc thư mục (Structure.md — file này)
-└── tests/                 # test tích hợp & E2E
+└── artifacts_bench/       # bakeoff QAOA (không trộn với artifacts/dev)
 ```
 
 Nguyên tắc: **`packages/` chứa toàn bộ trí tuệ của hệ thống. `backend/` và `frontend/` chỉ là lớp
@@ -60,9 +60,8 @@ tại (phần lớn còn là scaffold — file `.py` rỗng chỉ có một dòn
 | `data/` | `raw/`, `interim/`, `processed/`, `metadata/` — hiện chỉ có `.gitkeep`, chưa có dữ liệu thật | Dữ liệu giá/khối lượng qua từng giai đoạn xử lý (bị gitignore, trừ `metadata/`). |
 | `artifacts/` | `dev/` (đường dẫn cố định), `runs/run_YYYYMMDD_HHMM/` (có version) — hiện rỗng | Output của pipeline: regime, scenarios, risk, optimization theo từng `run_id`. |
 | `reports/` | `uat/` — hiện rỗng | Báo cáo cho người đọc: data quality report, benchmark, model card, UAT report. |
-| `notebooks/` | `exploration/`, `validation/`, `benchmarks/` — hiện rỗng | Notebook thử nghiệm; theo `CLAUDE.md`, **không được** chứa core logic — chỉ gọi lại hàm trong `packages/`. |
-| `docs/` | `Structure.md` (file này), `limitations.md`, `benchmark_plan.md`, `product/`, `architecture/`, `runbook/`, `perf/` (báo cáo hiện thực & đo đạc theo ngày), `handoffs/` (input còn chờ owner duyệt) | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook vận hành, kế hoạch benchmark. |
-| `tests/` | `contracts/`, `integration/`, `e2e/` | Test tích hợp & end-to-end xuyên nhiều package; unit test nằm trong từng `packages/*/tests/`. |
+| `notebooks/` | `exploration/` chuỗi `00`…`06` + `README.md` | Notebook thử nghiệm; **không** chứa core logic — chỉ gọi CLI/`packages/` (xem `notebooks/README.md`). |
+| `docs/` | `README.md`, `Structure.md`, `limitations.md`, `benchmark_plan.md`, `product/`, `architecture/`, `runbook/`, `perf/`, `handoffs/`, `archive/` | Toàn bộ tài liệu: phạm vi sản phẩm, kiến trúc, giới hạn, runbook, bằng chứng đo, handoff, archive. |
 | File gốc | `pyproject.toml` (uv workspace root), `uv.lock` (1 lockfile chung), `README.md`, `CLAUDE.md`, `main.py`, `.python-version`, `.gitignore` | Cấu hình workspace và hai tài liệu bắt buộc đọc trước khi code. |
 
 ---
@@ -298,22 +297,11 @@ Từ ngày 4, mọi số lên slide phải truy được về một `run_id`.
 
 ```
 notebooks/
-├── exploration/   # tò mò dữ liệu, thử ý tưởng trước khi viết thành hàm chính thức
-├── validation/     # chạy một hàm trong packages/ với input mẫu, xem output có hợp lý không
-└── benchmarks/      # so sánh QAOA vs exact vs classical, vẽ biểu đồ cho báo cáo/pitch
+└── exploration/   # chuỗi 00…06 workflow_update + narrative QAOA (xem notebooks/README.md)
 ```
 
-Cả ba thư mục hiện chỉ có `.gitkeep` — chưa có notebook nào. `jupyterlab` và `ipykernel` đã nằm sẵn
-trong `dev` dependency-group của `pyproject.toml` gốc, nên chỉ cần `uv run jupyter lab` là dùng
-được ngay, không cần cài thêm.
-
-**Dùng khi nào**
-
-| Thư mục | Câu hỏi nó trả lời | Ví dụ |
-|---|---|---|
-| `exploration/` | "Dữ liệu này trông như thế nào?" | Vẽ phân phối return của 8 mã, xem thử outlier |
-| `validation/` | "Hàm tôi vừa viết trong `packages/` chạy đúng không?" | Gọi `qshield_risk.metrics.cvar(...)` với vài mảng loss mẫu, so sánh bằng mắt với tính tay |
-| `benchmarks/` | "QAOA so với exact/classical thế nào?" | Đọc `qaoa_result.json` của nhiều run, vẽ optimality gap theo seed |
+**Dùng khi nào:** tái lập timing từng chặng, smoke profile/override, vẽ scaling/depth cho slide.
+Chi tiết file: `notebooks/README.md`.
 
 **Ranh giới bắt buộc — không được vi phạm**
 
@@ -328,7 +316,7 @@ trong `dev` dependency-group của `pyproject.toml` gốc, nên chỉ cần `uv 
 
 **Notebook khác `pytest` chỗ nào**
 
-| | `notebooks/` | `packages/*/tests/`, `tests/` |
+| | `notebooks/` | `packages/*/tests/`, `backend/tests/` |
 |---|---|---|
 | Ai đọc kết quả | Người, tự mắt xem có hợp lý không | Máy, tự động qua `assert` |
 | Chạy khi nào | Thủ công, lúc đang code/khám phá | Mỗi lần trước khi commit/mở PR (`uv run pytest`) |

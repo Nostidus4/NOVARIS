@@ -11,7 +11,12 @@ from pathlib import Path
 import pytest
 import qshield_pipeline.run as run_mod
 import yaml
-from qshield_pipeline.run import StageError, run_all, run_downstream
+from qshield_pipeline.run import (
+    StageError,
+    run_all,
+    run_downstream,
+    run_workflow_update,
+)
 
 
 def _write_config(tmp_path: Path) -> Path:
@@ -177,3 +182,39 @@ def test_run_downstream_uses_three_isolated_profiled_stages(
     assert calls[2][2][0] == "--mock"
     assert all("--profile" in extra_args for _, _, extra_args in calls)
     assert all("--override" in extra_args for _, _, extra_args in calls)
+
+
+def test_workflow_update_exact_fallback_runs_profiled_stages(
+    tmp_path: Path, monkeypatch
+) -> None:
+    calls: list[tuple[str, list[str]]] = []
+
+    def _fake_run(
+        module: str, subcommand: str, config_path: Path, extra_args: list[str]
+    ):
+        calls.append((subcommand, extra_args))
+        return _completed(0)
+
+    monkeypatch.setattr(run_mod, "_run_stage_subprocess", _fake_run)
+    base, profile, override = _write_downstream_configs(tmp_path)
+
+    run_workflow_update(
+        base,
+        profile,
+        override,
+        run_data=False,
+        quantum_mode="exact",
+    )
+
+    assert [command for command, _ in calls] == [
+        "regime",
+        "scenarios",
+        "prepare-workflow",
+        "workflow",
+        "rerank-polish",
+        "benchmark-true",
+    ]
+    quantum_args = calls[3][1]
+    assert "--exact-only" in quantum_args
+    assert "--no-warm-start" in quantum_args
+    assert all("--profile" in args and "--override" in args for _, args in calls)

@@ -24,6 +24,10 @@ from qshield_contracts.enums import ArtifactMode, SolverKind, Stage
 from qshield_contracts.paths import ArtifactPaths
 from qshield_contracts.runs import RunContext
 from qshield_contracts.schemas.downstream import (
+    ArtifactProvenance,
+    BenchmarkReport,
+    SolverManifest,
+    validate_benchmark_report,
     validate_candidate_top10,
     validate_objective_samples,
 )
@@ -113,6 +117,104 @@ def _resolve_run_id(config: Config) -> str | None:
     return f"run_{datetime.now().astimezone().strftime('%Y%m%d_%H%M%S')}"
 
 
+def _solver_package_versions() -> dict[str, str]:
+    """Record package versions that travel with GATE-08 BenchmarkReport."""
+    versions: dict[str, str] = {"python": sys.version.split()[0]}
+    for name in ("qiskit", "qiskit_algorithms", "qiskit_optimization", "numpy"):
+        try:
+            module = __import__(name)
+            versions[name] = str(getattr(module, "__version__", "unknown"))
+        except Exception:  # noqa: BLE001 — optional deps must not block artifact write
+            versions[name] = "unavailable"
+    return versions
+
+
+def _validate_workflow_benchmark_report(payload: dict) -> None:
+    """Fail fast if workflow_benchmark.json cannot satisfy BenchmarkReport contract."""
+    manifest_raw = dict(payload.get("solver_manifest") or {})
+    package_versions = dict(manifest_raw.get("package_versions") or {})
+    if not package_versions:
+        package_versions = _solver_package_versions()
+    manifest = SolverManifest(
+        shots=int(manifest_raw.get("shots") or 1),
+        registered_seeds=[
+            int(seed) for seed in (manifest_raw.get("registered_seeds") or [0])
+        ],
+        reps=int(manifest_raw.get("reps") or 1),
+        optimizer=str(manifest_raw.get("optimizer") or "COBYLA"),
+        maxiter=int(manifest_raw.get("maxiter") or 1),
+        backend=str(manifest_raw.get("backend") or "StatevectorSampler"),
+        package_versions=package_versions,
+        warm_start=bool(manifest_raw.get("warm_start", False)),
+        seed_status={
+            str(k): str(v)
+            for k, v in dict(manifest_raw.get("seed_status") or {}).items()
+        },
+        NON_FINAL_CONFIG=bool(manifest_raw.get("NON_FINAL_CONFIG", False)),
+    )
+    provenance = ArtifactProvenance(
+        run_id=str(payload.get("run_id") or "dev"),
+        profile_id=str(payload.get("profile_id") or ""),
+        profile_status=str(payload.get("profile_status") or ""),
+        config_version=str(payload.get("config_version") or ""),
+        config_hash=str(payload.get("config_hash") or ""),
+    )
+    qaoa_energy = payload.get("winning_energy")
+    if (
+        payload.get("qaoa_seed_count") in (0, None)
+        and payload.get("actual_solver") != "qaoa"
+    ):
+        qaoa_energy = None
+    report = BenchmarkReport(
+        provenance=provenance,
+        qubo_hash=str(payload.get("qubo_hash") or ""),
+        candidate_order_hash=str(payload.get("candidate_order_hash") or ""),
+        solver_manifest=manifest,
+        requested_solver=str(payload.get("requested_solver") or "qaoa"),
+        actual_solver=str(payload.get("actual_solver") or "exact"),
+        exact_best_energy=float(payload.get("exact_best_energy") or 0.0),
+        qaoa_best_energy=None if qaoa_energy is None else float(qaoa_energy),
+        classical_best_energy=(
+            None
+            if payload.get("classical_energy") is None
+            else float(payload["classical_energy"])
+        ),
+        success_prob=(
+            None
+            if payload.get("success_prob") is None
+            else float(payload["success_prob"])
+        ),
+        feasible_rate=(
+            None
+            if payload.get("feasible_rate") is None
+            else float(payload["feasible_rate"])
+        ),
+        optimality_gap=(
+            None
+            if payload.get("optimality_gap") is None
+            else float(payload["optimality_gap"])
+        ),
+        energy_stats=dict(payload.get("energy_stats") or {}),
+        runtime_seconds={
+            str(k): float(v)
+            for k, v in dict(payload.get("runtime_seconds") or {}).items()
+        },
+        peak_memory_mb=(
+            None
+            if payload.get("peak_memory_mb") is None
+            else float(payload["peak_memory_mb"])
+        ),
+        reference_hardware=dict(payload.get("reference_hardware") or {}),
+        fallback_reason=(
+            None
+            if payload.get("fallback_reason") is None
+            else str(payload["fallback_reason"])
+        ),
+        caveats=[str(payload["caveat"])] if payload.get("caveat") else [],
+    )
+    validate_benchmark_report(report)
+
+
 def _tickers(config: Config) -> list[str]:
     return [entry["ticker"] for entry in config["tickers"]]
 
@@ -190,6 +292,11 @@ def solve_workflow(
     no_warm_start: bool = typer.Option(
         False, "--no-warm-start", help="Disable Qiskit warm-start even when installed"
     ),
+    exact_only: bool = typer.Option(
+        False,
+        "--exact-only",
+        help="NON_FINAL fallback: run surrogate/verify/exact/classical and skip QAOA",
+    ),
 ) -> None:
     """Consume the workflow risk handoff and emit model/exact/QAOA candidate artifacts."""
     cfg = Config.load_profiled(Path(config), Path(profile), Path(override))
@@ -214,9 +321,6 @@ def solve_workflow(
     candidates = pd.read_csv(candidate_path)
     samples = pd.read_parquet(samples_path)
     risk_summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    runtime = cfg.workflow_runtime()
-    validate_candidate_top10(candidates, expected_candidates=runtime.candidate_count)
-    validate_objective_samples(samples, expected_bit_count=runtime.total_decision_bits)
     profile_id = str((cfg.get("profile", {}) or {}).get("id", ""))
     handoff_profiles = set(candidates["profile_id"].astype(str))
     if handoff_profiles != {profile_id} or risk_summary.get("profile_id") != profile_id:
@@ -225,8 +329,24 @@ def solve_workflow(
         )
 
     qaoa_cfg = dict(quantum.get("qaoa", {}) or {})
-    minimum_seeds = max(10, int(qaoa_cfg.get("min_seeds", 10)))
-    configured_seeds = qaoa_cfg.get("seeds")
+    non_final = bool(qaoa_cfg.get("NON_FINAL_CONFIG"))
+    dev_mode = dict(qaoa_cfg.get("dev_mode") or {})
+    if non_final and bool(dev_mode.get("enabled")):
+        configured_seeds = list(
+            dev_mode.get("reduced_seeds") or qaoa_cfg.get("seeds") or []
+        )
+        shots = int(dev_mode.get("reduced_shots", qaoa_cfg.get("shots", 1024)))
+        maxiter = int(
+            dev_mode.get("reduced_maxiter", qaoa_cfg.get("optimizer_maxiter", 200))
+        )
+        minimum_seeds = max(1, len(configured_seeds))
+        if bool(dev_mode.get("disable_warm_start")):
+            no_warm_start = True
+    else:
+        minimum_seeds = max(10, int(qaoa_cfg.get("min_seeds", 10)))
+        configured_seeds = qaoa_cfg.get("seeds")
+        shots = int(qaoa_cfg.get("shots", 1024))
+        maxiter = int(qaoa_cfg.get("optimizer_maxiter", 200))
     seed_base = int(cfg.get("seed") or 0)
     seeds = (
         [int(seed) for seed in configured_seeds]
@@ -237,26 +357,55 @@ def solve_workflow(
         raise typer.BadParameter(
             f"Workflow QAOA requires at least {minimum_seeds} seeds, got {len(seeds)}."
         )
+    # Align quantum.input_candidates with handoff when Risk selected a different M.
+    if "selected_top10" in candidates.columns:
+        selected_mask = candidates["selected_top10"].astype(str).str.lower().isin(
+            {"true", "1", "yes"}
+        ) | (candidates["selected_top10"] == True)
+        selected_count = int(selected_mask.sum())
+    else:
+        selected_count = len(candidates)
+    quantum = dict(quantum)
+    quantum["input_candidates"] = selected_count
+    bit_encoding = dict(quantum.get("bit_encoding") or {})
+    bit_encoding["asset_count"] = selected_count
+    bit_encoding["total_decision_bits"] = 2 * selected_count
+    bit_encoding["exact_reference_states"] = 2 ** (2 * selected_count)
+    quantum["bit_encoding"] = bit_encoding
+    cfg["quantum"] = quantum
+    runtime_bits = 2 * selected_count
+    validate_candidate_top10(candidates, expected_candidates=selected_count)
+    validate_objective_samples(samples, expected_bit_count=runtime_bits)
     logger.info(
-        "Four-level workflow: %d candidates, %d bits, %d QAOA seeds.",
-        int(quantum["input_candidates"]),
-        int(quantum["bit_encoding"]["total_decision_bits"]),
+        "Four-level workflow: %d candidates, %d bits, %d QAOA seeds "
+        "(shots=%d, maxiter=%d, NON_FINAL_CONFIG=%s).",
+        selected_count,
+        runtime_bits,
         len(seeds),
+        shots,
+        maxiter,
+        non_final,
     )
+    performance_budget = dict(cfg.get("performance_budget") or {})
     result = run_four_level_workflow(
         candidates,
         samples,
         profile=cfg,
         risk_summary=risk_summary,
         seeds=seeds,
-        shots=int(qaoa_cfg.get("shots", 1024)),
-        maxiter=int(qaoa_cfg.get("optimizer_maxiter", 200)),
+        shots=shots,
+        maxiter=maxiter,
         candidate_pool_size=20,
         warm_start=not no_warm_start,
+        logger=logger,
+        verify_sample_size=4096 if non_final and runtime_bits >= 16 else None,
+        run_qaoa=not exact_only,
+        allow_non_final=non_final,
+        performance_budget=performance_budget,
     )
 
     provenance = {
-        "run_id": context.run_id,
+        "run_id": context.run_id or "dev",
         "profile_id": profile_id,
         "profile_status": str((cfg.get("profile", {}) or {}).get("status", "")),
         "config_version": str(
@@ -276,12 +425,20 @@ def solve_workflow(
         "target_column": result.target_column,
         **result.model.to_dict(),
     }
+    # qubo_hash identifies the MODEL, not the run: `run_id` is excluded so two runs over the same
+    # config/candidates/coefficients hash identically. TL-015/G1 needs that stability to prove
+    # exact, QAOA and classical solved one QUBO — including across separate runs.
     model_hash_payload = json.dumps(
-        model_payload, sort_keys=True, separators=(",", ":"), default=str
+        {key: value for key, value in model_payload.items() if key != "run_id"},
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
     )
     model_payload["qubo_hash"] = hashlib.sha256(
         model_hash_payload.encode("utf-8")
     ).hexdigest()
+    actual_solver = str(result.benchmark.get("actual_solver", "qaoa"))
+    fallback_reason = result.benchmark.get("fallback_reason")
     exact_payload = {
         **provenance,
         "qubo_hash": model_payload["qubo_hash"],
@@ -290,17 +447,57 @@ def solve_workflow(
     qaoa_payload = {
         **provenance,
         "qubo_hash": model_payload["qubo_hash"],
+        "requested_solver": "qaoa",
+        "actual_solver": actual_solver,
+        "fallback_reason": fallback_reason,
         **qaoa_result_payload(result.qaoa_by_seed, result.candidate_pool),
     }
+    seed_status = {
+        str(seed): ("completed" if seed_result.feasible else "failed")
+        for seed, seed_result in result.qaoa_by_seed.items()
+    }
+    for seed in seeds:
+        seed_status.setdefault(str(seed), "timeout" if fallback_reason else "failed")
+    package_versions = _solver_package_versions()
+    solver_manifest = {
+        "shots": shots,
+        "registered_seeds": list(seeds),
+        "reps": int(qaoa_cfg.get("p", 1)),
+        "optimizer": str(qaoa_cfg.get("optimizer", "COBYLA")),
+        "maxiter": maxiter,
+        "backend": "StatevectorSampler",
+        "package_versions": package_versions,
+        "warm_start": not no_warm_start,
+        "seed_status": seed_status,
+        "NON_FINAL_CONFIG": non_final,
+    }
+    benchmark_payload = {
+        **provenance,
+        "qubo_hash": model_payload["qubo_hash"],
+        "NON_FINAL_CONFIG": non_final,
+        "qaoa_config": {
+            "seeds": seeds,
+            "shots": shots,
+            "maxiter": maxiter,
+            "warm_start": not no_warm_start,
+        },
+        "solver_manifest": solver_manifest,
+        "reference_hardware": dict(performance_budget.get("reference_hardware") or {}),
+        "stage_timings_seconds": result.stage_timings,
+        **result.benchmark,
+    }
+    # Ensure requested/actual from benchmark win over any stale keys.
+    benchmark_payload["requested_solver"] = str(
+        result.benchmark.get("requested_solver", "qaoa")
+    )
+    benchmark_payload["actual_solver"] = actual_solver
+    benchmark_payload["fallback_reason"] = fallback_reason
+    _validate_workflow_benchmark_report(benchmark_payload)
     outputs = {
         "qubo_model.json": model_payload,
         "exact_solution.json": exact_payload,
         "qaoa_results.json": qaoa_payload,
-        "workflow_benchmark.json": {
-            **provenance,
-            "qubo_hash": model_payload["qubo_hash"],
-            **result.benchmark,
-        },
+        "workflow_benchmark.json": benchmark_payload,
     }
     for filename, payload in outputs.items():
         paths.for_stage(Stage.QUBO, filename).write_text(

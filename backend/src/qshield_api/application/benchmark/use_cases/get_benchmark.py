@@ -1,4 +1,4 @@
-# Đỗ Ngọc Tân - use case: đọc benchmark.json. Trả None nếu chưa chạy solve() lần nào — router 404.
+# Đỗ Ngọc Tân - use case: đọc workflow_benchmark.json (hoặc legacy benchmark.json).
 from __future__ import annotations
 
 from qshield_api.application.benchmark.dto import BenchmarkDTO
@@ -28,4 +28,9 @@ def get_benchmark(repo: BenchmarkRepository) -> BenchmarkDTO | None:
         qaoa_beats_classical=view.qaoa_beats_classical,
         runtime_seconds_total=view.runtime_seconds_total,
         caveat=view.caveat,
+        source_artifact=view.source_artifact,
+        profile_id=view.profile_id,
+        requested_solver=view.requested_solver,
+        actual_solver=view.actual_solver,
+        fallback_reason=view.fallback_reason,
     )

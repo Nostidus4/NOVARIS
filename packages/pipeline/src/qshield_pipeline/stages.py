@@ -21,4 +21,5 @@ STAGE_LABELS: dict[str, str] = {
     "risk_workflow": "Risk workflow (dynamic top-10 + objective samples)",
     "quantum_workflow": "Quantum workflow (generic 2M-bit Exact/QAOA)",
     "rerank_polish": "Risk rerank + local polishing + final accounting",
+    "benchmark_true": "Risk true-objective benchmark (exact/QAOA/classical)",
 }

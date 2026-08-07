@@ -1,7 +1,6 @@
-# Đỗ Ngọc Tân - OptimizeJob + OptimizeJobRequest + OptimizeResult.
-"""`OptimizeResult` là bản domain-level của `qshield_contracts.schemas.optimization.QaoaResult`
-(dataclass, không phải pydantic — domain không biết pydantic tồn tại). `application/optimize/
-mapper.py` chuyển dict thô đọc từ `qaoa_result.json` → `OptimizeResult` → `QaoaResultView` (DTO).
+# Đỗ Ngọc Tân - OptimizeJob + OptimizeJobRequest + OptimizeResult (workflow_update).
+"""`OptimizeResult` map từ artifact `workflow_benchmark.json` (+ optional true_benchmark),
+không còn phụ thuộc schema demo_fast `qaoa_result.json`.
 """
 
 from __future__ import annotations
@@ -20,32 +19,30 @@ class OptimizeJobStatus(StrEnum):
 
 @dataclass(frozen=True)
 class OptimizeJobRequest:
-    """Riêng cho `optimize` — xem ghi chú trong `domain/portfolio/entities.py::PortfolioInput`."""
-
     weights: dict[str, float]
     cash_weight: float
 
 
 @dataclass(frozen=True)
 class OptimizeResult:
-    """Bản domain của `QaoaResult` (`qshield_contracts.schemas.optimization`) — field giữ nguyên
-    tên/kiểu, chỉ đổi `dict[int, float]` thành `dict[str, float]` cho `qaoa_energy_by_seed` vì khoá
-    JSON luôn là chuỗi."""
+    """Kết quả job optimize gắn packages `qshield-quantum workflow` (thường `--exact-only`)."""
 
     bitstring: str
-    k_actions: int
-    chosen_actions: list[int]
     requested_solver: str
     actual_solver: str
     exact_energy: float
-    qaoa_energy_by_seed: dict[str, float]
-    optimality_gap: float
-    feasibility_rate: float
-    true_cvar_before: float
-    true_cvar_after: float
-    shots: int
-    backend: str
+    classical_energy: float | None
+    optimality_gap: float | None
+    qaoa_beats_classical: bool
     runtime_seconds: float
+    shots: int | None
+    backend: str
+    fallback_reason: str | None
+    profile_id: str | None
+    qubo_hash: str | None
+    true_cvar_before: float | None
+    true_cvar_after: float | None
+    source_artifact: str
 
 
 @dataclass(frozen=True)

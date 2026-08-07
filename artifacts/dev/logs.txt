@@ -44,3 +44,51 @@
 2026-08-06 20:56:35,460 | qshield.run_20260806_205520.quantum | INFO | True CVaR (qshield_risk.evaluate): before=0.110032 after=0.100704 (improves_cvar)
 2026-08-06 20:56:35,470 | qshield.run_20260806_205424.pipeline | INFO | Pipeline hoàn tất — toàn bộ 5 chặng PASS.
 2026-08-06 21:39:05,227 | qshield.run_20260806_213905.quantum_workflow | INFO | Four-level workflow: 8 candidates, 16 bits, 10 QAOA seeds.
+2026-08-07 13:54:49,651 | qshield.run_20260807_135449.regime | INFO | Feature frame: 35 dòng, 2026-06-12 → 2026-07-30
+2026-08-07 13:54:51,840 | qshield.run_20260807_135451.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-07 13:54:51,843 | qshield.run_20260807_135451.scenarios | WARNING | Bỏ qua regime normal: pool rỗng, lý do loại: {'anchor_off_calendar': 0, 'beyond_evaluation_date': 0, 'incomplete_panel': 609}
+2026-08-07 14:01:28,702 | qshield.run_20260807_140128.regime | INFO | Feature frame: 1265 dòng, 2021-06-21 → 2026-07-30
+2026-08-07 14:01:36,729 | qshield.run_20260807_140128.regime | INFO | Champion seed=303, 1265 dòng regime đã ghi.
+2026-08-07 14:01:39,183 | qshield.run_20260807_140138.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-07 14:01:39,551 | qshield.run_20260807_140138.scenarios | WARNING | Bỏ qua regime stress: pool rỗng, lý do loại: {'anchor_off_calendar': 0, 'beyond_evaluation_date': 0, 'incomplete_panel': 254}
+2026-08-07 14:17:12,441 | qshield.run_20260807_141712.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 3 QAOA seeds (shots=256, maxiter=50, NON_FINAL_CONFIG=True).
+2026-08-07 14:17:12,452 | qshield.run_20260807_141712.quantum_workflow | INFO | [timing] fit_surrogate=0.01s
+2026-08-07 14:23:42,982 | qshield.run_20260807_142342.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 3 QAOA seeds (shots=256, maxiter=50, NON_FINAL_CONFIG=True).
+2026-08-07 14:23:42,986 | qshield.run_20260807_142342.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 14:23:45,202 | qshield.run_20260807_142342.quantum_workflow | INFO | [timing] verify_consistency=2.22s checked=4098 sampled=True
+2026-08-07 14:24:23,604 | qshield.run_20260807_142342.quantum_workflow | INFO | [timing] exact=38.40s states=1048576
+2026-08-07 14:26:08,690 | qshield.run_20260807_142608.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 3 QAOA seeds (shots=256, maxiter=50, NON_FINAL_CONFIG=True).
+2026-08-07 14:26:08,695 | qshield.run_20260807_142608.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 14:26:10,901 | qshield.run_20260807_142608.quantum_workflow | INFO | [timing] verify_consistency=2.21s checked=4098 sampled=True
+2026-08-07 14:26:48,166 | qshield.run_20260807_142608.quantum_workflow | INFO | [timing] exact=37.27s states=1048576
+2026-08-07 14:46:21,589 | qshield.run_20260807_144621.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-07 14:46:21,594 | qshield.run_20260807_144621.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 14:46:23,997 | qshield.run_20260807_144621.quantum_workflow | INFO | [timing] verify_consistency=2.40s checked=4098 sampled=True
+2026-08-07 14:47:02,592 | qshield.run_20260807_144621.quantum_workflow | INFO | [timing] exact=38.60s states=1048576
+2026-08-07 15:06:44,918 | qshield.run_20260807_150644.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-07 15:06:44,923 | qshield.run_20260807_150644.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 15:06:47,164 | qshield.run_20260807_150644.quantum_workflow | INFO | [timing] verify_consistency=2.24s checked=4098 sampled=True
+2026-08-07 15:07:25,105 | qshield.run_20260807_150644.quantum_workflow | INFO | [timing] exact=37.94s states=1048576
+2026-08-07 15:07:25,594 | qshield.run_20260807_150644.quantum_workflow | INFO | [timing] classical_benchmark=0.49s
+2026-08-07 15:07:28,017 | qshield.run_20260807_150726.risk_rerank_polish | ERROR | Risk rerank/polish failed: [risk.polish] max adjustment is 0.05 and final reduction bound is [0, 0.30].
+2026-08-07 15:49:41,858 | qshield.run_20260807_154941.pipeline | INFO | Bắt đầu workflow-update NON_BASELINE_RUN — run_id=None, candidates=10, bits=20, quantum_mode=exact, run_data=False.
+2026-08-07 15:49:41,858 | qshield.run_20260807_154941.pipeline | INFO | [1/6] Regime (qshield-ai regime)
+2026-08-07 15:49:45,474 | qshield.run_20260807_154944.regime | INFO | Feature frame: 1265 dòng, 2021-06-21 → 2026-07-30
+2026-08-07 15:49:56,251 | qshield.run_20260807_154944.regime | INFO | Champion seed=303, 1265 dòng regime đã ghi.
+2026-08-07 15:49:56,618 | qshield.run_20260807_154941.pipeline | INFO | [2/6] Scenarios (qshield-ai scenarios)
+2026-08-07 15:49:59,633 | qshield.run_20260807_154959.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-07 15:49:59,962 | qshield.run_20260807_154959.scenarios | WARNING | Bỏ qua regime stress: pool rỗng, lý do loại: {'anchor_off_calendar': 0, 'beyond_evaluation_date': 0, 'incomplete_panel': 254}
+2026-08-07 15:50:01,672 | qshield.run_20260807_154941.pipeline | INFO | [3/6] Risk workflow (dynamic top-10 + objective samples)
+2026-08-07 15:50:31,911 | qshield.run_20260807_154941.pipeline | INFO | [4/6] Quantum workflow (generic 2M-bit Exact/QAOA)
+2026-08-07 15:50:34,393 | qshield.run_20260807_155034.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-07 15:50:34,398 | qshield.run_20260807_155034.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 15:50:36,843 | qshield.run_20260807_155034.quantum_workflow | INFO | [timing] verify_consistency=2.44s checked=4098 sampled=True
+2026-08-07 15:51:16,427 | qshield.run_20260807_155034.quantum_workflow | INFO | [timing] exact=39.58s states=1048576
+2026-08-07 15:51:16,928 | qshield.run_20260807_155034.quantum_workflow | INFO | [timing] classical_benchmark=0.50s
+2026-08-07 15:51:16,943 | qshield.run_20260807_154941.pipeline | INFO | [5/6] Risk rerank + local polishing + final accounting
+2026-08-07 15:51:21,567 | qshield.run_20260807_154941.pipeline | INFO | [6/6] Risk true-objective benchmark (exact/QAOA/classical)
+2026-08-07 15:51:22,588 | qshield.run_20260807_154941.pipeline | INFO | workflow-update NON_BASELINE_RUN hoàn tất — 6/6 chặng PASS.
+2026-08-07 16:24:54,813 | qshield.run_20260807_162454.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 10 QAOA seeds (shots=1024, maxiter=200, NON_FINAL_CONFIG=True).
+2026-08-07 16:24:54,818 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 16:24:57,060 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] verify_consistency=2.24s checked=4098 sampled=True
+2026-08-07 16:25:33,990 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] exact=36.93s states=1048576

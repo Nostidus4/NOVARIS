@@ -1,0 +1,113 @@
+{
+  "status": "NON_BASELINE_RUN",
+  "NON_FINAL_CONFIG": true,
+  "disclaimer": "Narrative bakeoff only. Not workflow_update true-CVaR evidence. No quantum-advantage claim (StatevectorSampler).",
+  "exact_scaling": [
+    {
+      "n": 8,
+      "states": 256,
+      "exact_runtime_s": 0.0017789580015232787,
+      "classical_runtime_s": 0.00588108399824705,
+      "exact_bitstring": "10000111",
+      "exact_energy": -0.17539828661375378,
+      "classical_bitstring": "10000111",
+      "classical_energy": -0.17539828661375378,
+      "classical_gap": 0.0,
+      "classical_matches_exact": true
+    },
+    {
+      "n": 10,
+      "states": 1024,
+      "exact_runtime_s": 0.0026643750024959445,
+      "classical_runtime_s": 0.006315541002550162,
+      "exact_bitstring": "1001011100",
+      "exact_energy": -0.14584547671455161,
+      "classical_bitstring": "1001011100",
+      "classical_energy": -0.14584547671455161,
+      "classical_gap": 0.0,
+      "classical_matches_exact": true
+    },
+    {
+      "n": 12,
+      "states": 4096,
+      "exact_runtime_s": 0.011329625005600974,
+      "classical_runtime_s": 0.007958791000419296,
+      "exact_bitstring": "010011101010",
+      "exact_energy": -0.18970813816643028,
+      "classical_bitstring": "010011101010",
+      "classical_energy": -0.18970813816643073,
+      "classical_gap": -2.3409075337636002e-15,
+      "classical_matches_exact": true
+    },
+    {
+      "n": 14,
+      "states": 16384,
+      "exact_runtime_s": 0.050892625004053116,
+      "classical_runtime_s": 0.01283724998938851,
+      "exact_bitstring": "01010110000111",
+      "exact_energy": -0.25470160848709966,
+      "classical_bitstring": "01010110000111",
+      "classical_energy": -0.254701608487101,
+      "classical_gap": -5.230699709608099e-15,
+      "classical_matches_exact": true
+    },
+    {
+      "n": 16,
+      "states": 65536,
+      "exact_runtime_s": 0.22316895799303893,
+      "classical_runtime_s": 0.01138120899850037,
+      "exact_bitstring": "1001001001110011",
+      "exact_energy": -0.24775748330361314,
+      "classical_bitstring": "1001001001110011",
+      "classical_energy": -0.24775748330361314,
+      "classical_gap": 0.0,
+      "classical_matches_exact": true
+    }
+  ],
+  "depth_scan": {
+    "n": 10,
+    "shots": 128,
+    "maxiter": 20,
+    "seed": 101,
+    "warm_start": false,
+    "exact": {
+      "bitstring": "1001011100",
+      "energy": -0.14584547671455161,
+      "runtime_s": 0.0027757500065490603
+    },
+    "classical": {
+      "bitstring": "1001011100",
+      "energy": -0.14584547671455161,
+      "runtime_s": 0.0065012920094886795,
+      "gap": 0.0
+    },
+    "qaoa_by_p": [
+      {
+        "p": 1,
+        "seed": 101,
+        "shots": 128,
+        "maxiter": 20,
+        "warm_start": false,
+        "bitstring": "1011101000",
+        "energy": -0.11899632851961894,
+        "optimality_gap": 0.18409311553406454,
+        "matches_exact": false,
+        "success_prob": 0.0,
+        "runtime_s": 251.47013687499566
+      },
+      {
+        "p": 2,
+        "seed": 101,
+        "shots": 128,
+        "maxiter": 20,
+        "warm_start": false,
+        "bitstring": "1011001100",
+        "energy": -0.122024874446373,
+        "optimality_gap": 0.16332767258048211,
+        "matches_exact": false,
+        "success_prob": 0.0,
+        "runtime_s": 496.40152724999643
+      }
+    ]
+  }
+}

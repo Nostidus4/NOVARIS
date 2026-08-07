@@ -102,11 +102,15 @@ class Config(dict):
         The regular base config remains flat for backward compatibility. Nested profile sections
         are preserved, while an override may replace only the runtime dimensions or provisional
         financial values it declares. This is the required loader for workflow-profile runs.
+
+        An override may declare ``extends: <relative-or-absolute-yaml>`` to deep-merge another
+        provisional file first (chain resolved relative to the override's directory). The
+        ``extends`` key itself is not kept in the merged config.
         """
         merged: dict[str, Any] = dict(cls.load(base_yaml))
         _deep_merge(merged, _load_yaml(Path(profile_yaml)))
         if override_yaml is not None:
-            _deep_merge(merged, _load_yaml(Path(override_yaml)))
+            _deep_merge(merged, _load_override_chain(Path(override_yaml)))
         return cls(merged)
 
     def workflow_runtime(self) -> WorkflowRuntime:
@@ -135,6 +139,27 @@ class Config(dict):
 def _load_yaml(path: Path) -> dict[str, Any]:
     with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
+
+
+def _load_override_chain(
+    path: Path, *, _seen: frozenset[Path] | None = None
+) -> dict[str, Any]:
+    """Load an override yaml, recursively applying ``extends`` parents first."""
+    path = path.resolve()
+    seen = _seen or frozenset()
+    if path in seen:
+        cycle = " -> ".join(str(item) for item in (*seen, path))
+        raise ValueError(f"Config extends cycle detected: {cycle}")
+    payload = _load_yaml(path)
+    extends = payload.pop("extends", None)
+    merged: dict[str, Any] = {}
+    if extends is not None:
+        parent = Path(str(extends))
+        if not parent.is_absolute():
+            parent = path.parent / parent
+        _deep_merge(merged, _load_override_chain(parent, _seen=seen | {path}))
+    _deep_merge(merged, payload)
+    return merged
 
 
 def _deep_merge(target: dict[str, Any], incoming: dict[str, Any]) -> None:

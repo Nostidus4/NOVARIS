@@ -159,7 +159,7 @@ def financial_objective(
         "return_sacrifice": max(
             0.0, before.expected_horizon_return - after.expected_horizon_return
         ),
-        "transaction_cost": trade.costs.total,
+        "transaction_cost": trade.costs.total,  # fee+spread only (TL-008)
         "turnover": trade.turnover,
         "liquidity_penalty": trade.costs.liquidity_penalty,
         "cash_budget_deviation": abs(cash_increment - target_cash),

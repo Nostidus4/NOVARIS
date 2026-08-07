@@ -42,6 +42,7 @@ data source, scenario gate, risk candidate ranking va quantum benchmark.
 
 ## Xem Them
 
+- `configs/provisional/README.md` — override Decision-package / bakeoff (không phải baseline).
 - `README.md` (goc repo) — muc "Profile: demo_fast vs workflow_update" giai thich code hien tai
   dang o mode nao.
 - `docs/limitations.md` §1 — bang so sanh `workflow_update` (baseline chinh thuc) vs `demo_fast`

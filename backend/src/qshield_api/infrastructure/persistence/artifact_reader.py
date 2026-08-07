@@ -83,3 +83,25 @@ def read_scenario_cube(paths: ArtifactPaths) -> tuple[np.ndarray, list[str]] | N
     with np.load(cube_path, allow_pickle=False) as data:
         cube = np.asarray(data["scenarios"], dtype=float)
     return cube, list(manifest.get("ticker_order", []))
+
+
+def read_config_json(
+    cfg: Config, root_key: str, relative_path: str
+) -> dict[str, Any] | None:
+    """Read a non-versioned Data/Report JSON path rooted in ``config.paths``."""
+    root = Path((cfg.get("paths") or {}).get(root_key, ""))
+    path = root / relative_path
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def read_config_csv(
+    cfg: Config, root_key: str, relative_path: str
+) -> pd.DataFrame | None:
+    """Read a non-versioned Data/Report CSV path rooted in ``config.paths``."""
+    root = Path((cfg.get("paths") or {}).get(root_key, ""))
+    path = root / relative_path
+    if not path.exists():
+        return None
+    return pd.read_csv(path)

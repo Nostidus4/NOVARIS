@@ -20,7 +20,9 @@ def required_float(config: Mapping[str, Any], key: str) -> float:
     """Read one mandatory finite numeric config value without inventing a default."""
     value = config.get(key)
     if value is None:
-        raise ValueError(f"[risk.config] {key}=null; an approved explicit value is required.")
+        raise ValueError(
+            f"[risk.config] {key}=null; an approved explicit value is required."
+        )
     result = float(value)
     if not np.isfinite(result):
         raise ValueError(f"[risk.config] {key} must be finite, got {value!r}.")
@@ -43,6 +45,7 @@ class RiskEvaluation:
     reported independently from financial metrics, allowing Quantum to inspect infeasible
     candidates without treating a penalty score as true risk.
     """
+
     before: RiskMetrics
     after: RiskMetrics
     selected_action_ids: tuple[int, ...]
@@ -116,7 +119,9 @@ def evaluate(
         expected_assets=len(tickers),
     )
     tolerance = required_float(config, "weight_sum_tolerance")
-    aligned = align_portfolio_weights(weights, tickers, cash_weight, tolerance=tolerance)
+    aligned = align_portfolio_weights(
+        weights, tickers, cash_weight, tolerance=tolerance
+    )
     levels = confidence_levels(config)
     alpha = required_float(config, "cvar_alpha")
     reduction_pct = required_float(config, "action_reduction_pct")

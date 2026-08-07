@@ -49,8 +49,15 @@ def verify_quadratic_consistency(
     variable_names: list[str],
     atol: float = 1e-6,
     chunk_size: int = 65_536,
-) -> None:
-    """Compare NumPy, QuadraticProgram, and converted QUBO for every generic state."""
+    sample_size: int | None = None,
+    sample_seed: int = 0,
+) -> dict[str, int | bool]:
+    """Compare NumPy, QuadraticProgram, and converted QUBO energies.
+
+    Full enumeration is required for final/baseline evidence. For ``NON_FINAL_CONFIG`` runs at
+    ``d >= 16``, callers may pass ``sample_size`` to check a deterministic random subset plus the
+    all-zero / all-one corners (benchmark plan §3.1).
+    """
     if len(variable_names) != model.dimension:
         raise ValueError(
             f"variable_names has {len(variable_names)} entries, expected {model.dimension}."
@@ -59,8 +66,13 @@ def verify_quadratic_consistency(
         model.Q, model.linear, model.constant, ticker_order=variable_names
     )
     qubo = to_qubo(qp)
+    n = model.dimension
+    total = 1 << n
     checked = 0
-    for Z in bitstring_chunks(model.dimension, chunk_size):
+    sampled = False
+
+    def _check_batch(Z: np.ndarray) -> None:
+        nonlocal checked
         numpy_energy = model.evaluate_batch(Z)
         qp_energy = np.fromiter(
             (qp.objective.evaluate(z) for z in Z), dtype=float, count=len(Z)
@@ -79,10 +91,28 @@ def verify_quadratic_consistency(
                 f"qp={qp_energy[local]:.12g}, qubo={qubo_energy[local]:.12g}."
             )
         checked += len(Z)
-    if checked != 1 << model.dimension:
-        raise ConsistencyError(
-            f"Consistency enumeration checked {checked}, expected {1 << model.dimension} states."
+
+    if sample_size is not None:
+        if sample_size < 2:
+            raise ValueError("sample_size must be >= 2 when sampling.")
+        sampled = True
+        rng = np.random.default_rng(sample_seed)
+        take = min(sample_size, total)
+        integers = rng.choice(total, size=take, replace=False).astype(np.uint64)
+        integers = np.unique(
+            np.concatenate([integers, np.array([0, total - 1], dtype=np.uint64)])
         )
+        shifts = np.arange(n - 1, -1, -1, dtype=np.uint64)
+        Z = ((integers[:, None] >> shifts) & 1).astype(np.int8)
+        _check_batch(Z)
+    else:
+        for Z in bitstring_chunks(n, chunk_size):
+            _check_batch(Z)
+        if checked != total:
+            raise ConsistencyError(
+                f"Consistency enumeration checked {checked}, expected {total} states."
+            )
+    return {"checked_states": checked, "sampled": sampled, "total_states": total}
 
 
 def verify_consistency(

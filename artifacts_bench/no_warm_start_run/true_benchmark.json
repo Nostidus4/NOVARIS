@@ -1,0 +1,225 @@
+{
+  "run_id": "run_20260807_161520",
+  "profile_id": "qaoa_benchmark_10bit",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "qaoa-benchmark-10bit-v1",
+  "config_hash": "04b61692732bf10a018d2abf2766febd69ef6c0715433463c646bdaa7366abf5",
+  "qubo_hash": "2e50ce079c4711f69efe1ec9b21d696308301b63c6aa3a65a3588aacff85a181",
+  "candidate_order_hash": "3c10a747b9b45e68b4154fd42ad5404b3c3fbf0aa10af001cb6026411c9975bb",
+  "candidate_count": 5,
+  "candidate_order": [
+    "MWG",
+    "GVR",
+    "BSR",
+    "PLX",
+    "GAS"
+  ],
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA seed timeout (300s) on seed=101 (runtime=337.2s); stopped 9 remaining seeds",
+  "materiality_threshold": 0.01,
+  "baseline": {
+    "true_cvar": 0.07423905410008698,
+    "cvar": {
+      "0.95": 0.07423905410008698,
+      "0.975": 0.08575478891911807,
+      "0.99": 0.09940763012849547
+    },
+    "expected_horizon_return": 0.015608724670363,
+    "worst_scenario_max_drawdown": -0.13179936610788545
+  },
+  "solvers": {
+    "exact": {
+      "available": true,
+      "bitstring": "1111111111",
+      "qubo_energy": 0.8510740587522637,
+      "source": "exact_solution.json",
+      "decoded_actions": {
+        "MWG": 0.30000000000000004,
+        "GVR": 0.30000000000000004,
+        "BSR": 0.30000000000000004,
+        "PLX": 0.30000000000000004,
+        "GAS": 0.30000000000000004
+      },
+      "true_objective": 0.8554565412517743,
+      "true_cvar": 0.06637690410934619,
+      "true_cvar_before": 0.07423905410008698,
+      "true_cvar_after": 0.06637690410934619,
+      "cvar_before": {
+        "0.95": 0.07423905410008698,
+        "0.975": 0.08575478891911807,
+        "0.99": 0.09940763012849547
+      },
+      "cvar_after": {
+        "0.95": 0.06637690410934619,
+        "0.975": 0.07705911896620522,
+        "0.99": 0.08985944085244421
+      },
+      "cvar_reduction_relative": 0.10590315415577987,
+      "cvar_reduction_pct": 10.590315415577987,
+      "CVaR_reduction": 0.007862149990740794,
+      "CVaR_reduction_pct": 0.10590315415577987,
+      "expected_return_sacrifice": 0.0,
+      "expected_return_before": 0.015608724670363,
+      "expected_return_after": 0.016575296523996117,
+      "worst_drawdown_before": -0.13179936610788545,
+      "worst_drawdown_after": -0.12133267561764471,
+      "worst_drawdown_reduction": 0.010466690490240738,
+      "turnover": 0.049999999950000006,
+      "transaction_cost": 0.000124999999875,
+      "liquidity_penalty": 2.4999999975000003e-05,
+      "cost_per_cvar_reduction": 0.01589895893899401,
+      "cost_per_CVaR_reduction": 0.01589895893899401,
+      "constraint_violations": [],
+      "materiality_threshold": 0.01,
+      "true_cvar_relative_reduction": 0.10590315415577987,
+      "materiality_met": true,
+      "improvement_claim_allowed": true
+    },
+    "qaoa": {
+      "available": true,
+      "bitstring": "1101111111",
+      "qubo_energy": 0.8683401548149131,
+      "source": "qaoa_results.json:seeds",
+      "decoded_actions": {
+        "MWG": 0.30000000000000004,
+        "GVR": 0.2,
+        "BSR": 0.30000000000000004,
+        "PLX": 0.30000000000000004,
+        "GAS": 0.30000000000000004
+      },
+      "true_objective": 0.8713258738743574,
+      "true_cvar": 0.06690842070599325,
+      "true_cvar_before": 0.07423905410008698,
+      "true_cvar_after": 0.06690842070599325,
+      "cvar_before": {
+        "0.95": 0.07423905410008698,
+        "0.975": 0.08575478891911807,
+        "0.99": 0.09940763012849547
+      },
+      "cvar_after": {
+        "0.95": 0.06690842070599325,
+        "0.975": 0.07764864437095247,
+        "0.99": 0.09054996038092308
+      },
+      "cvar_reduction_relative": 0.09874362601940997,
+      "cvar_reduction_pct": 9.874362601940998,
+      "CVaR_reduction": 0.007330633394093733,
+      "CVaR_reduction_pct": 0.09874362601940997,
+      "expected_return_sacrifice": 0.0,
+      "expected_return_before": 0.015608724670363,
+      "expected_return_after": 0.016613292156745865,
+      "worst_drawdown_before": -0.13179936610788545,
+      "worst_drawdown_after": -0.1219972982815507,
+      "worst_drawdown_reduction": 0.009802067826334748,
+      "turnover": 0.046666666620000005,
+      "transaction_cost": 0.00011666666655000002,
+      "liquidity_penalty": 2.3333333310000004e-05,
+      "cost_per_cvar_reduction": 0.01591495035667695,
+      "cost_per_CVaR_reduction": 0.01591495035667695,
+      "constraint_violations": [],
+      "materiality_threshold": 0.01,
+      "true_cvar_relative_reduction": 0.09874362601940997,
+      "materiality_met": true,
+      "improvement_claim_allowed": true
+    },
+    "classical": {
+      "available": true,
+      "bitstring": "1111111111",
+      "qubo_energy": 0.8510740587522637,
+      "source": "workflow_benchmark.json",
+      "decoded_actions": {
+        "MWG": 0.30000000000000004,
+        "GVR": 0.30000000000000004,
+        "BSR": 0.30000000000000004,
+        "PLX": 0.30000000000000004,
+        "GAS": 0.30000000000000004
+      },
+      "true_objective": 0.8554565412517743,
+      "true_cvar": 0.06637690410934619,
+      "true_cvar_before": 0.07423905410008698,
+      "true_cvar_after": 0.06637690410934619,
+      "cvar_before": {
+        "0.95": 0.07423905410008698,
+        "0.975": 0.08575478891911807,
+        "0.99": 0.09940763012849547
+      },
+      "cvar_after": {
+        "0.95": 0.06637690410934619,
+        "0.975": 0.07705911896620522,
+        "0.99": 0.08985944085244421
+      },
+      "cvar_reduction_relative": 0.10590315415577987,
+      "cvar_reduction_pct": 10.590315415577987,
+      "CVaR_reduction": 0.007862149990740794,
+      "CVaR_reduction_pct": 0.10590315415577987,
+      "expected_return_sacrifice": 0.0,
+      "expected_return_before": 0.015608724670363,
+      "expected_return_after": 0.016575296523996117,
+      "worst_drawdown_before": -0.13179936610788545,
+      "worst_drawdown_after": -0.12133267561764471,
+      "worst_drawdown_reduction": 0.010466690490240738,
+      "turnover": 0.049999999950000006,
+      "transaction_cost": 0.000124999999875,
+      "liquidity_penalty": 2.4999999975000003e-05,
+      "cost_per_cvar_reduction": 0.01589895893899401,
+      "cost_per_CVaR_reduction": 0.01589895893899401,
+      "constraint_violations": [],
+      "materiality_threshold": 0.01,
+      "true_cvar_relative_reduction": 0.10590315415577987,
+      "materiality_met": true,
+      "improvement_claim_allowed": true
+    }
+  },
+  "financial_ranking": [
+    "classical",
+    "exact",
+    "qaoa"
+  ],
+  "ranking_disagreement": [
+    {
+      "solver": "exact",
+      "true_rank": 2,
+      "qubo_rank": 2,
+      "ranking_disagreement": 0,
+      "true_cvar": 0.06637690410934619,
+      "qubo_energy": 0.8510740587522637
+    },
+    {
+      "solver": "qaoa",
+      "true_rank": 3,
+      "qubo_rank": 3,
+      "ranking_disagreement": 0,
+      "true_cvar": 0.06690842070599325,
+      "qubo_energy": 0.8683401548149131
+    },
+    {
+      "solver": "classical",
+      "true_rank": 1,
+      "qubo_rank": 1,
+      "ranking_disagreement": 0,
+      "true_cvar": 0.06637690410934619,
+      "qubo_energy": 0.8510740587522637
+    }
+  ],
+  "notes": [
+    "QAOA loses to exact on true CVaR (no quantum advantage claim).",
+    "QAOA loses to classical on true CVaR."
+  ],
+  "warnings": [
+    "NON_BASELINE_RUN: true-benchmark is development evidence only.",
+    "No quantum advantage claim; report financial ranking honestly."
+  ],
+  "caveat": "Statevector simulation is not quantum hardware and this benchmark does not establish quantum advantage.",
+  "final_recommendation": {
+    "present": true,
+    "winning_bitstring": "1111111111",
+    "true_cvar_before": 0.07423905410008698,
+    "true_cvar_after": 0.06637690410934619,
+    "true_cvar_relative_reduction": 0.10590315415577987,
+    "materiality_met": true,
+    "actual_solver": "exact"
+  },
+  "evaluation_date": "2026-07-30",
+  "input_source": "real"
+}

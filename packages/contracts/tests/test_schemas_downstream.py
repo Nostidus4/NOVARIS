@@ -234,6 +234,9 @@ def test_final_recommendation_enforces_mapping_zero_lock_and_weight_sum() -> Non
         transaction_cost=0.0,
         turnover=0.0,
         constraints_passed=True,
+        true_cvar_relative_reduction=0.20,
+        materiality_met=True,
+        improvement_claim_allowed=True,
     )
     validate_final_recommendation(recommendation)
 
@@ -256,3 +259,89 @@ def test_final_recommendation_enforces_mapping_zero_lock_and_weight_sum() -> Non
                 }
             )
         )
+
+    with pytest.raises(ValueError, match="improvement_claim_allowed"):
+        validate_final_recommendation(
+            FinalRecommendation(
+                **{
+                    **recommendation.__dict__,
+                    "true_cvar_relative_reduction": 0.005,
+                    "materiality_met": False,
+                    "improvement_claim_allowed": True,
+                }
+            )
+        )
+
+
+def test_gate_verdict_and_benchmark_report() -> None:
+    from qshield_contracts.schemas.downstream import (
+        BenchmarkReport,
+        GateVerdict,
+        SolverManifest,
+        validate_benchmark_report,
+        validate_gate_verdict,
+        validate_transaction_cost_excludes_liquidity,
+    )
+
+    validate_gate_verdict(
+        GateVerdict(
+            gate_id="surrogate_gate",
+            status="WARN",
+            owner="Do Ngoc Tan",
+            metrics={"mae": 0.01},
+            notes=["provisional thresholds"],
+        )
+    )
+    with pytest.raises(ValueError, match="exception_disclosure"):
+        validate_gate_verdict(
+            GateVerdict(gate_id="scenario_gate", status="EXCEPTION", owner="Phuc")
+        )
+
+    report = BenchmarkReport(
+        provenance=_provenance(),
+        qubo_hash="qubo-hash",
+        candidate_order_hash="order-hash",
+        solver_manifest=SolverManifest(
+            shots=1024,
+            registered_seeds=[101, 202],
+            reps=1,
+            optimizer="COBYLA",
+            maxiter=200,
+            backend="StatevectorSampler",
+            package_versions={"qiskit": "2.0"},
+            warm_start=True,
+            seed_status={"101": "completed"},
+            NON_FINAL_CONFIG=False,
+        ),
+        requested_solver="qaoa",
+        actual_solver="exact",
+        exact_best_energy=-1.0,
+        qaoa_best_energy=None,
+        classical_best_energy=-0.9,
+        fallback_reason="QAOA timeout",
+        runtime_seconds={"exact": 1.0, "qaoa": 0.0, "classical": 0.5},
+    )
+    validate_benchmark_report(report)
+
+    with pytest.raises(ValueError, match="fallback_reason"):
+        validate_benchmark_report(
+            BenchmarkReport(
+                **{**report.__dict__, "fallback_reason": None},
+            )
+        )
+
+    validate_transaction_cost_excludes_liquidity(
+        {
+            "transaction_cost": {
+                "fee": 0.0015,
+                "spread": 0.001,
+                "liquidity_penalty": 0.0005,
+            },
+            "financial_objective": {
+                "components": {
+                    "transaction_cost": {"weight": 0.25},
+                    "liquidity_penalty": {"weight": 0.25},
+                }
+            },
+        }
+    )

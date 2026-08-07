@@ -15,6 +15,30 @@ from qshield_risk.portfolio import validate_ticker_order
 from qshield_risk.sampling import decode_four_level_bits
 
 
+def materiality_from_cvar(
+    cvar_before: float,
+    cvar_after: float,
+    *,
+    threshold: float = 0.01,
+) -> dict[str, float | bool]:
+    """TL-018 — relative true-CVaR reduction after hedge (loss convention: lower after is better)."""
+    if not np.isfinite(cvar_before) or not np.isfinite(cvar_after):
+        raise ValueError("[risk.materiality] CVaR values must be finite.")
+    if threshold <= 0.0:
+        raise ValueError("[risk.materiality] threshold must be positive.")
+    if cvar_before <= 0.0:
+        relative = 0.0 if cvar_after >= cvar_before else 1.0
+    else:
+        relative = float((cvar_before - cvar_after) / cvar_before)
+    met = relative >= threshold
+    return {
+        "materiality_threshold": float(threshold),
+        "true_cvar_relative_reduction": relative,
+        "materiality_met": met,
+        "improvement_claim_allowed": met,
+    }
+
+
 def rerank_candidates(
     candidate_pool: Sequence[Mapping[str, Any]],
     scenarios: npt.ArrayLike,
@@ -85,9 +109,15 @@ def rerank_candidates(
         frame["surrogate_rank"] = frame["qubo_energy"].rank(method="first").astype(int)
     else:
         frame["surrogate_rank"] = pd.NA
+    # TL-016 tie-break: true objective, then true CVaR, then cash transaction cost
     frame = frame.sort_values(
-        ["true_objective", "bitstring"], ascending=[True, True], kind="stable"
+        ["true_objective", "true_cvar", "transaction_cost", "bitstring"],
+        ascending=[True, True, True, True],
+        kind="stable",
     ).reset_index(drop=True)
+    top_n = int((config.get("reranking") or {}).get("top_distinct_feasible", 0) or 0)
+    if top_n > 0:
+        frame = frame.iloc[:top_n].reset_index(drop=True)
     frame.insert(0, "true_rank", frame.index + 1)
     frame["ranking_disagreement"] = (
         frame["surrogate_rank"] - frame["true_rank"]
@@ -124,6 +154,13 @@ def polish_reductions(
     """Coordinate-polish active actions while locking every Quantum zero at zero."""
     tickers = validate_ticker_order(ticker_order)
     quantum = np.asarray(quantum_reductions, dtype=float)
+    # Codec computes 0.10 + 0.20 for level 30%, which can be
+    # 0.30000000000000004. Normalize only machine-epsilon boundary noise.
+    quantum = np.where(
+        np.isclose(quantum, maximum_reduction, rtol=0.0, atol=1e-12),
+        maximum_reduction,
+        quantum,
+    )
     if quantum.shape != (len(tickers),) or not np.isfinite(quantum).all():
         raise ValueError(
             f"[risk.polish] quantum_reductions must have shape ({len(tickers)},)."
@@ -136,7 +173,7 @@ def polish_reductions(
         or maximum_reduction <= 0.0
         or maximum_reduction > 0.30
         or np.any(quantum < 0.0)
-        or np.any(quantum > maximum_reduction)
+        or np.any(quantum > maximum_reduction + 1e-12)
     ):
         raise ValueError(
             "[risk.polish] max adjustment is 0.05 and final reduction bound is [0, 0.30]."

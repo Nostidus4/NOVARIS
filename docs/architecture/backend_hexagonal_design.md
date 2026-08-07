@@ -173,7 +173,7 @@ backend/src/qshield_api/
 `SubprocessOptimizeRunner` gọi `qshield-quantum solve` qua `subprocess.run`/
 `asyncio.create_subprocess_exec` — **không bao giờ** `import qshield_quantum` trong tiến trình
 `qshield_api`. Đã verify thật (không suy đoán, verify lại qua `notebooks/exploration/
-quantum_solve.ipynb`): qiskit + pyarrow chung tiến trình sẽ segfault. FastAPI là một tiến trình
+`04_quantum_benchmark_workflow.ipynb`): qiskit + pyarrow chung tiến trình sẽ segfault. FastAPI là một tiến trình
 sống lâu, import mọi router lúc khởi động — lỗi này sập cả server, không chỉ một request.
 
 Job chạy nền (`BackgroundTasks` hoặc `asyncio.to_thread`), vì `subprocess.run` chặn đồng bộ và tốn

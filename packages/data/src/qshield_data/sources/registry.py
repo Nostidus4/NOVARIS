@@ -1,5 +1,5 @@
 # Nguyễn Đỗ Minh Anh - Data Source Register: nguồn, ngày lấy, quyền dùng, version.
-"""Universe Registry (30→8 mã đã khóa) và Data Source Register.
+"""Universe Registry 30 mã (workflow_update) và Data Source Register.
 
 Port từ `CLEAN.ipynb` Cell 8-9 (`UNIVERSE_ROWS`, `SOURCE_ROWS`). Khác với notebook: danh sách mã và
 `data_source` (yahoo/dnse) không còn hard-code trong Python — đọc từ `configs/universe.yaml` (đúng
@@ -154,17 +154,21 @@ def save_universe_and_sources(
     metadata_dir: Path,
     universe_as_of: str,
 ) -> tuple[Path, Path]:
-    """Ghi `universe_asof_{YYYYMMDD}.csv` và `source_register.csv` vào `metadata_dir`.
+    """Ghi snapshot universe + source register.
 
-    `universe_as_of` phải là chuỗi `YYYY-MM-DD`; dùng để đặt tên file universe snapshot.
+    Ghi cả hai tên:
+    - `universe_asof_{YYYYMMDD}.csv` — tương thích loader/CLI cũ;
+    - `universe_30_asof_{YYYYMMDD}.csv` — tên bắt buộc theo `workflow_update` Data Gate (TL-001).
     """
     metadata_dir = Path(metadata_dir)
     metadata_dir.mkdir(parents=True, exist_ok=True)
 
     as_of_tag = pd.to_datetime(universe_as_of).strftime("%Y%m%d")
     universe_path = metadata_dir / f"universe_asof_{as_of_tag}.csv"
+    universe_30_path = metadata_dir / f"universe_30_asof_{as_of_tag}.csv"
     sources_path = metadata_dir / "source_register.csv"
 
     universe.to_csv(universe_path, index=False, encoding="utf-8-sig")
+    universe.to_csv(universe_30_path, index=False, encoding="utf-8-sig")
     sources.to_csv(sources_path, index=False, encoding="utf-8-sig")
-    return universe_path, sources_path
+    return universe_30_path, sources_path

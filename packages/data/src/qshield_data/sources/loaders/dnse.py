@@ -4,8 +4,9 @@
 Public API, không cần auth, có full history HNX/UPCOM (Yahoo chỉ có HOSE). Endpoint:
 `https://services.entrade.com.vn/chart-api/v2/ohlcs/stock?from={epoch}&to={epoch}&symbol={ticker}&resolution=1D`
 
-Giá trả về theo NGHÌN VNĐ → nhân 1000 để có VNĐ đầy đủ (tương thích Yahoo). Giá đã điều chỉnh cổ
-tức + chia tách → dùng làm cả Close và Adj Close.
+Giá trả về theo NGHÌN VNĐ → nhân 1000 để có VNĐ đầy đủ (tương thích Yahoo). API không cung cấp
+field adjusted riêng; bản demo giữ proxy ``Adj Close = Close`` nhưng gắn metadata/warning
+``ADJ_UNVERIFIED``. Không được dùng proxy này làm bằng chứng baseline (TL-002).
 
 `verify=False`: máy phát triển gốc (Windows) thiếu root CA cho `entrade.com.vn`, khiến request luôn
 báo `SSLError` và fallback nhầm về Yahoo — mất hết history trước ngày chuyển sang HOSE. Xác định
@@ -72,7 +73,14 @@ def download_ticker(
                 }
             )
             df = df.set_index("date").sort_index()
-            df["Adj Close"] = df["Close"]  # DNSE trả giá đã adjust
+            logger.warning(
+                "DNSE %s không có field adjusted riêng: dùng Close làm proxy Adj Close với "
+                "flag ADJ_UNVERIFIED; không hợp lệ cho baseline TL-002.",
+                ticker,
+            )
+            df["Adj Close"] = df["Close"]
+            df.attrs["adjusted_close_method"] = "CLOSE_PROXY_UNVERIFIED"
+            df.attrs["adjusted_close_evidence"] = "ADJ_UNVERIFIED"
             df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
             return df, "dnse_entrade"
 

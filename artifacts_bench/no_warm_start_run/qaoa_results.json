@@ -1,0 +1,457 @@
+{
+  "run_id": "run_20260807_160938",
+  "profile_id": "qaoa_benchmark_10bit",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "qaoa-benchmark-10bit-v1",
+  "config_hash": "04b61692732bf10a018d2abf2766febd69ef6c0715433463c646bdaa7366abf5",
+  "candidate_order_hash": "3c10a747b9b45e68b4154fd42ad5404b3c3fbf0aa10af001cb6026411c9975bb",
+  "qubo_hash": "2e50ce079c4711f69efe1ec9b21d696308301b63c6aa3a65a3588aacff85a181",
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA seed timeout (300s) on seed=101 (runtime=337.2s); stopped 9 remaining seeds",
+  "seeds": {
+    "101": {
+      "seed": 101,
+      "bitstring": "1101111111",
+      "energy": 0.8683401548149131,
+      "feasible": true,
+      "feasibility_rate": 0.00164794921875,
+      "success_prob": 0.0,
+      "runtime_seconds": 337.242985416,
+      "samples": [
+        {
+          "bitstring": "1101111111",
+          "energy": 0.8683401548149131,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111110",
+          "energy": 0.8827538276610936,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111110101",
+          "energy": 0.8834010787044467,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111011111",
+          "energy": 0.8838979264721982,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111111101",
+          "energy": 0.8840558442353749,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111110111",
+          "energy": 0.8841302762267398,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111101",
+          "energy": 0.8842780128381663,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111111",
+          "energy": 0.8843456162002444,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101110111",
+          "energy": 0.8843582302407729,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111011110",
+          "energy": 0.898743353307624,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111100111",
+          "energy": 0.8989815959013121,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1111111001",
+          "energy": 0.8989843394794595,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101101111",
+          "energy": 0.8998221966282741,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1101111110",
+          "energy": 0.8998350666396766,
+          "probability": 1.52587890625e-05,
+          "feasible": true
+        },
+        {
+          "bitstring": "0111010111",
+          "energy": 0.9000987728967488,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011011111",
+          "energy": 0.9002848342631126,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011111101",
+          "energy": 0.9004539780261995,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1011110111",
+          "energy": 0.900508000722577,
+          "probability": 8.58306884765625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "0101111101",
+          "energy": 0.900946136797208,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        },
+        {
+          "bitstring": "1110011111",
+          "energy": 0.9012272304012077,
+          "probability": 3.814697265625e-06,
+          "feasible": true
+        }
+      ],
+      "warm_start_used": false
+    }
+  },
+  "candidate_pool": [
+    {
+      "bitstring": "1111111111",
+      "energy": 0.8510740587522637,
+      "sources": [
+        "exact"
+      ],
+      "rank": 1,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111011111",
+      "energy": 0.8670425015833555,
+      "sources": [
+        "exact"
+      ],
+      "rank": 2,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111111101",
+      "energy": 0.8671993343994233,
+      "sources": [
+        "exact"
+      ],
+      "rank": 3,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1111110111",
+      "energy": 0.8672758030572869,
+      "sources": [
+        "exact"
+      ],
+      "rank": 4,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0111111111",
+      "energy": 0.8679370682722432,
+      "sources": [
+        "exact"
+      ],
+      "rank": 5,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101111111",
+      "energy": 0.8683401548149131,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 6,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111101111",
+      "energy": 0.8827118712666253,
+      "sources": [
+        "exact"
+      ],
+      "rank": 7,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 10,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111111110",
+      "energy": 0.8827538276610936,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 8,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 10
+      }
+    },
+    {
+      "bitstring": "1111111011",
+      "energy": 0.8828484820985997,
+      "sources": [
+        "exact"
+      ],
+      "rank": 9,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 10,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111011101",
+      "energy": 0.8831693032504417,
+      "sources": [
+        "exact"
+      ],
+      "rank": 10,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1111010111",
+      "energy": 0.8832518843584327,
+      "sources": [
+        "exact"
+      ],
+      "rank": 11,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1111110101",
+      "energy": 0.8834010787044467,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 12,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "0111011111",
+      "energy": 0.8838979264721981,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 13,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0111111101",
+      "energy": 0.8840558442353749,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 14,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "0111110111",
+      "energy": 0.8841302762267398,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 15,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101011111",
+      "energy": 0.884137551996592,
+      "sources": [
+        "exact"
+      ],
+      "rank": 16,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 20,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101111101",
+      "energy": 0.8842780128381662,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 17,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 20
+      }
+    },
+    {
+      "bitstring": "1011111111",
+      "energy": 0.8843456162002444,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 18,
+      "actions_pct": {
+        "MWG": 10,
+        "GVR": 30,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "1101110111",
+      "energy": 0.8843582302407729,
+      "sources": [
+        "exact",
+        "qaoa_seed_101"
+      ],
+      "rank": 19,
+      "actions_pct": {
+        "MWG": 30,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 20,
+        "GAS": 30
+      }
+    },
+    {
+      "bitstring": "0101111111",
+      "energy": 0.8850147784579827,
+      "sources": [
+        "exact"
+      ],
+      "rank": 20,
+      "actions_pct": {
+        "MWG": 20,
+        "GVR": 20,
+        "BSR": 30,
+        "PLX": 30,
+        "GAS": 30
+      }
+    }
+  ]
+}

@@ -172,6 +172,11 @@ risk:
     input_assets: 30
     output_candidates: 10
     ranking_direction: descending_net_risk_score
+    exclude_ineligible_before_ranking: true
+    exclude_zero_weight_before_ranking: true
+    tie_break:
+      - marginal_cvar_reduction_desc
+      - transaction_cost_asc
     score_components:
       benefit:
         - marginal_CVaR_reduction_10pct
@@ -202,11 +207,31 @@ risk:
     required: true
     source: "stress probability / approved policy"
     output: B_t
+    target_cash_increment: 0.10
+    maximum_reduction: 0.30
+  # TL-007…011 — Decision-package locks (override may still refine for NON_BASELINE runs)
+  weight_sum_tolerance: 0.00000001
   transaction_cost:
-    fee: null
-    spread: null
-    liquidity_penalty: null
-    status: TBD_002
+    fee: 0.0015
+    spread: 0.0010
+    liquidity_penalty: 0.0005
+    status: DECISION_PACKAGE_TL007
+  cost_sensitivity:
+    low: {fee: 0.0010, spread: 0.0005, liquidity_penalty: 0.0003}
+    base: {fee: 0.0015, spread: 0.0010, liquidity_penalty: 0.0005}
+    high: {fee: 0.0020, spread: 0.0015, liquidity_penalty: 0.0008}
+  financial_objective:
+    priority: cvar_first
+    components:
+      cvar: {weight: 1.0, scale: 0.10}
+      return_sacrifice: {weight: 0.25, scale: 0.05}
+      transaction_cost: {weight: 0.25, scale: 0.01}
+      turnover: {weight: 0.05, scale: 0.20}
+      liquidity_penalty: {weight: 0.25, scale: 0.01}
+      cash_budget_deviation: {weight: 0.35, scale: 0.10}
+  materiality:
+    true_cvar_relative_reduction_min: 0.01
+    rule: "improvement only if true CVaR falls by >=1% relative after cost"
   handoff_to_quantum:
     required: true
     required_files:
@@ -245,18 +270,43 @@ quantum:
     optimizer: COBYLA
     optimizer_maxiter: 200
     min_seeds: 10
-    seeds: null
+    warm_start: true
+    seeds: [101, 202, 303, 404, 505, 606, 707, 808, 909, 1001]
+    final_config: true
+    NON_FINAL_CONFIG: false
   reranking:
     required: true
     owner: "Lieu Hoai Phuc"
     metric: true_CVaR_objective
-    top_distinct_feasible_bitstrings: "10_to_20"
+    top_distinct_feasible: 20
+    top_distinct_feasible_bitstrings: 20
   local_polishing:
     required: true
     owner: "Lieu Hoai Phuc"
     zero_action_lock: true
     max_adjustment_pp: 5
     final_reduction_bounds_pct: [0, 30]
+  surrogate_validation:
+    status: PROVISIONAL_PENDING_OWNER
+    ask_doc: docs/handoffs/surrogate_gate_thresholds_ask.md
+    thresholds:
+      mae_max: 0.02
+      rmse_max: 0.03
+      spearman_min: 0.70
+      top_k: 20
+      top_k_recall_min: 0.60
+      feasible_rate_min: 0.05
+      seed_stability_min: 0.50
+    on_fail: hard_stop_for_baseline_exception_only_for_analysis
+  performance_budget:
+    exact_timeout_seconds: 3600
+    qaoa_seed_timeout_seconds: 600
+    qaoa_total_timeout_seconds: 7200
+    classical_timeout_seconds: 600
+  benchmark:
+    require_same_qubo_hash: true
+    require_same_profile_id: true
+    solvers: [exact, qaoa, classical]
 
 pipeline:
   stages:

@@ -112,7 +112,7 @@ hoạch benchmark (`docs/benchmark_plan.md` §3.1). Vì vậy `qubo_model.json`,
 `final_recommendation.json` **chưa có số thật nào**.
 
 Cell chạy đầu-cuối có stream log trực tiếp nằm ở cuối
-`notebooks/exploration/quantum_solve.ipynb` (gọi CLI qua subprocess — không import
+`notebooks/exploration/04_quantum_benchmark_workflow.ipynb` (gọi CLI qua subprocess — không import
 `qshield_quantum` vào kernel, tránh cả segfault pyarrow lẫn `os._exit()` giết kernel).
 
 **Test và kiểm tra tĩnh:**
@@ -149,3 +149,51 @@ hạn chế đã biết, chưa sửa trong phiên này.
    tăng `config_version`, chạy lại toàn bộ downstream.
 5. Cập nhật `docs/limitations.md` §1: bảng so sánh ở đó vẫn mô tả "code hiện tại = `demo_fast`",
    nay đã có thêm đường downstream provisional cần ghi rõ.
+
+## 9. Cập nhật đo 20-bit — 2026-08-07
+
+Handoff Risk hiện đã đủ **10 candidates / 20-bit / 211 samples** trên cube `(5000, 20, 30)`.
+
+| Chặng | Kết quả đo |
+|---|---:|
+| Fit surrogate | 0.00s |
+| Consistency sampled NON_FINAL (4.098 / 1.048.576 states) | 2.24s |
+| Exact exhaustive 20-bit (1.048.576 states) | 37.94s |
+| Classical benchmark | 0.49s |
+| Risk rerank + local polish | 6s |
+
+QAOA 20-bit chưa hoàn tất:
+
+- 3 seeds / shots 256 / maxiter 50 / warm-start: không xong sau hơn 15 phút.
+- 1 seed / shots 128 / maxiter 10 / không warm-start: vẫn không xong sau hơn 13 phút.
+- Cả hai tiến trình đã bị dừng; không ghi nhận kết quả QAOA giả hay cherry-pick.
+
+Đường vận hành hiện tại dùng `--exact-only` và ghi trung thực
+`requested_solver=qaoa`, `actual_solver=exact`, `NON_FINAL_CONFIG=true`. Exact fallback đã tạo đủ
+`qubo_model.json`, `exact_solution.json`, `qaoa_results.json` (pool từ exact),
+`workflow_benchmark.json`; Risk sau đó tạo `final_recommendation.json`.
+
+## 10. Full pipeline exact-only — 2026-08-07 15:49 (UTC+7)
+
+Lệnh:
+
+```bash
+/usr/bin/time -p uv run qshield-pipeline workflow-update \
+  --config configs/base.yaml \
+  --profile configs/profiles/workflow_update.yaml \
+  --override configs/provisional/workflow_update_downstream.yaml \
+  --quantum-mode exact
+```
+
+Kết quả: **6/6 chặng PASS**, `NON_BASELINE_RUN`, wall-clock chính xác **101,27 giây**
+(1 phút 41,27 giây). Quantum workflow nội bộ mất **42,531 giây**:
+
+- fit surrogate: `0,004s`
+- consistency sampled: `2,444s` (`4.098` trạng thái kiểm tra; đây là counter, không phải giây)
+- exact exhaustive 20-bit: `39,583s` (`1.048.576` trạng thái)
+- QAOA: `0s` (exact-only fallback)
+- classical benchmark: `0,500s`
+
+Backend `/workflow/summary` đọc tươi toàn bộ artifact sau run: Data/Regime/Scenarios/Risk/QUBO/
+Exact/Benchmark/Rerank/True-benchmark đều `READY` hoặc `PASS`; `actual_solver=exact`,
+true CVaR `0,074239 → 0,061405`. Không tuyên bố quantum advantage.
