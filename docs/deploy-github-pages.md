@@ -44,9 +44,12 @@
 # ---------------------------------------------------------------------------
 #
 # - Pages = static. Không host FastAPI.
+# - Nếu không set `QSHIELD_API_URL`, workflow tự bật FastAPI tạm với
+#   `QSHIELD_WORKFLOW_STORE=file`, đọc artifact đã commit và bake số liệu vào
+#   HTML. API tạm bị tắt ngay sau build.
 # - Server Component chỉ gọi API lúc CI build, không poll lại mỗi lần user F5
-#   trừ khi rebuild. Nút client (Sync, Optimize, Refresh) thì gọi API runtime
-#   nếu `NEXT_PUBLIC_QSHIELD_API_URL` trỏ đúng và CORS mở.
+#   trừ khi rebuild. Nút client (Sync, Optimize, Refresh) vẫn cần backend public
+#   qua `NEXT_PUBLIC_QSHIELD_API_URL` và CORS đúng.
 # - Không commit `.env` chứa secret; chỉ dùng GitHub Secrets.
 #
 # ---------------------------------------------------------------------------
