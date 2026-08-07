@@ -1,0 +1,8 @@
+2026-08-07 11:11:02,858 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | WARNING | lambda_1=1.000000 lambda_2=1.000000 P=0.046774 là PROVISIONAL (suggest_penalty, chưa Phúc/Ngọc duyệt — plan.md câu hỏi 3). Run này là NON_BASELINE_RUN.
+2026-08-07 11:11:02,858 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | INFO | Chạy verify/consistency trước khi tin bất kỳ kết quả QAOA nào (quy tắc 15)...
+2026-08-07 11:11:02,975 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | INFO | verify/consistency PASS trên toàn bộ 256 bitstring.
+2026-08-07 11:11:02,976 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | INFO | Exact: best_feasible=01011000 energy=-0.009400 (duyệt 256 trạng thái)
+2026-08-07 11:11:02,977 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | WARNING | configs/quantum.yaml: qaoa.seeds chưa đăng ký — dùng tạm [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] (PROVISIONAL, plan.md câu hỏi 4). Run này là NON_BASELINE_RUN.
+2026-08-07 11:12:16,831 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | INFO | QAOA: chạy xong 10 seed.
+2026-08-07 11:12:16,833 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | WARNING | QAOA KHÔNG thắng classical baseline (greedy theo g) — báo cáo trung thực theo CLAUDE.md quy tắc 18, không diễn giải có lợi cho QAOA.
+2026-08-07 11:12:16,841 | qshield.job_66ee97da761e4ac1bfc5c8f129fccc35.quantum | INFO | True CVaR (qshield_risk.evaluate): before=0.110032 after=0.100704 (improves_cvar)
