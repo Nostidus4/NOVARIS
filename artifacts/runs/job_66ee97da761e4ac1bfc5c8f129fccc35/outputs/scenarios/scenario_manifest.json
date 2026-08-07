@@ -1,0 +1,186 @@
+{
+  "run_mode": "NON_BASELINE_RUN",
+  "run_id": "run_20260806_205517",
+  "gate_status": "PASS",
+  "forced": false,
+  "input_source": "real",
+  "regime_input_source": "real",
+  "regime_source": "hmm_champion",
+  "structural_violations": [],
+  "evaluation_date": "2026-07-30",
+  "target_regime": "volatile",
+  "return_type": "simple",
+  "return_type_note": "scenarios = simple daily returns; scenarios_log = log daily returns; simple = expm1(log). R^(H) mỗi tài sản = prod(1+r) - 1 trên 20 ngày.",
+  "ticker_order": [
+    "ACB",
+    "CTG",
+    "VCB",
+    "HPG",
+    "VIC",
+    "MWG",
+    "VNM",
+    "FPT"
+  ],
+  "num_scenarios": 500,
+  "horizon_days": 20,
+  "block_length": 5,
+  "seed": 20260804,
+  "conditioning_method": "hard_filtered_label",
+  "data_version": "v1.0.0",
+  "feature_version": "v0.2",
+  "primary": {
+    "target_regime": "volatile",
+    "seed": 20260805,
+    "block_length": 5,
+    "blocks_per_path": 4,
+    "num_scenarios": 500,
+    "horizon_days": 20,
+    "n_assets": 8,
+    "ticker_order": [
+      "ACB",
+      "CTG",
+      "VCB",
+      "HPG",
+      "VIC",
+      "MWG",
+      "VNM",
+      "FPT"
+    ],
+    "eligible_block_count": 864,
+    "blocks_drawn": 2000,
+    "unique_blocks_used": 765,
+    "reuse_rate": 0.6174999999999999,
+    "rejected_blocks": {
+      "anchor_off_calendar": 0,
+      "beyond_evaluation_date": 5,
+      "incomplete_panel": 5
+    },
+    "anchor_split_counts": {
+      "train": 284,
+      "validation": 85,
+      "test": 495
+    },
+    "anchor_first": "2020-10-23",
+    "anchor_last": "2026-07-23",
+    "return_type": "simple"
+  },
+  "by_regime": {
+    "normal": {
+      "target_regime": "normal",
+      "seed": 20260804,
+      "block_length": 5,
+      "blocks_per_path": 4,
+      "num_scenarios": 500,
+      "horizon_days": 20,
+      "n_assets": 8,
+      "ticker_order": [
+        "ACB",
+        "CTG",
+        "VCB",
+        "HPG",
+        "VIC",
+        "MWG",
+        "VNM",
+        "FPT"
+      ],
+      "eligible_block_count": 599,
+      "blocks_drawn": 2000,
+      "unique_blocks_used": 583,
+      "reuse_rate": 0.7085,
+      "rejected_blocks": {
+        "anchor_off_calendar": 0,
+        "beyond_evaluation_date": 0,
+        "incomplete_panel": 10
+      },
+      "anchor_split_counts": {
+        "train": 599
+      },
+      "anchor_first": "2016-04-27",
+      "anchor_last": "2020-01-22",
+      "return_type": "simple"
+    },
+    "volatile": {
+      "target_regime": "volatile",
+      "seed": 20260805,
+      "block_length": 5,
+      "blocks_per_path": 4,
+      "num_scenarios": 500,
+      "horizon_days": 20,
+      "n_assets": 8,
+      "ticker_order": [
+        "ACB",
+        "CTG",
+        "VCB",
+        "HPG",
+        "VIC",
+        "MWG",
+        "VNM",
+        "FPT"
+      ],
+      "eligible_block_count": 864,
+      "blocks_drawn": 2000,
+      "unique_blocks_used": 765,
+      "reuse_rate": 0.6174999999999999,
+      "rejected_blocks": {
+        "anchor_off_calendar": 0,
+        "beyond_evaluation_date": 5,
+        "incomplete_panel": 5
+      },
+      "anchor_split_counts": {
+        "train": 284,
+        "validation": 85,
+        "test": 495
+      },
+      "anchor_first": "2020-10-23",
+      "anchor_last": "2026-07-23",
+      "return_type": "simple"
+    },
+    "stress": {
+      "target_regime": "stress",
+      "seed": 20260806,
+      "block_length": 5,
+      "blocks_per_path": 4,
+      "num_scenarios": 500,
+      "horizon_days": 20,
+      "n_assets": 8,
+      "ticker_order": [
+        "ACB",
+        "CTG",
+        "VCB",
+        "HPG",
+        "VIC",
+        "MWG",
+        "VNM",
+        "FPT"
+      ],
+      "eligible_block_count": 1083,
+      "blocks_drawn": 2000,
+      "unique_blocks_used": 913,
+      "reuse_rate": 0.5435,
+      "rejected_blocks": {
+        "anchor_off_calendar": 0,
+        "beyond_evaluation_date": 0,
+        "incomplete_panel": 5
+      },
+      "anchor_split_counts": {
+        "train": 779,
+        "validation": 164,
+        "test": 140
+      },
+      "anchor_first": "2016-04-04",
+      "anchor_last": "2026-06-04",
+      "return_type": "simple"
+    }
+  },
+  "skipped_regimes": {},
+  "validation_reference": "regime_matched_forward_windows",
+  "unresolved_decisions": [
+    "IN-PO-01 (S=500 vs 2000/5000)",
+    "IN-PO-02 (tư cách bằng chứng của fallback)",
+    "IN-RISK-01 (đơn vị return của cube)",
+    "IN-RISK-02 (ngày đánh giá t)",
+    "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
+    "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
+    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)"
+  ]
+}

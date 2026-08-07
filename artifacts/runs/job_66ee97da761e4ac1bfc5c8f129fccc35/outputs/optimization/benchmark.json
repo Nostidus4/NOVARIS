@@ -1,0 +1,22 @@
+{
+  "winning_seed": 0,
+  "winning_bitstring": "01011000",
+  "winning_energy": -0.009399661404173476,
+  "winning_is_feasible": true,
+  "n_seeds_feasible": 10,
+  "n_seeds_total": 10,
+  "exact_best_feasible_bitstring": "01011000",
+  "exact_best_feasible_energy": -0.00939966140417349,
+  "exact_best_overall_bitstring": "01011000",
+  "exact_best_overall_energy": -0.00939966140417349,
+  "exact_evaluated_states": 256,
+  "optimality_gap": 1.4764135867333114e-15,
+  "mean_feasibility_rate": 0.003887367248535156,
+  "mean_success_prob": 4.291534423828125e-05,
+  "classical_bitstring": "01011000",
+  "classical_energy": -0.00939966140417349,
+  "classical_gap": 0.0,
+  "qaoa_beats_classical": false,
+  "runtime_seconds_total": 73.80480116599938,
+  "caveat": "Simulator (StatevectorSampler), không phải phần cứng lượng tử thật. Không suy diễn kết luận về hiệu năng trên QPU thực (CLAUDE.md quy tắc 18)."
+}
