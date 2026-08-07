@@ -61,3 +61,7 @@ cd frontend && npm run build:pages
 
 Workflow: `.github/workflows/deploy-pages.yml` — push `main`/`master` hoặc Run workflow thủ công.
 Settings → Pages → Source = **GitHub Actions**.
+
+Nếu không có API public, CI tự bật backend tạm ở chế độ `file`, đọc artifact đã commit và bake
+số liệu vào HTML tĩnh. Các nút ghi/chạy runtime (Sync, Optimize) vẫn cần
+`NEXT_PUBLIC_QSHIELD_API_URL` trỏ đến backend public.
