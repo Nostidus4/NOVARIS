@@ -90,6 +90,14 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      # Pages không chạy FastAPI sau deploy. CI bật một API tạm từ artifact đã
+      # commit để Server Components lấy số liệu rồi bake vào HTML tĩnh.
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
       - name: Install dependencies
         run: npm ci
 
@@ -122,36 +130,95 @@ jobs:
             PUBLIC_API="${API}"
           fi
 
+          # Không có API public vẫn bake được data: CI tự bật backend local.
+          BUILD_API="${API:-http://127.0.0.1:8000}"
+          USE_LOCAL_API="false"
+          if [[ -z "${API}" ]]; then
+            USE_LOCAL_API="true"
+          fi
+
           {
             echo "base_path=${BASE}"
             echo "api_url=${API}"
+            echo "build_api_url=${BUILD_API}"
             echo "public_api_url=${PUBLIC_API}"
+            echo "use_local_api=${USE_LOCAL_API}"
           } >> "$GITHUB_OUTPUT"
 
           echo "GITHUB_PAGES=true"
           echo "NEXT_BASE_PATH='${BASE:-<empty/root>}'"
           if [[ -z "${API}" ]]; then
-            echo "QSHIELD_API_URL=<chưa set> → build ra HTML offline (banner 'Backend chưa sẵn sàng')."
-            echo "  Muốn có số liệu: thêm secret QSHIELD_API_URL trỏ tới API công khai rồi chạy lại."
+            echo "QSHIELD_API_URL=<chưa set> → CI sẽ bật backend local từ artifact để bake data."
           else
             echo "QSHIELD_API_URL đã set → fetch lúc build, timeout 15s/route, lỗi thì fallback offline."
           fi
           echo "NEXT_PUBLIC_QSHIELD_API_URL='${PUBLIC_API:-<none — nút Sync/Optimize sẽ không gọi được>}'"
 
+      - name: Install snapshot API dependencies
+        if: steps.env.outputs.use_local_api == 'true'
+        working-directory: .
+        run: uv sync --package qshield-api --no-dev
+
+      - name: Start snapshot API for static build
+        if: steps.env.outputs.use_local_api == 'true'
+        working-directory: .
+        shell: bash
+        run: |
+          set -euo pipefail
+          QSHIELD_WORKFLOW_STORE=file \
+            uv run --package qshield-api uvicorn qshield_api.main:app \
+              --host 127.0.0.1 --port 8000 > /tmp/qshield-pages-api.log 2>&1 &
+          echo "SNAPSHOT_API_PID=$!" >> "$GITHUB_ENV"
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/console/overview \
+              > /tmp/qshield-overview.json; then
+              echo "Snapshot API ready (attempt ${attempt})."
+              python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("/tmp/qshield-overview.json").read_text())
+          print(
+              "Bake source:",
+              f"profile={data.get('profile_id')}",
+              f"candidates={data.get('candidate_count')}",
+              f"online={data.get('online')}",
+          )
+          if not data.get("online"):
+              raise SystemExit("console/overview returned online=false")
+          PY
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "::error::Snapshot API không khởi động trong 60 giây"
+          cat /tmp/qshield-pages-api.log
+          exit 1
+
       - name: Lint
         run: npm run lint
 
-      # `frontend/lib/api.ts` coi chuỗi rỗng là "chưa cấu hình" và bỏ qua fetch,
-      # nên secret trống không còn làm static export treo 60s/route như trước.
       - name: Build static export
         env:
           GITHUB_PAGES: "true"
           NEXT_BASE_PATH: ${{ steps.env.outputs.base_path }}
-          QSHIELD_API_URL: ${{ steps.env.outputs.api_url }}
+          # API public nếu có; nếu không thì API local vừa bật ở bước trên.
+          QSHIELD_API_URL: ${{ steps.env.outputs.build_api_url }}
           NEXT_PUBLIC_QSHIELD_API_URL: ${{ steps.env.outputs.public_api_url }}
           # Tránh telemetry làm chậm / nhiễu log CI
           NEXT_TELEMETRY_DISABLED: "1"
         run: npm run build
+
+      - name: Stop snapshot API
+        if: always() && steps.env.outputs.use_local_api == 'true'
+        working-directory: .
+        shell: bash
+        run: |
+          if [[ -n "${SNAPSHOT_API_PID:-}" ]]; then
+            kill "${SNAPSHOT_API_PID}" 2>/dev/null || true
+          fi
 
       - name: Prepare Pages artifact
         shell: bash
