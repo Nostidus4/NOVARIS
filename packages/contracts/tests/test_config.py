@@ -46,7 +46,7 @@ def test_load_real_base_yaml() -> None:
     cfg = Config.load(repo_root / "configs" / "base.yaml")
 
     assert "date_range" in cfg
-    assert cfg["expected_ticker_count"] == 8
+    assert cfg["expected_ticker_count"] == 30
 
 
 def test_load_provisional_downstream_runtime() -> None:
