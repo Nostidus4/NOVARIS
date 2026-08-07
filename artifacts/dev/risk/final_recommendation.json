@@ -1,0 +1,173 @@
+{
+  "run_id": "run_20260807_155117",
+  "profile_id": "workflow_update_downstream",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-decision-package-v3",
+  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
+  "evaluation_date": "2026-07-30",
+  "requested_solver": "qaoa",
+  "actual_solver": "exact",
+  "fallback_reason": "QAOA skipped/timeout in NON_FINAL_CONFIG",
+  "candidate_order_hash": "f6aa77efe6a238ba974a08a94ee1d93a439584df11b3ebcb2a7d5ffccc78b6b9",
+  "qubo_hash": "17e39af0d73a935574d8cf952f7369f2765df340e1fe81b15f070b4d10e0db2d",
+  "candidate_count": 10,
+  "bits_per_candidate": 2,
+  "winning_bitstring": "11111111111111111111",
+  "actions": [
+    {
+      "ticker": "MWG",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "GVR",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "BSR",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "PLX",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "GAS",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "VRE",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "SSI",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "HDB",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "CTG",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    },
+    {
+      "ticker": "BID",
+      "bits": "11",
+      "quantum_reduction": 0.3,
+      "polished_reduction": 0.3,
+      "current_weight": 0.0333333333,
+      "sell_value": 0.00999999999,
+      "final_weight": 0.023339168102019664
+    }
+  ],
+  "portfolio_after": {
+    "stock_weights": {
+      "ACB": 0.03334166871717095,
+      "BID": 0.023339168102019664,
+      "BSR": 0.023339168102019664,
+      "CTG": 0.023339168102019664,
+      "FPT": 0.03334166871717095,
+      "GAS": 0.023339168102019664,
+      "GVR": 0.023339168102019664,
+      "HDB": 0.023339168102019664,
+      "HPG": 0.03334166871717095,
+      "LPB": 0.03334166871717095,
+      "MBB": 0.03334166871717095,
+      "MSN": 0.03334166871717095,
+      "MWG": 0.023339168102019664,
+      "PLX": 0.023339168102019664,
+      "SAB": 0.03334166871717095,
+      "SHB": 0.03334166871717095,
+      "SSB": 0.03334166871717095,
+      "SSI": 0.023339168102019664,
+      "STB": 0.03334166871717095,
+      "TCB": 0.03334166871717095,
+      "TPB": 0.03334166871717095,
+      "VCB": 0.03334166871717095,
+      "VHM": 0.03334166871717095,
+      "VIB": 0.03334166871717095,
+      "VIC": 0.03334166871717095,
+      "VJC": 0.03334166871717095,
+      "VNM": 0.03334166871717095,
+      "VPB": 0.03334166871717095,
+      "VPL": 0.03334166881719596,
+      "VRE": 0.023339168102019664
+    },
+    "cash_weight": 0.09977494363613407,
+    "nav_after": 0.99975000000025
+  },
+  "cvar_before": {
+    "0.95": 0.07423905410008698,
+    "0.975": 0.08575478891911807,
+    "0.99": 0.09940763012849547
+  },
+  "cvar_after": {
+    "0.95": 0.061404689903750344,
+    "0.975": 0.07151458023217612,
+    "0.99": 0.08335398554230952
+  },
+  "true_cvar_before": 0.07423905410008698,
+  "true_cvar_after": 0.061404689903750344,
+  "expected_return_before": 0.015608724670363,
+  "expected_return_after": 0.016133212729464434,
+  "transaction_cost": 0.00024999999974999995,
+  "liquidity_penalty": 4.999999994999999e-05,
+  "turnover": 0.09999999989999998,
+  "objective_before_polish": 0.6474218993541285,
+  "objective_after_polish": 0.6474218993541285,
+  "objective_improvement": 0.0,
+  "polishing_dependency": 0.0,
+  "constraints_passed": true,
+  "materiality_threshold": 0.01,
+  "true_cvar_relative_reduction": 0.1728788755717942,
+  "materiality_met": true,
+  "improvement_claim_allowed": true,
+  "warnings": [
+    "NON_BASELINE_RUN: underfilled/provisional downstream development evidence."
+  ]
+}

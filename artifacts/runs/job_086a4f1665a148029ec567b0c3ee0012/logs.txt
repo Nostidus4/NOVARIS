@@ -1,0 +1,5 @@
+2026-08-07 21:54:08,620 | qshield.job_086a4f1665a148029ec567b0c3ee0012.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-07 21:54:08,625 | qshield.job_086a4f1665a148029ec567b0c3ee0012.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
+2026-08-07 21:54:10,996 | qshield.job_086a4f1665a148029ec567b0c3ee0012.quantum_workflow | INFO | [timing] verify_consistency=2.37s checked=4098 sampled=True
+2026-08-07 21:54:49,053 | qshield.job_086a4f1665a148029ec567b0c3ee0012.quantum_workflow | INFO | [timing] exact=38.06s states=1048576
+2026-08-07 21:54:49,614 | qshield.job_086a4f1665a148029ec567b0c3ee0012.quantum_workflow | INFO | [timing] classical_benchmark=0.56s

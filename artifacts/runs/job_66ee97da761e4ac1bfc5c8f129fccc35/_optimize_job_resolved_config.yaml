@@ -1,0 +1,232 @@
+action_reduction_pct: 0.2
+artifacts:
+  mode: runs
+backend: simulator
+block_length: 5
+candidate_selection:
+  output_candidates: 10
+candidates:
+  covariance_type:
+  - diag
+  - full
+  n_states:
+  - 2
+  - 3
+  - 4
+  - 5
+champion:
+  covariance_type: diag
+  n_states: 3
+corporate_actions:
+- adjustment_factor: 1.495
+  event_date: '2025-03-03'
+  evidence: docs/perf/2026-08-05-kurtosis-fail-vcb.md — Close và Adj Close cùng bước
+    nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài
+    sản nào khác trong universe biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%),
+    bất khả thi vật lý trên HOSE.
+  ticker: VCB
+  type: stock_dividend
+covariance_type: diag
+cvae:
+  enabled: false
+cvar_alpha: 0.95
+data:
+  data_version: v1.0.0
+  universe_as_of: '2026-08-03'
+  universe_version: v1.0
+date_range:
+  asset_train_end: '2022-12-31'
+  asset_train_start: '2018-07-02'
+  market_train_end: '2022-12-31'
+  market_train_start: '2016-01-01'
+  test_end: '2026-07-31'
+  test_start: '2024-01-01'
+  validation_end: '2023-12-31'
+  validation_start: '2023-01-01'
+eligibility:
+  min_coverage_pct: 0.98
+  min_turnover_20d_vnd: 1000000000
+evaluation_date: null
+expected_ticker_count: 8
+fallback:
+  drawdown_threshold: -0.1
+  vol_quantile: 0.8
+feature_contract_version: v0.2
+features:
+  corr_window: 60
+  market_columns:
+  - market_log_return
+  - realized_vol_20d
+  - drawdown
+  - liquidity_20d
+frequency: daily
+gate:
+  min_mean_label_agreement: 0.6
+  min_state_occupancy: 0.02
+horizon_days: 20
+k_actions: 3
+logging:
+  level: INFO
+  path: null
+min_history_sessions: 252
+missing_data_policy: no_forward_fill
+n_iter: 500
+n_states: 3
+num_scenarios: 500
+paths:
+  data_root: data
+  reports_root: reports
+penalty:
+  P: null
+  lambda_1: null
+  lambda_2: null
+price_limits:
+  bands_by_exchange:
+    HNX: 0.1
+    HOSE: 0.07
+    UPCOM: 0.15
+  tolerance_pct: 0.005
+qaoa:
+  min_seeds: 10
+  optimizer: COBYLA
+  optimizer_maxiter: 200
+  p: 1
+  seeds: null
+  shots: 1024
+robustness_confidence_levels:
+- 0.975
+- 0.99
+run_id: job_66ee97da761e4ac1bfc5c8f129fccc35
+sample_portfolio_weights:
+  ACB: 0.125
+  CTG: 0.125
+  FPT: 0.125
+  HPG: 0.125
+  MWG: 0.125
+  VCB: 0.125
+  VIC: 0.125
+  VNM: 0.125
+scaler: standard
+scenario_seed: 20260804
+seed: 20260804
+seeds:
+  count: 10
+  values:
+  - 101
+  - 202
+  - 303
+  - 404
+  - 505
+  - 606
+  - 707
+  - 808
+  - 909
+  - 1001
+snapshot_date: '2026-08-03'
+source: yahoo_dnse_vnstock
+tickers:
+- company_name: Ngân hàng Á Châu
+  data_source: dnse
+  exchange_current: HOSE
+  exchange_history: HNX→HOSE 2020-12
+  exchange_periods:
+  - exchange: HNX
+    until: '2020-11-30'
+  - exchange: HOSE
+    from: '2020-12-01'
+  first_trading_date: '2006-11-21'
+  notes: ''
+  ticker: ACB
+  yahoo_symbol: ACB.VN
+- company_name: VietinBank
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2009-07-16'
+  notes: ''
+  ticker: CTG
+  yahoo_symbol: CTG.VN
+- company_name: Vietcombank
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2009-06-30'
+  notes: ''
+  ticker: VCB
+  yahoo_symbol: VCB.VN
+- company_name: Hoà Phát
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2007-11-15'
+  notes: ''
+  ticker: HPG
+  yahoo_symbol: HPG.VN
+- company_name: Vingroup
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2007-09-19'
+  notes: ''
+  ticker: VIC
+  yahoo_symbol: VIC.VN
+- company_name: Thế Giới Di Động
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2014-07-14'
+  notes: ''
+  ticker: MWG
+  yahoo_symbol: MWG.VN
+- company_name: Vinamilk
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2006-01-19'
+  notes: ''
+  ticker: VNM
+  yahoo_symbol: VNM.VN
+- company_name: FPT Corporation
+  data_source: yahoo
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  first_trading_date: '2006-12-13'
+  notes: ''
+  ticker: FPT
+  yahoo_symbol: FPT.VN
+transaction_cost:
+  fee: 0.0015
+  liquidity_penalty: 0.0005
+  spread: 0.001
+transforms:
+  mean_pairwise_corr_60d: fisher_z
+  realized_vol_20d: log
+validation:
+  min_reference_windows: 30
+  reference: regime_matched_forward_windows
+  thresholds:
+    autocorr_abs_diff_max: 0.1
+    corr_mean_abs_diff_max: 0.1
+    kurtosis_abs_diff_max: 5.0
+    mean_abs_diff_max: 0.001
+    quantile_rel_error_max: 0.25
+    skew_abs_diff_max: 1.0
+    std_ratio_max: 1.25
+    std_ratio_min: 0.8
+    tail_coverage_ratio_max: 2.0
+    tail_coverage_ratio_min: 0.5
+weight_sum_tolerance: 1.0e-06

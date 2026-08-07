@@ -1,0 +1,127 @@
+{
+  "run_mode": "NON_BASELINE_RUN",
+  "input_source": "real",
+  "gate_status": "OK",
+  "gate_reasons": [],
+  "feature_version": "v0.2",
+  "feature_names": [
+    "market_log_return",
+    "realized_vol_20d",
+    "drawdown",
+    "liquidity_20d",
+    "mean_pairwise_corr_60d"
+  ],
+  "data_version": "v1.0.0",
+  "unresolved_decisions": [
+    "IN-PO-01 (S=500 vs 2000/5000)",
+    "IN-PO-02 (tư cách bằng chứng của fallback)",
+    "IN-RISK-01 (đơn vị return của cube)",
+    "IN-RISK-02 (ngày đánh giá t)",
+    "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
+    "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
+    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)"
+  ],
+  "seeds_reported": [
+    101,
+    202,
+    303,
+    404,
+    505,
+    606,
+    707,
+    808,
+    909,
+    1001
+  ],
+  "stability": {
+    "n_seeds": 5.0,
+    "mean_agreement": 0.8230647709320695,
+    "min_agreement": 0.5576619273301737,
+    "max_agreement": 1.0
+  },
+  "champion": {
+    "seed": 303,
+    "n_states": 3,
+    "covariance_type": "diag",
+    "converged": true,
+    "log_likelihood_train": -1539.2847833062651,
+    "log_likelihood_validation": -1864.6348672742981,
+    "n_parameters": 38,
+    "aic": 3154.5695666125303,
+    "bic": 3304.693983610864
+  },
+  "label_map": {
+    "0": "stress",
+    "1": "volatile",
+    "2": "normal"
+  },
+  "state_profiles": [
+    {
+      "state_id": 0,
+      "label": "stress",
+      "occupancy": 0.35071090047393366,
+      "mean_return": -0.00015977549387912775,
+      "mean_volatility": 0.016344875913420674,
+      "mean_drawdown": -0.25174724405900833,
+      "mean_correlation": 0.4858189474207785,
+      "stress_score": 2.3593315118324623
+    },
+    {
+      "state_id": 1,
+      "label": "volatile",
+      "occupancy": 0.3791469194312796,
+      "mean_return": -0.0008382364683013222,
+      "mean_volatility": 0.009725797598866258,
+      "mean_drawdown": -0.13128139252378393,
+      "mean_correlation": 0.3350045994618761,
+      "stress_score": 0.5965883495677284
+    },
+    {
+      "state_id": 2,
+      "label": "normal",
+      "occupancy": 0.27014218009478674,
+      "mean_return": 0.00014656866886469185,
+      "mean_volatility": 0.009718190129581484,
+      "mean_drawdown": -0.023364133391166907,
+      "mean_correlation": 0.2627908232333082,
+      "stress_score": -2.955919861400191
+    }
+  ],
+  "coverage": {
+    "n_rows": 1265,
+    "start": "2021-06-21",
+    "end": "2026-07-30",
+    "by_split": {
+      "test": 632,
+      "train": 384,
+      "validation": 249
+    }
+  },
+  "occupancy": {
+    "normal": 0.2798418972332016,
+    "volatile": 0.5193675889328063,
+    "stress": 0.2007905138339921
+  },
+  "mean_durations": {
+    "normal": 32.18181818181818,
+    "volatile": 43.8,
+    "stress": 63.5
+  },
+  "transition_matrix": {
+    "normal": {
+      "normal": 0.9689265536723164,
+      "volatile": 0.01524390243902439,
+      "stress": 0.0
+    },
+    "volatile": {
+      "normal": 0.031073446327683617,
+      "volatile": 0.9786585365853658,
+      "stress": 0.015748031496062992
+    },
+    "stress": {
+      "normal": 0.0,
+      "volatile": 0.006097560975609756,
+      "stress": 0.984251968503937
+    }
+  }
+}

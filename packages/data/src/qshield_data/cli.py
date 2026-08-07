@@ -34,6 +34,7 @@ from qshield_data import split as split_mod
 from qshield_data.clean import corporate_actions, normalize, validate_prices
 from qshield_data.manifest import build_manifest, write_manifest
 from qshield_data.quality import checks as checks_mod
+from qshield_data.quality import evidence as evidence_mod
 from qshield_data.quality import report as report_mod
 from qshield_data.quality.price_limits import find_price_limit_violations
 from qshield_data.sources import fetch as fetch_mod
@@ -46,6 +47,16 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 _CONFIG_OPTION = typer.Option(
     "configs/base.yaml", "--config", help="Đường dẫn configs/base.yaml"
+)
+_PROFILE_OPTION = typer.Option(
+    None,
+    "--profile",
+    help="Optional profile YAML; with --override uses Config.load_profiled",
+)
+_OVERRIDE_OPTION = typer.Option(
+    None,
+    "--override",
+    help="Optional Decision-package / provisional override YAML",
 )
 
 
@@ -76,8 +87,19 @@ def _run_id() -> str:
     return f"data_run_{datetime.now().astimezone().strftime('%Y%m%d_%H%M%S')}"
 
 
-def _load_config(config: Path) -> dict[str, Any]:
-    cfg = Config.load(config)
+def _load_config(
+    config: Path,
+    profile: Path | None = None,
+    override: Path | None = None,
+) -> dict[str, Any]:
+    if profile is not None or override is not None:
+        cfg = Config.load_profiled(
+            config,
+            profile or Path("configs/profiles/workflow_update.yaml"),
+            override or Path("configs/provisional/workflow_update_downstream.yaml"),
+        )
+    else:
+        cfg = Config.load(config)
     level = ((cfg.get("logging") or {}).get("level")) or "INFO"
     logging.basicConfig(level=getattr(logging, str(level).upper(), logging.INFO))
     return cfg
@@ -124,9 +146,13 @@ def _vnstock_version() -> str:
 # Bước 1-2: fetch
 # ---------------------------------------------------------------------------
 @app.command()
-def fetch(config: Path = _CONFIG_OPTION) -> None:
+def fetch(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 1-2: đọc universe, tải giá từ Yahoo/DNSE/vnstock vào data/raw/."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
@@ -179,9 +205,13 @@ def fetch(config: Path = _CONFIG_OPTION) -> None:
 # Bước 3: clean
 # ---------------------------------------------------------------------------
 @app.command()
-def clean(config: Path = _CONFIG_OPTION) -> None:
+def clean(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 3: normalize + dedup + phantom-day + pre-listing → data/processed/prices_adjusted.parquet."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
@@ -201,6 +231,16 @@ def clean(config: Path = _CONFIG_OPTION) -> None:
     typer.echo(
         f"Loaded raw: {len(prices):,} rows, {prices['ticker'].nunique()} tickers"
     )
+
+    registered_actions = cfg.get("corporate_actions") or []
+    if registered_actions:
+        prices = corporate_actions.apply_registered_adjustments(
+            prices, registered_actions
+        )
+        typer.echo(
+            f"Corporate action back-adjustment: {len(registered_actions)} entry đã đăng ký "
+            "(configs/data.yaml) — xem logs.txt để biết đúng bao nhiêu phiên bị đổi."
+        )
 
     prices, n_dup = validate_prices.dedup_prices(prices)
     typer.echo(f"Duplicates removed: {n_dup}")
@@ -227,9 +267,13 @@ def clean(config: Path = _CONFIG_OPTION) -> None:
 # Bước 4: features
 # ---------------------------------------------------------------------------
 @app.command()
-def features(config: Path = _CONFIG_OPTION) -> None:
+def features(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 4: tính returns + market features → data/processed/{returns,market_features}.parquet."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
@@ -259,9 +303,13 @@ def features(config: Path = _CONFIG_OPTION) -> None:
 # Bước 5: eligibility
 # ---------------------------------------------------------------------------
 @app.command()
-def eligibility(config: Path = _CONFIG_OPTION) -> None:
+def eligibility(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 5: build eligibility_daily.parquet."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
@@ -294,9 +342,13 @@ def eligibility(config: Path = _CONFIG_OPTION) -> None:
 # Bước 6: split
 # ---------------------------------------------------------------------------
 @app.command()
-def split(config: Path = _CONFIG_OPTION) -> None:
+def split(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 6: gán cột split (train/validation/test) cho returns & market_features."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
     date_range = cfg["date_range"]
@@ -325,9 +377,13 @@ def split(config: Path = _CONFIG_OPTION) -> None:
 # Bước 7: quality
 # ---------------------------------------------------------------------------
 @app.command()
-def quality(config: Path = _CONFIG_OPTION) -> bool:
+def quality(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> bool:
     """Bước 7: chạy Data Quality Gate → reports/data_quality_report.csv."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
@@ -379,6 +435,18 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
     report_mod.write_quality_report(report_df, out_path)
     typer.echo(f"✓ DQ report: {out_path}")
 
+    evidence_frame = evidence_mod.build_adjusted_close_evidence_report(
+        universe, cfg.get("corporate_actions") or []
+    )
+    evidence_path = paths.reports_root / "adjusted_close_evidence_report.csv"
+    evidence_mod.write_adjusted_close_evidence_report(evidence_frame, evidence_path)
+    verified = int(evidence_frame["evidence_flag"].eq("ADJ_REGISTERED").sum())
+    typer.echo(
+        f"✓ Adjusted-close evidence: {evidence_path} — "
+        f"{verified}/{len(evidence_frame)} ADJ_REGISTERED; "
+        "baseline_ok=False until Data Gate sign-off (TL-002)."
+    )
+
     violations_path = paths.reports_root / "price_limit_violations.csv"
     report_mod.write_violations(violations, violations_path)
     if len(violations):
@@ -395,9 +463,13 @@ def quality(config: Path = _CONFIG_OPTION) -> bool:
 # Bước 8: manifest
 # ---------------------------------------------------------------------------
 @app.command()
-def manifest(config: Path = _CONFIG_OPTION) -> None:
+def manifest(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Bước 8: build data_dictionary.xlsx + data_manifest.json."""
-    cfg = _load_config(config)
+    cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
     data_cfg = cfg.get("data", {})
@@ -407,11 +479,13 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
     report_mod.build_data_dictionary(dict_out)
     typer.echo(f"✓ Data Dictionary: {dict_out}")
 
-    universe_files = sorted(paths.metadata_dir.glob("universe_asof_*.csv"))
+    universe_files = sorted(paths.metadata_dir.glob("universe_30_asof_*.csv"))
+    if not universe_files:
+        universe_files = sorted(paths.metadata_dir.glob("universe_asof_*.csv"))
     universe_register_path = (
         universe_files[-1]
         if universe_files
-        else paths.metadata_dir / "universe_asof_MISSING.csv"
+        else paths.metadata_dir / "universe_30_asof_MISSING.csv"
     )
     files = {
         "universe_register": universe_register_path,
@@ -422,6 +496,8 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
         "eligibility_daily": paths.processed_dir / "eligibility_daily.parquet",
         "data_dictionary": dict_out,
         "data_quality_report": paths.reports_root / "data_quality_report.csv",
+        "adjusted_close_evidence_report": paths.reports_root
+        / "adjusted_close_evidence_report.csv",
         "price_limit_violations": paths.reports_root / "price_limit_violations.csv",
     }
 
@@ -488,18 +564,22 @@ def manifest(config: Path = _CONFIG_OPTION) -> None:
 # `build` — lệnh chính, khớp docs/architecture/pipeline.md + docs/runbook/setup.md
 # ---------------------------------------------------------------------------
 @app.command()
-def build(config: Path = _CONFIG_OPTION) -> None:
+def build(
+    config: Path = _CONFIG_OPTION,
+    profile: Path | None = _PROFILE_OPTION,
+    override: Path | None = _OVERRIDE_OPTION,
+) -> None:
     """Thu thập, làm sạch dữ liệu, tạo feature và ghi returns.parquet / features.parquet.
 
     Chạy tuần tự 7 bước: fetch → clean → features → eligibility → split → quality → manifest.
     """
-    fetch(config)
-    clean(config)
-    features(config)
-    eligibility(config)
-    split(config)
-    all_pass = quality(config)
-    manifest(config)
+    fetch(config, profile=profile, override=override)
+    clean(config, profile=profile, override=override)
+    features(config, profile=profile, override=override)
+    eligibility(config, profile=profile, override=override)
+    split(config, profile=profile, override=override)
+    all_pass = quality(config, profile=profile, override=override)
+    manifest(config, profile=profile, override=override)
 
     if not all_pass:
         typer.echo(

@@ -1,0 +1,25 @@
+{
+  "job_id": "086a4f1665a148029ec567b0c3ee0012",
+  "status": "done",
+  "created_at": "2026-08-07T14:54:06.455316+00:00",
+  "finished_at": "2026-08-07T14:54:49.625496+00:00",
+  "error": null,
+  "result": {
+    "bitstring": "11111111111111111111",
+    "requested_solver": "qaoa",
+    "actual_solver": "exact",
+    "exact_energy": 0.6289068154030706,
+    "classical_energy": 0.6289068154030706,
+    "optimality_gap": null,
+    "qaoa_beats_classical": false,
+    "runtime_seconds": 38.61626999998407,
+    "shots": 128,
+    "backend": "StatevectorSampler",
+    "fallback_reason": "QAOA skipped/timeout in NON_FINAL_CONFIG",
+    "profile_id": "workflow_update_downstream",
+    "qubo_hash": "c34782afa6366957cf3ebcaa5d79994a1947dbfa16fed003706eb79c2349b282",
+    "true_cvar_before": 0.07423905410008698,
+    "true_cvar_after": 0.061404689903750344,
+    "source_artifact": "workflow_benchmark.json"
+  }
+}

@@ -9,16 +9,12 @@ frequency: daily  # đã khóa — CLAUDE.md: "dữ liệu ngày"
 source: yahoo_dnse_vnstock
 
 date_range:
-  # PROVISIONAL — dùng tạm cùng mốc thời gian đã áp dụng cho thiết kế 30-mã (mvp_scope.md §8.3) để
-  # có thể chạy pipeline end-to-end trong lúc phát triển phạm vi 8-mã. CHƯA được Data Owner duyệt
-  # riêng cho phạm vi 8-mã đã khóa — phải xác nhận lại trước khi dùng làm số liệu UAT/demo chính thức.
-  #
-  # "2 đồng hồ" (CLEAN.ipynb): market-level (HMM regime, packages/ai) train dài hơn asset-level
-  # (scenarios/CVaR/QUBO) vì asset-level cần coverage tốt hơn giữa các mã trong universe đã chốt.
-  # validation/test dùng CHUNG cho cả hai tầng.
+  # Decision-package TL-003 (2026-08-07): asset_train_start=2016-01-01, test_end=2026-07-31.
+  # "2 đồng hồ": market-level (HMM) và asset-level dùng chung validation/test; market train
+  # vẫn bắt đầu 2016-01-01. Khi đổi range phải tạo data_version mới.
   market_train_start: "2016-01-01"
   market_train_end: "2022-12-31"
-  asset_train_start: "2018-07-02"
+  asset_train_start: "2016-01-01"
   asset_train_end: "2022-12-31"
   validation_start: "2023-01-01"
   validation_end: "2023-12-31"
@@ -53,3 +49,20 @@ price_limits:
     HOSE: 0.07
     HNX: 0.10
     UPCOM: 0.15
+
+# Sự kiện corporate action mà nguồn giá (Yahoo/DNSE) KHÔNG tự điều chỉnh — phát hiện qua DQ-007
+# (price_limits ở trên), xác nhận thủ công bởi con người, KHÔNG suy diễn tự động (CLAUDE.md quy
+# tắc 5: không tự sửa/xóa outlier). Mỗi entry được `clean/corporate_actions.py::
+# apply_registered_adjustments` dùng để back-adjust `adjusted_close` của MỌI phiên trước
+# `event_date` theo `1 / adjustment_factor` — KHÔNG đụng open/high/low/close/volume thô.
+#
+# Entry đầu tiên: VCB 2025-03-03, điều tra đầy đủ tại docs/perf/2026-08-05-kurtosis-fail-vcb.md.
+corporate_actions:
+  - ticker: VCB
+    event_date: "2025-03-03"
+    type: stock_dividend
+    adjustment_factor: 1.4950
+    evidence: >-
+      docs/perf/2026-08-05-kurtosis-fail-vcb.md — Close và Adj Close cùng bước nhảy 1,4950 tại
+      2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài sản nào khác trong universe
+      biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE.

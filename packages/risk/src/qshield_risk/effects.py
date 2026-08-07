@@ -26,6 +26,7 @@ class EffectsResult:
     ``actions`` contains canonical columns ``action_id,ticker,g,c`` and ``pairs`` contains one
     ``action_i,action_j,C_ij`` row for each ``i < j``. Values are raw decimal-NAV units.
     """
+
     baseline: RiskMetrics
     actions: pd.DataFrame
     pairs: pd.DataFrame
@@ -54,7 +55,9 @@ def build_effects(
         expected_assets=len(tickers),
     )
     tolerance = required_float(config, "weight_sum_tolerance")
-    aligned = align_portfolio_weights(weights, tickers, cash_weight, tolerance=tolerance)
+    aligned = align_portfolio_weights(
+        weights, tickers, cash_weight, tolerance=tolerance
+    )
     reduction_pct = required_float(config, "action_reduction_pct")
     levels = confidence_levels(config)
     primary_key = alpha_key(required_float(config, "cvar_alpha"))

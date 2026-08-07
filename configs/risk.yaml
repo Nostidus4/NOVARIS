@@ -19,3 +19,10 @@ weight_sum_tolerance: null
 # Robustness metrics — không thay thế cvar_alpha làm chỉ tiêu quyết định chính
 # (docs/product/mvp_scope.md §10.1).
 robustness_confidence_levels: [0.975, 0.99]
+
+# Chọn top-N ứng viên trước khi đưa vào Quantum — khớp
+# configs/profiles/workflow_update.yaml (risk.candidate_selection.output_candidates: 10).
+# Với universe hiện tại (8 mã, demo_fast) N < output_candidates nên KHÔNG lọc gì — xem
+# packages/risk/src/qshield_risk/candidates.py.
+candidate_selection:
+  output_candidates: 10
