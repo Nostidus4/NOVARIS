@@ -11,25 +11,39 @@ import type {
 
 const DEFAULT_API = "http://127.0.0.1:8000";
 
-export function apiBase(): string {
-  return process.env.QSHIELD_API_URL ?? DEFAULT_API;
+/** Bỏ cuộc sau ngần này ms — static export retry 3×60s nếu fetch treo. */
+const FETCH_TIMEOUT_MS = 15_000;
+
+function isPagesBuild(): boolean {
+  return process.env.GITHUB_PAGES === "true";
 }
 
 /**
- * Static export (GitHub Pages) không cho route dynamic.
- * `cache: "no-store"` → Next đánh dấu dynamic → `next build` với `output: "export"` fail.
- * Khi GITHUB_PAGES=true, fetch một lần lúc build rồi bake vào HTML.
+ * Chuỗi rỗng (secret CI chưa set) phải coi như chưa cấu hình — `??` không bắt được ""
+ * nên `fetch("/console/overview")` thành URL tương đối và treo cả build.
  */
-function fetchInit(): RequestInit {
-  if (process.env.GITHUB_PAGES === "true") {
-    return { cache: "force-cache" };
-  }
-  return { cache: "no-store" };
+export function apiBase(): string {
+  const configured = process.env.QSHIELD_API_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  // Static export không có API thật: đừng đoán localhost của runner.
+  return isPagesBuild() ? "" : DEFAULT_API;
 }
 
+/**
+ * Static export không cho route dynamic: `cache: "no-store"` khiến Next đánh dấu
+ * page là dynamic và `output: "export"` fail. Lúc build Pages thì fetch một lần
+ * rồi bake kết quả vào HTML.
+ */
 async function getJson<T>(path: string): Promise<T | null> {
+  const base = apiBase();
+  // Không có API → trả null, UI hiện banner "Backend chưa sẵn sàng" thay vì treo build.
+  if (!base) return null;
+
   try {
-    const response = await fetch(`${apiBase()}${path}`, fetchInit());
+    const response = await fetch(`${base}${path}`, {
+      cache: isPagesBuild() ? "force-cache" : "no-store",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!response.ok) return null;
     return (await response.json()) as T;
   } catch {
