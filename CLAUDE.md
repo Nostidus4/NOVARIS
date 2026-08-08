@@ -178,8 +178,8 @@ uv run ruff check . && uv run ruff format .
 uv run mypy packages backend
 
 uv run uvicorn qshield_api.main:app --reload --port 8000
-cd frontend && npm run dev
-cd frontend && npm run types    # sinh lib/types.ts từ OpenAPI
+cd frontend && yarn dev
+cd frontend && yarn types    # sinh lib/types.ts từ OpenAPI (nếu có script)
 ```
 
 Thêm dependency cho một package cụ thể:
@@ -270,7 +270,7 @@ Cổng nghiệm thu cuối ngày 4 chưa đạt ⇒ mọi việc trên dừng v�
 | Kịch bản mất tương quan chéo | Bootstrap từng tài sản độc lập. Phải lấy nguyên vector 8 tài sản mỗi ngày |
 | `ModuleNotFoundError: qshield_*` | Thiếu `src/<module>/__init__.py`, `uv_build` bắt buộc có |
 | `conflicting Python requirements` | `requires-python` giữa root và member lệch nhau |
-| Frontend lệch field | Quên `npm run types` sau khi backend đổi schema |
+| Frontend lệch field | Quên `yarn types` sau khi backend đổi schema |
 
 ---
 
