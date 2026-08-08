@@ -24,7 +24,7 @@ frontend/
 
 - UI/UX, copy, loading/error states.
 - Gọi API; hiển thị gate status, solver identity, limitations.
-- `npm run types` sau khi backend đổi schema.
+- `yarn types` sau khi backend đổi schema (nếu có script).
 
 ## Không được làm
 
