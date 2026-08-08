@@ -59,7 +59,7 @@ def test_transforms_reference_real_features(config: Config) -> None:
 def test_scenario_seed_is_not_shadowed_by_base(config: Config) -> None:
     """`Config.load` gộp phẳng rồi cho key của base.yaml đè mọi include.
 
-    Nếu `configs/scenarios.yaml` khai báo lại `seed`, giá trị đó vĩnh viễn không đọc được
+    Nếu `configs/base.yaml` khai báo lại `seed`, giá trị đó vĩnh viễn không đọc được
     và stage scenarios sẽ im lặng dùng seed của base. Test này chặn hồi quy đó.
 
     NGOẠI LỆ CÓ CHỦ Ý với quy tắc "`Config` là nơi DUY NHẤT được `yaml.safe_load` trên

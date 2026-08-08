@@ -14,15 +14,14 @@ from typer.testing import CliRunner
 
 runner = CliRunner()
 _TEST_TICKERS = ("AAA", "BBB", "CCC", "DDD")
-# `qshield_risk.portfolio.validate_ticker_order` hard-code `expected_assets=8` (khớp scope
-# demo_fast đã khóa) — test đường thật qua `qshield_risk.evaluate()` phải dùng đúng 8 mã, không
-# dùng được bộ 4 mã rút gọn ở trên (chỉ path --mock/QUBO thuần mới không đụng risk).
+# `qshield_risk.portfolio.validate_ticker_order` hiện kỳ vọng 8 mã trên một số fixture test —
+# đường evaluate() dùng bộ 8 mã dưới; path --mock/QUBO thuần dùng `_TEST_TICKERS` (n=4).
 _RISK_TEST_TICKERS = ("ACB", "CTG", "VCB", "HPG", "VIC", "MWG", "VNM", "FPT")
 
 
 def _write_config(tmp_path: Path, **overrides) -> Path:
     """Config phẳng (không `includes`) — n=4 mã để exact (2^4) + QAOA (4 qubit, 10 seed) chạy
-    nhanh trong test, không cần đúng 8 mã thật của `configs/universe.yaml`."""
+    nhanh trong test, không cần đúng 8 mã thật của `configs/base.yaml`."""
     config = {
         "seed": 20260805,
         "artifacts": {"mode": "dev", "root": str(tmp_path / "artifacts")},

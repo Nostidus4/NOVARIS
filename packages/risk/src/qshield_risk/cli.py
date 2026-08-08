@@ -407,8 +407,10 @@ def _workflow_identity(config: Config, context: RunContext) -> dict[str, str]:
     }
 
 
-def _load_workflow_config(config: str, profile: str, override: str) -> Config:
-    return Config.load_profiled(Path(config), Path(profile), Path(override))
+def _load_workflow_config(config: str, profile: str, override: str | None) -> Config:
+    return Config.load_profiled(
+        Path(config), Path(profile), Path(override) if override else None
+    )
 
 
 def _workflow_inputs(
@@ -438,14 +440,14 @@ def prepare_workflow(
         "configs/base.yaml", "--config", help="Base config path"
     ),
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Product profile path",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE override path",
+        help="Optional YAML deep-merged after profile",
     ),
     mock: bool = typer.Option(
         False,
@@ -632,14 +634,14 @@ def rerank_polish(
         "configs/base.yaml", "--config", help="Base config path"
     ),
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Product profile path",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE override path",
+        help="Optional YAML deep-merged after profile",
     ),
     mock: bool = typer.Option(
         False, "--mock", help="Recreate deterministic mock scenarios"
@@ -847,14 +849,14 @@ def benchmark_true(
         "configs/base.yaml", "--config", help="Base config path"
     ),
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Product profile path",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE override path",
+        help="Optional YAML deep-merged after profile",
     ),
     mock: bool = typer.Option(
         False,

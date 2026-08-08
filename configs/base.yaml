@@ -1,40 +1,524 @@
-# Đỗ Ngọc Tân - seed, artifacts.mode (dev/runs), log; gộp các file config khác qua includes. Duyệt: Nguyễn Thị Ánh Ngọc.
+# Q-SHIELD — config mặc định (universe/data/regime/scenarios/risk/quantum).
+# Load: Config.load("configs/base.yaml")
+# Profile: Config.load_profiled(base, "configs/workflow_update.yaml")
+# SoT: docs/workflow-v2.md. Duyệt số: Nguyễn Thị Ánh Ngọc.
 
-includes:
-  - universe.yaml
-  - data.yaml
-  - regime.yaml
-  - scenarios.yaml
-  - risk.yaml
-  - quantum.yaml
 
-# TODO(Đỗ Ngọc Tân): seed toàn cục mặc định — chưa được nêu ở bất kỳ tài liệu nguồn nào.
-# Seed riêng của từng module (regime, QAOA...) nằm trong file config của module đó.
-# PROVISIONAL (NON_BASELINE_RUN, IN-CTR-09): giá trị do AI đề xuất, chờ Nguyễn Thị Ánh Ngọc duyệt.
+expected_ticker_count: 30
+tickers:
+- ticker: ACB
+  yahoo_symbol: ACB.VN
+  company_name: Ngân hàng Á Châu
+  first_trading_date: '2006-11-21'
+  exchange_current: HOSE
+  exchange_history: HNX→HOSE 2020-12
+  exchange_periods:
+  - exchange: HNX
+    until: '2020-11-30'
+  - exchange: HOSE
+    from: '2020-12-01'
+  data_source: dnse
+  notes: ''
+- ticker: BID
+  yahoo_symbol: BID.VN
+  company_name: BIDV
+  first_trading_date: '2014-01-24'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: BSR
+  yahoo_symbol: BSR.VN
+  company_name: Lọc hoá dầu Bình Sơn
+  first_trading_date: '2018-03-01'
+  exchange_current: HOSE
+  exchange_history: UPCOM→HOSE 2025-01
+  exchange_periods:
+  - exchange: UPCOM
+    until: '2025-01-16'
+  - exchange: HOSE
+    from: '2025-01-17'
+  data_source: dnse
+  notes: Chuyển sàn verify qua HOSE/BSR công bố chính thức 17/1/2025.
+- ticker: CTG
+  yahoo_symbol: CTG.VN
+  company_name: VietinBank
+  first_trading_date: '2009-07-16'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: FPT
+  yahoo_symbol: FPT.VN
+  company_name: FPT Corporation
+  first_trading_date: '2006-12-13'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: GAS
+  yahoo_symbol: GAS.VN
+  company_name: PV GAS
+  first_trading_date: '2012-05-21'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: GVR
+  yahoo_symbol: GVR.VN
+  company_name: Tập đoàn Cao su VN
+  first_trading_date: '2018-03-21'
+  exchange_current: HOSE
+  exchange_history: UPCOM→HOSE 2020-03
+  exchange_periods:
+  - exchange: UPCOM
+    until: '2020-03-16'
+  - exchange: HOSE
+    from: '2020-03-17'
+  data_source: dnse
+  notes: 'Chuyển sàn verify: lễ niêm yết HOSE 17/3/2020.'
+- ticker: HDB
+  yahoo_symbol: HDB.VN
+  company_name: HDBank
+  first_trading_date: '2018-01-05'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: HPG
+  yahoo_symbol: HPG.VN
+  company_name: Hoà Phát
+  first_trading_date: '2007-11-15'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: LPB
+  yahoo_symbol: LPB.VN
+  company_name: LPBank
+  first_trading_date: '2017-10-05'
+  exchange_current: HOSE
+  exchange_history: UPCOM→HOSE 2020-11
+  exchange_periods:
+  - exchange: UPCOM
+    until: '2020-11-08'
+  - exchange: HOSE
+    from: '2020-11-09'
+  data_source: dnse
+  notes: 'Chuyển sàn verify: phiên đầu tiên trên HOSE 09/11/2020 (chấp thuận niêm
+    yết 14/10/2020).'
+- ticker: MBB
+  yahoo_symbol: MBB.VN
+  company_name: MBBank
+  first_trading_date: '2011-11-01'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: MSN
+  yahoo_symbol: MSN.VN
+  company_name: Masan Group
+  first_trading_date: '2009-11-05'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: MWG
+  yahoo_symbol: MWG.VN
+  company_name: Thế Giới Di Động
+  first_trading_date: '2014-07-14'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: PLX
+  yahoo_symbol: PLX.VN
+  company_name: Petrolimex
+  first_trading_date: '2017-04-21'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: SAB
+  yahoo_symbol: SAB.VN
+  company_name: Sabeco
+  first_trading_date: '2016-12-06'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: SHB
+  yahoo_symbol: SHB.VN
+  company_name: SHBank
+  first_trading_date: '2009-04-20'
+  exchange_current: HOSE
+  exchange_history: HNX→HOSE 2021-10
+  exchange_periods:
+  - exchange: HNX
+    until: '2021-10-10'
+  - exchange: HOSE
+    from: '2021-10-11'
+  data_source: dnse
+  notes: SỬA so với ước lượng gốc trong CLEAN.ipynb (ghi nhầm 2020-10) — ngày thật
+    11/10/2021, verify qua công bố thông tin chính thức SHB/HOSE.
+- ticker: SSB
+  yahoo_symbol: SSB.VN
+  company_name: SeABank
+  first_trading_date: '2021-03-24'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: SSI
+  yahoo_symbol: SSI.VN
+  company_name: SSI Securities
+  first_trading_date: '2007-10-29'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: STB
+  yahoo_symbol: STB.VN
+  company_name: Sacombank
+  first_trading_date: '2006-07-12'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: TCB
+  yahoo_symbol: TCB.VN
+  company_name: Techcombank
+  first_trading_date: '2018-06-04'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: TPB
+  yahoo_symbol: TPB.VN
+  company_name: TPBank
+  first_trading_date: '2018-04-19'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VCB
+  yahoo_symbol: VCB.VN
+  company_name: Vietcombank
+  first_trading_date: '2009-06-30'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VHM
+  yahoo_symbol: VHM.VN
+  company_name: Vinhomes
+  first_trading_date: '2018-05-17'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VIB
+  yahoo_symbol: VIB.VN
+  company_name: VIB
+  first_trading_date: '2017-01-09'
+  exchange_current: HOSE
+  exchange_history: UPCOM→HOSE 2020-11
+  exchange_periods:
+  - exchange: UPCOM
+    until: '2020-11-01'
+  - exchange: HOSE
+    from: '2020-11-02'
+  data_source: dnse
+  notes: 'Chuyển sàn verify: chấp thuận niêm yết 16/10/2020, giao dịch đầu tháng 11/2020
+    (ngày chính xác trong tháng — best-effort).'
+- ticker: VIC
+  yahoo_symbol: VIC.VN
+  company_name: Vingroup
+  first_trading_date: '2007-09-19'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VJC
+  yahoo_symbol: VJC.VN
+  company_name: Vietjet Air
+  first_trading_date: '2017-02-28'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VNM
+  yahoo_symbol: VNM.VN
+  company_name: Vinamilk
+  first_trading_date: '2006-01-19'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VPB
+  yahoo_symbol: VPB.VN
+  company_name: VPBank
+  first_trading_date: '2017-08-17'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+- ticker: VPL
+  yahoo_symbol: VPL.VN
+  company_name: VPL (placeholder — verify)
+  first_trading_date: '2025-01-01'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production
+    trong CLEAN.ipynb).
+- ticker: VRE
+  yahoo_symbol: VRE.VN
+  company_name: Vincom Retail
+  first_trading_date: '2017-11-06'
+  exchange_current: HOSE
+  exchange_history: '-'
+  exchange_periods:
+  - exchange: HOSE
+  data_source: yahoo
+  notes: ''
+sample_portfolio_weights:
+  ACB: 0.0333333333
+  BID: 0.0333333333
+  BSR: 0.0333333333
+  CTG: 0.0333333333
+  FPT: 0.0333333333
+  GAS: 0.0333333333
+  GVR: 0.0333333333
+  HDB: 0.0333333333
+  HPG: 0.0333333333
+  LPB: 0.0333333333
+  MBB: 0.0333333333
+  MSN: 0.0333333333
+  MWG: 0.0333333333
+  PLX: 0.0333333333
+  SAB: 0.0333333333
+  SHB: 0.0333333333
+  SSB: 0.0333333333
+  SSI: 0.0333333333
+  STB: 0.0333333333
+  TCB: 0.0333333333
+  TPB: 0.0333333333
+  VCB: 0.0333333333
+  VHM: 0.0333333333
+  VIB: 0.0333333333
+  VIC: 0.0333333333
+  VJC: 0.0333333333
+  VNM: 0.0333333333
+  VPB: 0.0333333333
+  VPL: 0.0333333334
+  VRE: 0.0333333333
+sample_portfolio_cash_weight: 0.0
+snapshot_date: '2026-08-03'
+frequency: daily
+source: yahoo_dnse_vnstock
+date_range:
+  market_train_start: '2016-01-01'
+  market_train_end: '2022-12-31'
+  asset_train_start: '2016-01-01'
+  asset_train_end: '2022-12-31'
+  validation_start: '2023-01-01'
+  validation_end: '2023-12-31'
+  test_start: '2024-01-01'
+  test_end: '2026-07-31'
+missing_data_policy: no_forward_fill
+min_history_sessions: 252
+eligibility:
+  min_coverage_pct: 0.98
+  min_turnover_20d_vnd: 1000000000
+price_limits:
+  tolerance_pct: 0.005
+  bands_by_exchange:
+    HOSE: 0.07
+    HNX: 0.1
+    UPCOM: 0.15
+corporate_actions:
+- ticker: VCB
+  event_date: '2025-03-03'
+  type: stock_dividend
+  adjustment_factor: 1.495
+  evidence: Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39
+    và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên;
+    vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE.
+n_states: 3
+n_iter: 500
+covariance_type: diag
+seeds:
+  count: 10
+  values:
+  - 101
+  - 202
+  - 303
+  - 404
+  - 505
+  - 606
+  - 707
+  - 808
+  - 909
+  - 1001
+feature_contract_version: v0.2
+features:
+  market_columns:
+  - market_log_return
+  - realized_vol_20d
+  - drawdown
+  - liquidity_20d
+  corr_window: 60
+transforms:
+  realized_vol_20d: log
+  mean_pairwise_corr_60d: fisher_z
+scaler: standard
+candidates:
+  n_states:
+  - 2
+  - 3
+  - 4
+  - 5
+  covariance_type:
+  - diag
+  - full
+champion:
+  n_states: 3
+  covariance_type: diag
+gate:
+  min_state_occupancy: 0.02
+  min_mean_label_agreement: 0.6
+fallback:
+  vol_quantile: 0.8
+  drawdown_threshold: -0.1
+num_scenarios: 5000
+horizon_days: 20
+block_length: 5
+cvae:
+  enabled: false
+scenario_seed: 20260804
+evaluation_date: null
+validation:
+  reference: regime_matched_forward_windows
+  min_reference_windows: 30
+  thresholds:
+    mean_abs_diff_max: 0.001
+    std_ratio_min: 0.8
+    std_ratio_max: 1.25
+    skew_abs_diff_max: 1.0
+    kurtosis_abs_diff_max: 5.0
+    quantile_rel_error_max: 0.25
+    autocorr_abs_diff_max: 0.1
+    corr_mean_abs_diff_max: 0.1
+    tail_coverage_ratio_min: 0.5
+    tail_coverage_ratio_max: 2.0
+cvar_alpha: 0.95
+action_reduction_pct: 0.2
+target_cash_increment: 0.1
+maximum_reduction: 0.3
+weight_sum_tolerance: 1.0e-08
+transaction_cost:
+  fee: 0.0015
+  spread: 0.001
+  liquidity_penalty: 0.0005
+cost_sensitivity:
+  low:
+    fee: 0.001
+    spread: 0.0005
+    liquidity_penalty: 0.0003
+  base:
+    fee: 0.0015
+    spread: 0.001
+    liquidity_penalty: 0.0005
+  high:
+    fee: 0.002
+    spread: 0.0015
+    liquidity_penalty: 0.0008
+robustness_confidence_levels:
+- 0.975
+- 0.99
+candidate_selection:
+  output_candidates: 10
+k_actions: 3
+qaoa:
+  p: 1
+  shots: 1024
+  optimizer: COBYLA
+  optimizer_maxiter: 200
+  min_seeds: 10
+  warm_start: true
+  seeds:
+  - 101
+  - 202
+  - 303
+  - 404
+  - 505
+  - 606
+  - 707
+  - 808
+  - 909
+  - 1001
+penalty:
+  lambda_1: 1.0
+  lambda_2: 1.0
+  P: null
+backend: simulator
 seed: 20260804
-
 artifacts:
-  mode: dev  # dev | runs
-  # dev  -> artifacts/dev/... (đường dẫn cố định, lặp nhanh khi đang phát triển)
-  # runs -> artifacts/runs/run_YYYYMMDD_HHMM/... (có version — bắt buộc dùng từ ngày 4 sprint,
-  #         mọi số lên slide/demo phải truy được về một run_id, xem docs/architecture/pipeline.md §4)
-
+  mode: dev
 logging:
   level: INFO
-  # TODO(Đỗ Ngọc Tân): đường dẫn log file nếu cần ghi ra ngoài logs.txt mặc định của RunContext
   path: null
-
-# Version/identifier dùng bởi packages/data (qshield_data.manifest, sources.registry) — thêm khi
-# refactor CLEAN.ipynb → qshield_data (xem plan.md §3.4). Không phải tham số tài chính, chỉ là
-# nhãn version cho manifest/data dictionary/source register.
 data:
-  data_version: "v1.0.0"
-  universe_version: "v1.0"
-  universe_as_of: "2026-08-03"
-
-# Đường dẫn gốc cho data/ và reports/ (khác với artifacts/ — nơi đó do
-# qshield_contracts.paths.ArtifactPaths quản lý theo run_id, xem CLAUDE.md quy tắc 8). data/ và
-# reports/ không version theo run, chỉ có một bộ processed/metadata "chính thức" tại một thời điểm.
+  data_version: v1.0.0
+  universe_version: v1.0
+  universe_as_of: '2026-08-03'
 paths:
-  data_root: "data"
-  reports_root: "reports"
+  data_root: data
+  reports_root: reports

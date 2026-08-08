@@ -48,7 +48,7 @@ def apply_registered_adjustments(
     prices: pd.DataFrame, actions: Sequence[Mapping[str, Any]]
 ) -> pd.DataFrame:
     """Back-adjust `adjusted_close` cho các sự kiện corporate action đã XÁC NHẬN THỦ CÔNG trong
-    `configs/data.yaml["corporate_actions"]`.
+    `configs/base.yaml["corporate_actions"]`.
 
     Với mỗi entry `{ticker, event_date, adjustment_factor, ...}`: nhân `adjusted_close` của MỌI
     dòng `date < event_date` (đúng ticker) với `1 / adjustment_factor` — quy ước back-adjustment
@@ -57,8 +57,8 @@ def apply_registered_adjustments(
 
     KHÔNG suy diễn hệ số điều chỉnh từ thống kê — `actions` phải được liệt kê tường minh sau khi
     con người đã điều tra và xác nhận (CLAUDE.md quy tắc 5: không tự sửa/xóa outlier). Entry cho
-    ticker/ngày không có trong `prices` bị bỏ qua im lặng (universe khác nhau giữa các profile,
-    vd. `demo_fast` 8 mã không có mọi ticker của `workflow_update`).
+    ticker/ngày không có trong `prices` bị bỏ qua im lặng (universe/eligibility có thể thiếu
+    một số ticker đã đăng ký trong bảng corporate actions).
 
     Raise `ValueError` nếu một entry thiếu khóa bắt buộc, hoặc `adjustment_factor <= 0`.
     """
@@ -70,7 +70,7 @@ def apply_registered_adjustments(
         if missing:
             raise ValueError(
                 f"Entry corporate_actions thiếu khóa {missing}: {dict(action)!r} — "
-                "sửa configs/data.yaml (corporate_actions)."
+                "sửa configs/base.yaml (corporate_actions)."
             )
         ticker = str(action["ticker"])
         event_date = pd.Timestamp(action["event_date"])
@@ -78,7 +78,7 @@ def apply_registered_adjustments(
         if factor <= 0:
             raise ValueError(
                 f"adjustment_factor phải > 0 cho {ticker} @ {event_date.date()}, nhận {factor} "
-                "(configs/data.yaml: corporate_actions)."
+                "(configs/base.yaml: corporate_actions)."
             )
 
         target = (adjusted["ticker"] == ticker) & (adjusted["date"] < event_date)
@@ -97,7 +97,7 @@ def apply_registered_adjustments(
         )
         logger.warning(
             "corporate_actions: back-adjust %d phiên của %s trước %s theo hệ số %.4f "
-            "(xem evidence trong configs/data.yaml).",
+            "(xem evidence trong configs/base.yaml).",
             n_rows,
             ticker,
             event_date.date(),

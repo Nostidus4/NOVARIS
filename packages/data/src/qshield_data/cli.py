@@ -95,8 +95,8 @@ def _load_config(
     if profile is not None or override is not None:
         cfg = Config.load_profiled(
             config,
-            profile or Path("configs/profiles/workflow_update.yaml"),
-            override or Path("configs/provisional/workflow_update_downstream.yaml"),
+            profile or Path("configs/workflow_update.yaml"),
+            Path(override) if override else None,
         )
     else:
         cfg = Config.load(config)
@@ -239,7 +239,7 @@ def clean(
         )
         typer.echo(
             f"Corporate action back-adjustment: {len(registered_actions)} entry đã đăng ký "
-            "(configs/data.yaml) — xem logs.txt để biết đúng bao nhiêu phiên bị đổi."
+            "(configs/base.yaml) — xem logs.txt để biết đúng bao nhiêu phiên bị đổi."
         )
 
     prices, n_dup = validate_prices.dedup_prices(prices)
@@ -409,7 +409,7 @@ def quality(
         # tình được viết ở chỗ lẽ ra phải là section — thì `price_limits_cfg["bands_by_exchange"]`
         # không raise KeyError mà raise TypeError vì không subscript được bằng chuỗi).
         typer.echo(
-            f"✗ configs/data.yaml (price_limits) thiếu khóa hoặc sai kiểu: {exc} — "
+            f"✗ configs/base.yaml (price_limits) thiếu khóa hoặc sai kiểu: {exc} — "
             "không chạy được DQ-007. Cần price_limits.bands_by_exchange (mapping) và "
             "price_limits.tolerance_pct (số).",
             err=True,

@@ -72,7 +72,7 @@ def build_manifest(
 
     `files`: tên logic → path (vd `{"prices_adjusted": .../prices_adjusted.parquet}`).
     `splits_config`: `{"market": {"train": [start, end], "validation": [...], "test": [...]},
-    "asset": {...}}` — khớp `configs/data.yaml` train/validation/test date_range.
+    "asset": {...}}` — khớp `configs/base.yaml` train/validation/test date_range.
     """
     return {
         "run_id": run_id,

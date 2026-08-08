@@ -23,7 +23,7 @@ from qiskit_optimization.converters import QuadraticProgramToQubo
 def build_quadratic_program(
     Q: np.ndarray, linear: np.ndarray, constant: float, *, ticker_order: list[str]
 ) -> QuadraticProgram:
-    """8 biến nhị phân, đặt tên theo `ticker_order` (khớp `configs/universe.yaml`) để dễ trace lúc
+    """8 biến nhị phân, đặt tên theo `ticker_order` (khớp `configs/base.yaml`) để dễ trace lúc
     debug — KHÔNG dùng để decode (đó là việc của `decode.py`, dựa trên index, không dựa trên tên
     biến qiskit trả về)."""
     n = len(ticker_order)

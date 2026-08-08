@@ -1,0 +1,628 @@
+# Q-SHIELD — profile workflow_update (30 mã → top 10 → 20-bit).
+# Status NON_BASELINE_RUN cho đến khi 3 gate ký. Số Decision-package đã gộp vào file này.
+# Load: Config.load_profiled("configs/base.yaml", "configs/workflow_update.yaml")
+profile:
+  id: workflow_update
+  name: Workflow update
+  status: NON_BASELINE_RUN
+  owner: Nguyen Thi Anh Ngoc
+  purpose: Baseline đích 30→top10→20-bit; status NON_BASELINE_RUN đến khi data/scenario/product
+    gate ký
+  report_label: Workflow Update — 30→top10→20-bit (NON_BASELINE_RUN until gates signed)
+  allowed_for:
+  - downstream_development
+  - integration_smoke_test
+  - uat_after_gates
+  not_allowed_for:
+  - final_uat_baseline
+  - product_claim_full_workflow
+  - quantum_advantage_claim
+  - cherry_pick_seed_only
+  - bypass_scenario_gate_without_disclosure
+  - quantum_direct_30_assets
+governance:
+  source_of_truth:
+  - docs/workflow-v2.md
+  - docs/disclaimer.md
+  module_owners:
+    product_scope_uat: Nguyen Thi Anh Ngoc
+    data_universe_eligibility: Nguyen Do Minh Anh
+    regime_scenarios: Nguyen Anh Tu
+    risk_candidate_engine: Lieu Hoai Phuc
+    quantum_pipeline_dashboard: Do Ngoc Tan
+  approval_gates:
+    data_gate:
+      owner: Nguyen Do Minh Anh
+      required_outputs:
+      - universe_30_asof_20260803.csv
+      - data_quality_report.csv
+      - adjusted_close_evidence_report
+      - eligibility_daily.parquet
+    scenario_gate:
+      owner: Lieu Hoai Phuc
+      required_outputs:
+      - scenario_validation.csv
+      - scenario_manifest.json
+      - regime_summary.json
+    product_gate:
+      owner: Nguyen Thi Anh Ngoc
+      required_outputs:
+      - requirement_coverage_report
+      - limitations_report
+      - UAT_evidence
+data:
+  universe_mode: fixed_snapshot_with_dynamic_eligibility
+  universe_family: VN30
+  snapshot_date: '2026-08-03'
+  expected_input_tickers: 30
+  ticker_source: Universe Registry approved by Data Owner and Product Owner
+  ticker_list_status: TBD_001
+  ticker_registry_required_columns:
+  - ticker
+  - yahoo_symbol
+  - company_name
+  - first_trading_date
+  - exchange_current
+  - exchange_history
+  - data_source
+  - adjusted_close_evidence
+  - notes
+  adjusted_price_policy:
+    required_field: adjusted_close
+    return_calculation: simple_return/log_return tinh tu adjusted_close
+    allowed_methods:
+    - vendor_adjusted_close_with_documented_corporate_actions
+    - self_adjusted_from_raw_close_and_corporate_actions
+    - cross_checked_free_source_with_ADJ_VERIFIED_flag
+    disallowed_methods:
+    - Gan adjusted_close = close ma khong co evidence
+    dnse_requirement:
+      current_repo_assumption: DNSE Close = Adj Close
+      workflow_update_requirement: Phai co evidence/cross-check truoc khi gan ADJ_VERIFIED
+  date_range:
+    market_train_start: '2016-01-01'
+    asset_train_start: '2016-01-01'
+    validation_start: '2023-01-01'
+    test_start: '2024-01-01'
+    test_end: '2026-07-31'
+  eligibility:
+    dynamic_by_evaluation_date: true
+    min_history_sessions: 252
+    min_coverage_pct: 0.98
+    min_turnover_20d_vnd: 1000000000
+    excluded_tickers_must_have_reason_code: true
+regime:
+  engine: GaussianHMM
+  champion:
+    n_states: 3
+    labels:
+    - normal
+    - volatile
+    - stress
+    covariance_type: diag
+    n_iter: 500
+  candidate_grid_must_be_reported: true
+  seeds:
+    count: 10
+    values:
+    - 101
+    - 202
+    - 303
+    - 404
+    - 505
+    - 606
+    - 707
+    - 808
+    - 909
+    - 1001
+  feature_contract_version: v0.2
+  features:
+    market_columns:
+    - market_log_return
+    - realized_vol_20d
+    - drawdown
+    - liquidity_20d
+    ai_computed_columns:
+    - mean_pairwise_corr_60d
+  labels_must_be_profile_based: true
+scenarios:
+  method: moving_block_bootstrap
+  num_scenarios:
+    dev: 2000
+    final: 5000
+  horizon_days: 20
+  block_length_default: 5
+  sensitivity_grid_required_before_final:
+    block_length:
+    - 3
+    - 5
+    - 10
+    - 20
+    num_scenarios:
+    - 2000
+    - 5000
+    seeds:
+    - 101
+    - 202
+    - 303
+    - 404
+    - 505
+    - 606
+    - 707
+    - 808
+    - 909
+    - 1001
+  target_regime_policy: point_in_time_selected_regime
+  validation_gate:
+    owner: Lieu Hoai Phuc
+    status: MUST_BE_APPROVED
+    hard_fail_behavior: no_baseline_without_approved_exception
+    thresholds:
+      mean_abs_diff_max: 0.001
+      std_ratio_min: 0.8
+      std_ratio_max: 1.25
+      skew_abs_diff_max: 1.0
+      kurtosis_abs_diff_max: 5.0
+      quantile_rel_error_max: 0.25
+      autocorr_abs_diff_max: 0.1
+      corr_mean_abs_diff_max: 0.1
+      tail_coverage_ratio_min: 0.5
+      tail_coverage_ratio_max: 2.0
+risk:
+  scope: rank_30_select_top_10
+  cvar_alpha_primary: 0.95
+  robustness_confidence_levels:
+  - 0.975
+  - 0.99
+  baseline_metrics:
+  - VaR_95
+  - CVaR_95
+  - VaR_97_5
+  - CVaR_97_5
+  - VaR_99
+  - CVaR_99
+  - expected_horizon_return
+  - worst_scenario_max_drawdown
+  - turnover
+  - transaction_cost
+  - liquidity_penalty
+  - cash_generated
+  candidate_selection:
+    enabled: true
+    input_assets: 30
+    output_candidates: 10
+    ranking_direction: descending_net_risk_score
+    exclude_ineligible_before_ranking: true
+    exclude_zero_weight_before_ranking: true
+    tie_break:
+    - marginal_cvar_reduction_desc
+    - transaction_cost_asc
+    score_components:
+      benefit:
+      - marginal_CVaR_reduction_10pct
+      - marginal_CVaR_reduction_20pct
+      - marginal_CVaR_reduction_30pct
+      - baseline_CVaR_contribution
+      cost:
+      - transaction_fee
+      - spread_cost
+      - liquidity_penalty
+      - constraint_penalty
+    required_output_file: candidate_top10.csv
+    required_columns:
+    - rank
+    - ticker
+    - current_weight
+    - eligible_status
+    - baseline_CVaR_contribution
+    - marginal_CVaR_reduction_10pct
+    - marginal_CVaR_reduction_20pct
+    - marginal_CVaR_reduction_30pct
+    - transaction_cost_estimate
+    - liquidity_penalty
+    - net_risk_score
+    - selected_top10
+    - reason
+  cash_budget:
+    required: true
+    source: stress probability / approved policy
+    output: B_t
+    target_cash_increment: 0.1
+    maximum_reduction: 0.3
+  weight_sum_tolerance: 1.0e-08
+  transaction_cost:
+    fee: 0.0015
+    spread: 0.001
+    liquidity_penalty: 0.0005
+    status: DECISION_PACKAGE_TL007
+  cost_sensitivity:
+    low:
+      fee: 0.001
+      spread: 0.0005
+      liquidity_penalty: 0.0003
+    base:
+      fee: 0.0015
+      spread: 0.001
+      liquidity_penalty: 0.0005
+    high:
+      fee: 0.002
+      spread: 0.0015
+      liquidity_penalty: 0.0008
+  financial_objective:
+    priority: cvar_first
+    components:
+      cvar:
+        weight: 1.0
+        scale: 0.1
+      return_sacrifice:
+        weight: 0.25
+        scale: 0.05
+      transaction_cost:
+        weight: 0.25
+        scale: 0.01
+      turnover:
+        weight: 0.05
+        scale: 0.2
+      liquidity_penalty:
+        weight: 0.25
+        scale: 0.01
+      cash_budget_deviation:
+        weight: 0.35
+        scale: 0.1
+  materiality:
+    true_cvar_relative_reduction_min: 0.01
+    rule: improvement only if true CVaR falls by >=1% relative after cost
+  handoff_to_quantum:
+    required: true
+    required_files:
+    - candidate_top10.csv
+    - qubo_objective_samples.parquet
+    - risk_summary.json
+    objective_samples:
+      minimum_count: 211
+      must_include:
+      - all_zero_action
+      - single_asset_actions
+      - pairwise_interaction_actions
+      - risk_top_candidate_actions
+quantum:
+  mode: top10_four_level_actions
+  direct_30_asset_quantum_allowed: false
+  input_candidates: 10
+  action_levels_pct:
+  - 0
+  - 10
+  - 20
+  - 30
+  bit_encoding:
+    bits_per_asset: 2
+    asset_count: 10
+    total_decision_bits: 20
+    mapping:
+      '00': 0
+      '10': 10
+      '01': 20
+      '11': 30
+    exact_reference_states: 1048576
+  exact_solver:
+    required: true
+    purpose: benchmark QUBO 20 bit
+  qaoa:
+    p: 1
+    shots: 1024
+    optimizer: COBYLA
+    optimizer_maxiter: 200
+    min_seeds: 10
+    warm_start: true
+    seeds:
+    - 101
+    - 202
+    - 303
+    - 404
+    - 505
+    - 606
+    - 707
+    - 808
+    - 909
+    - 1001
+    final_config: false
+    NON_FINAL_CONFIG: true
+    dev_mode:
+      enabled: true
+      reduced_seeds:
+      - 101
+      reduced_shots: 128
+      reduced_maxiter: 10
+      disable_warm_start: true
+  reranking:
+    required: true
+    owner: Lieu Hoai Phuc
+    metric: true_CVaR_objective
+    top_distinct_feasible: 20
+    top_distinct_feasible_bitstrings: 20
+  local_polishing:
+    required: true
+    owner: Lieu Hoai Phuc
+    zero_action_lock: true
+    max_adjustment_pp: 5
+    final_reduction_bounds_pct:
+    - 0
+    - 30
+  surrogate_validation:
+    status: PROVISIONAL_PENDING_OWNER
+    ask_doc: docs/workflow-v2.md
+    thresholds:
+      mae_max: 0.02
+      rmse_max: 0.03
+      spearman_min: 0.7
+      top_k: 20
+      top_k_recall_min: 0.6
+      feasible_rate_min: 0.05
+      seed_stability_min: 0.5
+    on_fail: hard_stop_for_baseline_exception_only_for_analysis
+  performance_budget:
+    exact_timeout_seconds: 3600
+    qaoa_seed_timeout_seconds: 600
+    qaoa_total_timeout_seconds: 7200
+    classical_timeout_seconds: 600
+  benchmark:
+    require_same_qubo_hash: true
+    require_same_profile_id: true
+    solvers:
+    - exact
+    - qaoa
+    - classical
+pipeline:
+  stages:
+  - id: data
+    owner: Nguyen Do Minh Anh
+    input: 30 VN30 tickers
+    output: processed returns/features/eligibility
+  - id: regime
+    owner: Nguyen Anh Tu
+    input: market features + returns
+    output: regime_daily.parquet + regime_summary.json
+  - id: scenarios
+    owner: Nguyen Anh Tu
+    input: regime + returns for 30 eligible assets
+    output: scenario cube S x 20 x 30 + validation report
+  - id: risk_top10
+    owner: Lieu Hoai Phuc
+    input: portfolio + scenario cube + cost/liquidity
+    output: candidate_top10.csv + risk_summary.json
+  - id: qubo_quantum
+    owner: Do Ngoc Tan
+    input: top 10 + QUBO handoff
+    output: exact/QAOA candidate bitstrings
+  - id: rerank_polish
+    owner: Lieu Hoai Phuc
+    input: QAOA/exact candidates
+    output: final recommendation
+  - id: dashboard_uat
+    owner: Do Ngoc Tan + Nguyen Thi Anh Ngoc
+    input: all approved artifacts
+    output: dashboard + UAT evidence
+outputs:
+  required_artifacts:
+  - data/metadata/universe_30_asof_20260803.csv
+  - reports/data_quality_report.csv
+  - data/processed/prices_adjusted.parquet
+  - data/processed/returns.parquet
+  - data/processed/market_features.parquet
+  - data/processed/eligibility_daily.parquet
+  - artifacts/regime/regime_daily.parquet
+  - artifacts/regime/regime_summary.json
+  - artifacts/scenarios/stress_scenarios.npz
+  - artifacts/scenarios/scenario_manifest.json
+  - reports/scenario_validation.csv
+  - candidate_top10.csv
+  - risk_summary.json
+  - qubo_objective_samples.parquet
+  - qubo_model.json
+  - exact_solution.json
+  - qaoa_results.json
+  - reranked_candidates.csv
+  - final_recommendation.json
+  - dashboard_uat_evidence
+  comparison_metrics:
+    risk_quality:
+    - CVaR_reduction_pct
+    - CVaR_97_5_reduction_pct
+    - CVaR_99_reduction_pct
+    - expected_return_sacrifice
+    - worst_drawdown_reduction
+    - cost_per_CVaR_reduction
+    candidate_quality:
+    - top10_risk_coverage_pct
+    - rank_stability_across_seeds
+    - top10_overlap_across_scenario_configs
+    quantum_quality:
+    - exact_best_objective
+    - qaoa_best_objective
+    - exact_vs_qaoa_gap
+    - feasible_solution_rate
+    - seed_stability
+    operations:
+    - runtime_seconds_by_stage
+    - memory_peak_mb
+    - artifact_size_mb
+    - reproducibility_run_id
+    - requirement_coverage_pct
+development_rules:
+- 30 ma la universe dau vao cho Data/AI/Risk, khong phai 30 ma dua thang vao Quantum.
+- Risk phai chon dynamic top 10 truoc Quantum.
+- Quantum chi chay tren top 10 voi 20 bit.
+- Action grid bat buoc la 0/10/20/30%.
+- Khong duoc noi workflow update khong kha thi dua tren benchmark Quantum 30 ma, vi
+  benchmark do sai flow.
+- Moi run baseline phai co run_id, config snapshot, data manifest va gate verdict.
+- 'Baseline SoT: docs/workflow-v2.md. Chi mot profile workflow_update.'
+provenance:
+  config_version: workflow-update-v4
+  decision_package: docs/workflow-v2.md
+  decision_config_map: docs/workflow-v2.md
+  required_fields:
+  - run_id
+  - profile_id
+  - profile_status
+  - config_version
+  - config_hash
+  require_candidate_order_hash_from_qubo_onward: true
+  require_qubo_hash_from_solver_onward: true
+runtime:
+  candidate_count: 10
+  bits_per_candidate: 2
+  total_decision_bits: 20
+  action_levels_pct:
+  - 0
+  - 10
+  - 20
+  - 30
+  structured_sample_count: 211
+  structured_design:
+    intercept: 1
+    main_effects: 20
+    pairwise_effects: 190
+  baseline_target:
+    candidate_count: 10
+    total_decision_bits: 20
+    structured_sample_count: 211
+num_scenarios: 5000
+horizon_days: 20
+block_length: 5
+weight_sum_tolerance: 1.0e-08
+maximum_reduction: 0.3
+target_cash_increment: 0.1
+transaction_cost:
+  fee: 0.0015
+  spread: 0.001
+  liquidity_penalty: 0.0005
+cost_sensitivity:
+  low:
+    fee: 0.001
+    spread: 0.0005
+    liquidity_penalty: 0.0003
+  base:
+    fee: 0.0015
+    spread: 0.001
+    liquidity_penalty: 0.0005
+  high:
+    fee: 0.002
+    spread: 0.0015
+    liquidity_penalty: 0.0008
+financial_objective:
+  priority: cvar_first
+  components:
+    cvar:
+      weight: 1.0
+      scale: 0.1
+    return_sacrifice:
+      weight: 0.25
+      scale: 0.05
+    transaction_cost:
+      weight: 0.25
+      scale: 0.01
+    turnover:
+      weight: 0.05
+      scale: 0.2
+    liquidity_penalty:
+      weight: 0.25
+      scale: 0.01
+    cash_budget_deviation:
+      weight: 0.35
+      scale: 0.1
+candidate_selection:
+  output_filename: candidate_top10.csv
+  output_candidates: 10
+  underfilled: true
+  deterministic_order_required: true
+  exclude_ineligible_before_ranking: true
+  exclude_zero_weight_before_ranking: true
+  tie_break:
+  - marginal_cvar_reduction_desc
+  - transaction_cost_asc
+  score_weights:
+    marginal_10: 1.0
+    marginal_20: 1.0
+    marginal_30: 1.0
+    baseline_contribution: 1.0
+    transaction_cost: 1.0
+    liquidity_penalty: 1.0
+objective_sampling:
+  policy_version: decision-package-structured-v2
+reranking:
+  top_distinct_feasible: 20
+  tie_break:
+  - true_objective_asc
+  - true_cvar_asc
+  - transaction_cost_asc
+local_polishing:
+  zero_action_lock: true
+  max_adjustment_pp: 5
+  final_reduction_bounds_pct:
+  - 0
+  - 30
+materiality:
+  true_cvar_relative_reduction_min: 0.01
+  rule: improvement only if true CVaR falls by >=1% relative after cost
+quantum_constraints: {}
+performance_budget:
+  reference_hardware:
+    label: team_benchmark_reference
+    note: Fill cpu/ram/os when recording GATE-08 numbers on one machine.
+    cpu: null
+    ram_gb: null
+    os: null
+  exact_timeout_seconds: 3600
+  qaoa_seed_timeout_seconds: 600
+  qaoa_total_timeout_seconds: 7200
+  classical_timeout_seconds: 600
+benchmark:
+  require_same_qubo_hash: true
+  require_same_profile_id: true
+  solvers:
+  - exact
+  - qaoa
+  - classical
+  registered_seed_count: 10
+  report_true_cvar_rerank: true
+surrogate_validation:
+  status: PROVISIONAL_PENDING_OWNER
+  ask_doc: docs/workflow-v2.md
+  thresholds:
+    mae_max: 0.02
+    rmse_max: 0.03
+    spearman_min: 0.7
+    top_k: 20
+    top_k_recall_min: 0.6
+    feasible_rate_min: 0.05
+    seed_stability_min: 0.5
+  on_fail: hard_stop_for_baseline_exception_only_for_analysis
+encoding:
+  mapping:
+    '00': 0
+    '10': 10
+    '01': 20
+    '11': 30
+  candidate_order_filename: candidate_order.json
+artifacts:
+  risk_summary: risk_summary.json
+  objective_samples: objective_samples.parquet
+  qubo_model: qubo_model.json
+  exact_result: exact_solution.json
+  qaoa_result: qaoa_results.json
+  reranked_candidates: reranked_candidates.csv
+  final_recommendation: final_recommendation.json
+  workflow_benchmark: workflow_benchmark.json
+  true_benchmark: true_benchmark.json
+gates:
+  surrogate_validation_required_before_solver: true
+  exact_reference_required: true
+  rerank_by_true_cvar_required: true
+  local_polishing_required: true
+  zero_action_lock: true
+disclosures:
+- NON_BASELINE_RUN until data_gate + scenario_gate + product_gate are signed.
+- Surrogate thresholds are PROVISIONAL — see docs/workflow-v2.md §15.
+- Liquidity penalty is a separate objective component from fee+spread.
+- Dynamic underfill M=min(N_eligible,10) allowed without fake tickers.

@@ -2,7 +2,7 @@
 """Universe Registry 30 mã (workflow_update) và Data Source Register.
 
 Port từ `CLEAN.ipynb` Cell 8-9 (`UNIVERSE_ROWS`, `SOURCE_ROWS`). Khác với notebook: danh sách mã và
-`data_source` (yahoo/dnse) không còn hard-code trong Python — đọc từ `configs/universe.yaml` (đúng
+`data_source` (yahoo/dnse) không còn hard-code trong Python — đọc từ `configs/base.yaml` (đúng
 ràng buộc CLAUDE.md quy tắc 8 "Không hard-code ticker").
 """
 
@@ -27,7 +27,7 @@ _UNIVERSE_COLUMNS = [
 
 
 def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
-    """Chuyển section `tickers` của `configs/universe.yaml` (đã parse) thành DataFrame.
+    """Chuyển section `tickers` của `configs/base.yaml` (đã parse) thành DataFrame.
 
     `universe_config` là dict đã đọc từ yaml (vd qua `_config_stub.load_config`), PHẢI có key
     `tickers`: list[dict] với đúng các cột trong `_UNIVERSE_COLUMNS`.
@@ -38,7 +38,7 @@ def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
     rows = universe_config.get("tickers")
     if not rows:
         raise ValueError(
-            "universe_config['tickers'] rỗng hoặc null — configs/universe.yaml chưa được điền "
+            "universe_config['tickers'] rỗng hoặc null — configs/base.yaml chưa được điền "
             "(xem TODO/PROVISIONAL trong file đó)."
         )
     df = pd.DataFrame(rows)
