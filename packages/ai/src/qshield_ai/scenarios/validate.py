@@ -6,7 +6,7 @@ regime, cắt tại `t`. Không có mẫu tham chiếu thì "validation" chỉ l
 kiểm định.
 
 Cấu trúc (shape/NaN/Inf/ticker) FAIL CỨNG theo AC-SCN-007. Metric phân phối chấm theo ngưỡng
-PROVISIONAL trong `configs/scenarios.yaml` — AI đề xuất, Phúc sở hữu quyết định (IN-RISK-03). Không
+PROVISIONAL trong `configs/base.yaml` — AI đề xuất, Phúc sở hữu quyết định (IN-RISK-03). Không
 metric nào được bỏ qua im lặng (AC-SCN-010): mọi metric đều có một dòng và một verdict.
 
 `tail_loss_q95` dùng danh mục ĐỀU (equal-weight) giữa các tài sản: tỷ trọng thật là việc của
@@ -194,7 +194,7 @@ def _threshold(thresholds: Mapping[str, float], key: str) -> float:
         return thresholds[key]
     except KeyError as exc:
         raise ValueError(
-            f"Thiếu ngưỡng {key!r} trong configs/scenarios.yaml (validation.thresholds) — "
+            f"Thiếu ngưỡng {key!r} trong configs/base.yaml (validation.thresholds) — "
             "không kiểm định được metric này."
         ) from exc
 
@@ -213,7 +213,7 @@ def build_validation_report(
     được xoá bằng chứng: `statistic` luôn là giá trị thật đã tính (không bao giờ ép về NaN), một
     metric PASS bị hạ xuống WARN vì mẫu mỏng, nhưng một metric VI PHẠM ngưỡng vẫn FAIL — mẫu nhỏ
     không làm vi phạm biến mất. `min_reference_windows` phải được truyền vào tường minh từ
-    `configs/scenarios.yaml` (`validation.min_reference_windows`); không có giá trị mặc định ngầm
+    `configs/base.yaml` (`validation.min_reference_windows`); không có giá trị mặc định ngầm
     trong module để tránh áp dụng một ngưỡng không ai chọn khi caller quên truyền.
     """
     if reference.size == 0:

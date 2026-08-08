@@ -1,4 +1,4 @@
-# Đỗ Ngọc Tân - BenchmarkView — đọc workflow_benchmark.json (ưu tiên) hoặc benchmark.json (demo_fast).
+# Đỗ Ngọc Tân - BenchmarkView — đọc workflow_benchmark.json (ưu tiên) hoặc benchmark.json legacy.
 """Không tự tính lại benchmark — chỉ mô tả artifact packages đã ghi. `qaoa_beats_classical=False`
 là giá trị HỢP LỆ (CLAUDE.md quy tắc 18).
 """
@@ -28,7 +28,7 @@ class BenchmarkView:
     qaoa_beats_classical: bool
     runtime_seconds_total: float
     caveat: str
-    # workflow_update provenance (optional on legacy demo_fast benchmark.json)
+    # workflow_update provenance (optional on legacy benchmark.json)
     source_artifact: str
     profile_id: str | None
     requested_solver: str | None
