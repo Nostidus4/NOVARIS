@@ -3,7 +3,7 @@
 
 "2 đồng hồ": market-level (dùng cho HMM regime, `packages/ai`) và asset-level (scenarios/CVaR/QUBO)
 có `train_start`/`train_end` khác nhau — asset-level bắt đầu muộn hơn để có coverage tốt hơn giữa
-các mã trong universe đã chốt (xem `configs/data.yaml` `date_range`). validation/test dùng chung.
+các mã trong universe đã chốt (xem `configs/base.yaml` `date_range`). validation/test dùng chung.
 
 Đây chỉ gán NHÃN split theo mốc thời gian đã khóa — không phải fit/transform scaler (đó là việc
 của consumer, ví dụ `packages/ai`, và PHẢI fit CHỈ trên phần được gán `"train"` ở đây).
@@ -21,7 +21,7 @@ Level = Literal["market", "asset"]
 def assign_split(dt: pd.Timestamp, level: Level, splits_config: dict[str, Any]) -> str:
     """Trả `"train" | "validation" | "test" | "out_of_scope"` cho một ngày `dt`.
 
-    `splits_config` là `configs/data.yaml["date_range"]` đã parse — cần các key
+    `splits_config` là `configs/base.yaml["date_range"]` đã parse — cần các key
     `{level}_train_start`, `{level}_train_end`, `validation_start`, `validation_end`, `test_start`,
     `test_end`.
     """

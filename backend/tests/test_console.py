@@ -13,7 +13,7 @@ from qshield_api.main import app
 class _FakeWorkflowRepository:
     def get_summary(self) -> WorkflowArtifactView:
         return WorkflowArtifactView(
-            profile_id="workflow_update_downstream",
+            profile_id="workflow_update",
             profile_status="NON_BASELINE_RUN",
             config_version="test-v1",
             stage_status={

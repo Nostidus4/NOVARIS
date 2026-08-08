@@ -51,7 +51,7 @@ def _period_exchange(ticker: str, period: Mapping[str, Any]) -> str:
     if exchange is None:
         raise ValueError(
             f"Ticker {ticker!r} có một period trong exchange_periods thiếu khoá 'exchange': "
-            f"{dict(period)!r}. Sửa configs/universe.yaml."
+            f"{dict(period)!r}. Sửa configs/base.yaml."
         )
     return str(exchange)
 
@@ -74,7 +74,7 @@ def _periods_by_ticker(
     """`ticker -> exchange_periods`, báo lỗi ngay nếu thiếu, rỗng, sai dạng, hoặc lệch
     `exchange_current`.
 
-    `configs/universe.yaml` mang lịch sử sàn của mỗi ticker ba lần: `exchange_current` (máy đọc
+    `configs/base.yaml` mang lịch sử sàn của mỗi ticker ba lần: `exchange_current` (máy đọc
     được), `exchange_history` (văn xuôi), `exchange_periods` (máy đọc được, dùng để resolve biên
     độ). Chỉ `exchange_periods` được đọc ở đây — nếu nó lệch với `exchange_current` thì một trong
     hai đã bị sửa mà quên sửa cái kia, và triệu chứng duy nhất là một con số vi phạm không ai có
@@ -90,7 +90,7 @@ def _periods_by_ticker(
     if "exchange_periods" not in universe.columns:
         raise ValueError(
             "universe thiếu cột 'exchange_periods' — không resolve được sàn theo ngày. "
-            "Thêm trường này vào configs/universe.yaml (xem registry._UNIVERSE_COLUMNS)."
+            "Thêm trường này vào configs/base.yaml (xem registry._UNIVERSE_COLUMNS)."
         )
     has_current = "exchange_current" in universe.columns
     out: dict[str, Sequence[Mapping[str, Any]]] = {}
@@ -103,12 +103,12 @@ def _periods_by_ticker(
                 f"{type(periods).__name__} = {periods!r}. Nguyên nhân thường gặp: universe đã đi "
                 "qua round-trip registry.save_universe_and_sources (ghi CSV) rồi "
                 "pd.read_csv (đọc lại) — CSV không giữ được kiểu list[dict], cột đó thành chuỗi "
-                "repr. Đọc universe qua configs/universe.yaml (registry.load_universe), không qua "
+                "repr. Đọc universe qua configs/base.yaml (registry.load_universe), không qua "
                 "CSV đã ghi, nếu cần exchange_periods."
             )
         if len(periods) == 0:
             raise ValueError(
-                f"Ticker {ticker!r} có exchange_periods rỗng trong configs/universe.yaml — "
+                f"Ticker {ticker!r} có exchange_periods rỗng trong configs/base.yaml — "
                 "không suy ra được biên độ. Không có fallback theo thiết kế."
             )
         if has_current:
@@ -118,7 +118,7 @@ def _periods_by_ticker(
                 raise ValueError(
                     f"Ticker {ticker!r}: exchange_periods cho thấy sàn đang hiệu lực là "
                     f"{in_force!r}, nhưng exchange_current lại ghi {declared!r} trong "
-                    "configs/universe.yaml — hai trường lệch nhau. Đồng bộ lại cả hai."
+                    "configs/base.yaml — hai trường lệch nhau. Đồng bộ lại cả hai."
                 )
         out[ticker] = periods
     return out
@@ -147,7 +147,7 @@ def _check_exchange_history_covered_by_periods(
     phiên HNX hợp lệ của ACB bị chấm nhầm bằng biên HOSE ±7%. `exchange_history` vẫn còn nhắc tới
     sàn đã mất nên bắt được đúng lỗi này.
 
-    Từ vựng tên sàn lấy từ khoá của `bands_by_exchange` (configs/data.yaml: price_limits.
+    Từ vựng tên sàn lấy từ khoá của `bands_by_exchange` (configs/base.yaml: price_limits.
     bands_by_exchange) — đây là những sàn DUY NHẤT hệ thống biết tới; không hard-code tên sàn ở
     đây (CLAUDE.md quy tắc 8) và không suy đoán bằng regex tách token viết hoa (sẽ false-positive
     với văn xuôi tiếng Việt viết hoa tùy tiện).
@@ -175,7 +175,7 @@ def _check_exchange_history_covered_by_periods(
                 f"Ticker {ticker!r}: exchange_history {history_text!r} nhắc tới sàn {missing}, "
                 "nhưng exchange_periods không có period nào ở (các) sàn đó (hiện có: "
                 f"{sorted(covered)}). exchange_periods có thể đã bị thu gọn/xóa lịch sử — đồng bộ "
-                "lại với configs/universe.yaml."
+                "lại với configs/base.yaml."
             )
 
 
@@ -217,14 +217,14 @@ def resolve_exchange_column(returns: pd.DataFrame, universe: pd.DataFrame) -> pd
             first = dates[overlapping].min().date()
             raise ValueError(
                 f"exchange_periods của {ticker!r} chồng lấn tại {first} — "
-                f"một ngày khớp {int(hits[overlapping].max())} period. Sửa configs/universe.yaml."
+                f"một ngày khớp {int(hits[overlapping].max())} period. Sửa configs/base.yaml."
             )
         missing = is_ticker & (hits == 0)
         if missing.any():
             first = dates[missing].min().date()
             raise ValueError(
                 f"Ticker {ticker!r}: ngày {first} không rơi vào exchange_periods nào — "
-                "lịch sử sàn có khoảng trống. Sửa configs/universe.yaml."
+                "lịch sử sàn có khoảng trống. Sửa configs/base.yaml."
             )
 
     return resolved
@@ -268,13 +268,13 @@ def find_price_limit_violations(
     if tolerance_pct < 0:
         raise ValueError(
             f"tolerance_pct phải >= 0, nhận {tolerance_pct} "
-            "(configs/data.yaml: price_limits.tolerance_pct)."
+            "(configs/base.yaml: price_limits.tolerance_pct)."
         )
     for exchange, band in bands_by_exchange.items():
         if band <= 0:
             raise ValueError(
                 f"Biên độ của sàn {exchange!r} phải > 0, nhận {band} "
-                "(configs/data.yaml: price_limits.bands_by_exchange)."
+                "(configs/base.yaml: price_limits.bands_by_exchange)."
             )
 
     _check_exchange_history_covered_by_periods(
@@ -288,7 +288,7 @@ def find_price_limit_violations(
             returns.loc[exchange_col.isin(unknown), "ticker"].astype(str).unique()
         )
         raise ValueError(
-            f"Không có biên độ cho sàn {unknown} trong configs/data.yaml "
+            f"Không có biên độ cho sàn {unknown} trong configs/base.yaml "
             f"(price_limits.bands_by_exchange hiện có: {sorted(bands_by_exchange)}). "
             f"Mã bị ảnh hưởng: {affected}."
         )

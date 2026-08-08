@@ -12,7 +12,7 @@ from typer.testing import CliRunner
 runner = CliRunner()
 TICKERS = ("AAA", "BBB", "CCC", "DDD")
 
-# Ngưỡng mặc định — vô hại (giống configs/scenarios.yaml thật), để test tập trung vào hành vi CLI
+# Ngưỡng mặc định — vô hại (giống configs/base.yaml thật), để test tập trung vào hành vi CLI
 # thay vì phải nghĩ lại bộ ngưỡng mỗi lần.
 _DEFAULT_THRESHOLDS = {
     "mean_abs_diff_max": 0.0010,

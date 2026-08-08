@@ -63,12 +63,12 @@ def build_feature_frame(
 ) -> pd.DataFrame:
     """Ghép 4 cột market + tương quan → 1 dòng/ngày, chỉ giữ dòng đủ cả 5 feature.
 
-    Loại `split == "out_of_scope"` (ngoài cửa sổ nghiên cứu đã khóa ở `configs/data.yaml`).
+    Loại `split == "out_of_scope"` (ngoài cửa sổ nghiên cứu đã khóa ở `configs/base.yaml`).
     """
     missing = [column for column in market_columns if column not in market_features]
     if missing:
         raise ValueError(
-            f"market_features thiếu cột {missing} — kiểm tra configs/regime.yaml."
+            f"market_features thiếu cột {missing} — kiểm tra configs/base.yaml."
         )
 
     corr = mean_pairwise_corr(returns, tickers=tickers, window=corr_window)
@@ -121,7 +121,7 @@ def fit_scaler(frame: pd.DataFrame, feature_names: Sequence[str]) -> StandardSca
     if train.empty:
         raise ValueError(
             "Không có dòng split=='train' để fit scaler — kiểm tra date_range "
-            "trong configs/data.yaml."
+            "trong configs/base.yaml."
         )
     return StandardScaler().fit(train.to_numpy(dtype=float))
 

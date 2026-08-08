@@ -87,8 +87,7 @@ def test_other_tickers_and_dates_are_untouched() -> None:
 
 
 def test_ticker_not_present_in_prices_is_skipped_silently() -> None:
-    """Universe khác nhau giữa các profile (demo_fast 8 mã vs workflow_update 30 mã) — entry cho
-    ticker không có trong prices không được raise."""
+    """Ticker không có trong prices không được raise (eligibility/universe subset)."""
     prices = _prices([("ACB", "2025-02-28", 30000.0, 30000.0)])
     actions = [
         {"ticker": "VCB", "event_date": "2025-03-03", "adjustment_factor": 1.4950}

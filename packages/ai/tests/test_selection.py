@@ -26,9 +26,7 @@ FEATURE_COLUMNS = {
     "correlation_column": "mean_pairwise_corr_60d",
 }
 CHAMPION = {"n_states": 3, "covariance_type": "diag"}
-MIN_MEAN_LABEL_AGREEMENT = (
-    0.60  # khớp configs/regime.yaml gate.min_mean_label_agreement
-)
+MIN_MEAN_LABEL_AGREEMENT = 0.60  # khớp configs/base.yaml gate.min_mean_label_agreement
 
 
 @pytest.fixture(scope="module")
@@ -268,7 +266,7 @@ def test_single_eligible_seed_reports_nan_agreement_and_fails_the_gate(
     """Chỉ 1 seed hợp lệ ⇒ không có cặp nào để so ⇒ mean agreement phải là NaN (Change 2), và
     NaN >= ngưỡng luôn sai ⇒ cổng đóng (Change 1). Đây là scenario mặc định của fixture `prepared`
     sau khi fix rò rỉ dữ liệu — xem comment `gate.min_mean_label_agreement` trong
-    `configs/regime.yaml`.
+    `configs/base.yaml`.
     """
     outcome = _run(
         prepared,
@@ -288,7 +286,7 @@ def test_champion_family_agreement_stays_below_gate_even_with_all_registered_see
     prepared,
 ) -> None:
     """Phát hiện thật về fixture mặc định (data seed=11), không phải bug: ngay cả dùng đủ 10 seed
-    đã đăng ký trong configs/regime.yaml, đồng thuận trung bình cao nhất trong họ champion
+    đã đăng ký trong configs/base.yaml, đồng thuận trung bình cao nhất trong họ champion
     (~0.55) vẫn dưới ngưỡng 0.60 — cổng đóng là hành vi đúng của AD-04, dữ liệu tổng hợp seed=11
     này không tạo ra state đủ tách bạch để 10 seed đồng thuận với nhau."""
     outcome = _run(

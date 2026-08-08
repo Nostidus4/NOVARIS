@@ -21,7 +21,7 @@ def get_benchmark_endpoint(
             status_code=404,
             detail=(
                 "Chưa có workflow_benchmark.json / benchmark.json — chạy "
-                "`qshield-quantum workflow --exact-only` (hoặc solve demo_fast) trước."
+                "`qshield-quantum workflow --exact-only` (hoặc pipeline quantum stage) trước."
             ),
         )
     return dto

@@ -1,0 +1,34 @@
+# Chạy frontend (3000) + backend (8000)
+#   docker compose up --build
+#
+# API: http://localhost:8000/health
+# UI:  http://localhost:3000
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./configs:/app/configs:ro
+      - ./data:/app/data
+    environment:
+      QSHIELD_CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        QSHIELD_API_URL: http://backend:8000
+        NEXT_PUBLIC_QSHIELD_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      QSHIELD_API_URL: http://backend:8000
+      NEXT_PUBLIC_QSHIELD_API_URL: http://localhost:8000
+    depends_on:
+      - backend

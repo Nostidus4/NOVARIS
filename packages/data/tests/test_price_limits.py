@@ -107,7 +107,7 @@ def test_empty_periods_raise() -> None:
 
 def test_exchange_current_mismatch_with_periods_raises_naming_both_values() -> None:
     """`exchange_current` và `exchange_periods` là hai nguồn ghi lịch sử sàn độc lập trong
-    configs/universe.yaml — chỉ `exchange_periods` được đọc, nên nếu chúng lệch nhau (một cái
+    configs/base.yaml — chỉ `exchange_periods` được đọc, nên nếu chúng lệch nhau (một cái
     được sửa, cái kia bị quên) thì phải nổ lỗi ngay, không được im lặng dùng `exchange_periods`
     và bỏ qua `exchange_current` (finding Important 1, review round cuối).
     """

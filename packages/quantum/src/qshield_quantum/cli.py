@@ -280,14 +280,14 @@ def _resolved_penalty(cfg: Config, g, C, c) -> tuple[float, float, float, bool]:
 def solve_workflow(
     config: str = _CONFIG_OPTION,
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Profile declaring top10_four_level_actions",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE runtime/financial override",
+        help="Optional YAML deep-merged after profile",
     ),
     no_warm_start: bool = typer.Option(
         False, "--no-warm-start", help="Disable Qiskit warm-start even when installed"
@@ -299,7 +299,9 @@ def solve_workflow(
     ),
 ) -> None:
     """Consume the workflow risk handoff and emit model/exact/QAOA candidate artifacts."""
-    cfg = Config.load_profiled(Path(config), Path(profile), Path(override))
+    cfg = Config.load_profiled(
+        Path(config), Path(profile), Path(override) if override else None
+    )
     quantum = validate_four_level_profile(cfg)
     paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
     context = RunContext(cfg, paths)
@@ -636,7 +638,7 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
     if not seeds:
         seeds = list(range(int(qaoa_cfg["min_seeds"])))
         logger.warning(
-            "configs/quantum.yaml: qaoa.seeds chưa đăng ký — dùng tạm %s (PROVISIONAL, "
+            "configs/base.yaml: qaoa.seeds chưa đăng ký — dùng tạm %s (PROVISIONAL, "
             "plan.md câu hỏi 4). Run này là NON_BASELINE_RUN.",
             seeds,
         )

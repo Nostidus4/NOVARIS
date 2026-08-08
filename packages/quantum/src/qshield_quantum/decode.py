@@ -1,7 +1,7 @@
 # Đỗ Ngọc Tân - bitstring → action → ticker → tỷ trọng mới.
 """Giải mã bitstring 8-bit thắng cuộc thành hành động cụ thể.
 
-Bit thứ `i` (0-indexed, thứ tự = `configs/universe.yaml`) = 1 nghĩa là chọn hành động `i` = giảm
+Bit thứ `i` (0-indexed, thứ tự = `configs/base.yaml`) = 1 nghĩa là chọn hành động `i` = giảm
 `reduction_pct` (khóa 20% — CLAUDE.md) vị thế mã `ticker_order[i]`, phần vốn giải phóng chuyển sang
 tiền mặt. Tổng tỷ trọng (kể cả `cash`) luôn phải = 1.0 sau decode (CLAUDE.md quy tắc 6).
 """
@@ -28,7 +28,7 @@ def decode(
     """Trả tỷ trọng mới (có khóa `"cash"`), tổng luôn = 1.0.
 
     `current_weights` không cần có sẵn khóa `"cash"` (mặc định 0.0 nếu chưa có — danh mục 100%
-    cổ phiếu trước hedge, đúng `configs/universe.yaml: sample_portfolio_weights`).
+    cổ phiếu trước hedge, đúng `configs/base.yaml: sample_portfolio_weights`).
     """
     if len(bitstring) != len(ticker_order):
         raise ValueError(

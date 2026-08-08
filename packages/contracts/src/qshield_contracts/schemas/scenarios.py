@@ -4,8 +4,8 @@
 Tensor `(num_scenarios, horizon_days, n_assets)`, không phải bảng — không dùng pandera. Kèm
 `ScenarioMetadata` (sidecar JSON) để biết seed, regime điều kiện hóa và validation battery.
 
-`num_scenarios` theo profile: demo_fast thường 500; workflow_update dev 2000 / final 5000
-(Decision-package TL-005). `n_assets` theo universe/eligibility tại evaluation date (8 hoặc 30).
+`num_scenarios` theo `workflow_update`: typically 2000 (dev) / 5000 (final) — Decision-package
+TL-005. `n_assets` theo universe/eligibility tại evaluation date (30 mã sau eligibility).
 """
 
 from __future__ import annotations

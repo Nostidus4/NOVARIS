@@ -106,8 +106,7 @@ _FEATURE_COLUMNS = {
     "correlation_column": CORR_FEATURE,
 }
 _MOCK_DAYS = 900
-_DEFAULT_PROFILE = Path("configs/profiles/workflow_update.yaml")
-_DEFAULT_OVERRIDE = Path("configs/provisional/workflow_update_downstream.yaml")
+_DEFAULT_PROFILE = Path("configs/workflow_update.yaml")
 # Thứ tự cố định ⇒ mỗi regime nhận một seed lệch xác định, tái lập được giữa các lần chạy: đổi
 # thứ tự là đổi cube sinh ra, nên tuple này được viết tường minh chứ không lấy theo thứ tự khai
 # báo của enum. Dựng từ thành viên `RegimeName` (không phải literal chuỗi) để đổi tên nhãn ở
@@ -130,7 +129,7 @@ def _load_cli_config(
         return Config.load_profiled(
             base,
             Path(profile) if profile else _DEFAULT_PROFILE,
-            Path(override) if override else _DEFAULT_OVERRIDE,
+            Path(override) if override else None,
         )
     return Config.load(base)
 

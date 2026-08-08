@@ -28,7 +28,7 @@ def test_view_from_workflow_benchmark_payload() -> None:
             "qaoa_beats_classical": False,
             "runtime_seconds": {"exact": 39.5, "qaoa": 0.0, "classical": 0.5},
             "caveat": "NON_FINAL exact fallback",
-            "profile_id": "workflow_update_downstream",
+            "profile_id": "workflow_update",
             "requested_solver": "qaoa",
             "actual_solver": "exact",
             "fallback_reason": "QAOA skipped/timeout in NON_FINAL_CONFIG",
