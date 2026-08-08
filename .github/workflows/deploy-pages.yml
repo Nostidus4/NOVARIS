@@ -86,9 +86,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
 
       # Pages không chạy FastAPI sau deploy. CI bật một API tạm từ artifact đã
       # commit để Server Components lấy số liệu rồi bake vào HTML tĩnh.
@@ -99,7 +99,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Resolve build environment
         id: env
@@ -198,7 +198,7 @@ jobs:
           exit 1
 
       - name: Lint
-        run: npm run lint
+        run: yarn lint
 
       - name: Build static export
         env:
@@ -209,7 +209,7 @@ jobs:
           NEXT_PUBLIC_QSHIELD_API_URL: ${{ steps.env.outputs.public_api_url }}
           # Tránh telemetry làm chậm / nhiễu log CI
           NEXT_TELEMETRY_DISABLED: "1"
-        run: npm run build
+        run: yarn build
 
       - name: Stop snapshot API
         if: always() && steps.env.outputs.use_local_api == 'true'
