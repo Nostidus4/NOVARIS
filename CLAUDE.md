@@ -16,30 +16,16 @@ Data (30 mã) → Regime → Scenarios → Risk (chọn dynamic top 10) → QUBO
   → Rerank/Polish → CVaR after hedge → Dashboard/UAT
 ```
 
-### Hai profile — đọc `configs/profiles/README.md` trước khi hiểu mục này
+### Profile và config — đọc `configs/README.md` + `docs/workflow-v2.md`
 
-Từ **2026-08-06, team đã thống nhất chốt** `workflow_update` làm baseline sản phẩm chính thức,
-thay cho việc chỉ tạm khóa vĩnh viễn ở 8 mã. Hai profile khai báo máy đọc được ở
-`configs/profiles/`:
+SoT sản phẩm: **`docs/workflow-v2.md`**. Chỉ một profile vận hành:
 
-- **`workflow_update`** (`configs/profiles/workflow_update.yaml`, status `BASELINE_TARGET`) — **đích
-  chính thức**: 30 mã VN30 (universe) → Risk chọn **dynamic top 10** theo net risk score → Quantum
-  **20-bit** (2 bit/mã × 10 mã, 4 mức hành động 0/10/20/30%) → **rerank + local polishing** (owner
-  Phúc) → dashboard/UAT. Cần 3 approval gate (`data_gate`/Minh Anh, `scenario_gate`/Phúc,
-  `product_gate`/Ngọc) trước khi được dùng làm baseline/UAT chính thức — xem file yaml để biết đủ
-  output bắt buộc từng gate.
-- **`demo_fast`** (`configs/profiles/demo_fast.yaml`, status `NON_BASELINE_RUN`) — scope thu gọn
-  cho debug/demo nhanh: 8 mã cố định, cả 8 mã đưa thẳng vào Quantum (không chọn top 10), QUBO
-  **8-bit** chọn đúng K=3, một mức hành động duy nhất (giảm 20%). **Đây là scope mà `packages/*`
-  hiện đang hiện thực** (kể cả `packages/quantum`, `packages/pipeline`) — `workflow_update` vẫn
-  đang trong quá trình nâng cấp lên, chưa code xong. Không xóa `demo_fast` khi nâng cấp — nó vẫn
-  cần cho vòng lặp dev/debug nhanh và integration smoke test.
+- **`workflow_update`** (`configs/workflow_update.yaml`) — 30 mã VN30 → Risk **dynamic top 10**
+  → Quantum **20-bit** (0/10/20/30%) → rerank/polish → dashboard/UAT.
+  Status: `NON_BASELINE_RUN` đến khi đủ 3 gate (`data_gate`, `scenario_gate`, `product_gate`).
+- **`base.yaml`** — tham số mặc định (universe/data/regime/scenarios/risk/quantum).
 
-**Không được trộn số liệu hai profile trong cùng một báo cáo/so sánh.** Run `demo_fast` luôn gắn
-`profile_id=demo_fast` và báo cáo `NON_BASELINE_RUN`. Quy tắc "Quantum" bên dưới (14-18) mô tả công
-thức của scope `demo_fast` (code hiện tại) — khi nâng cấp lên `workflow_update`, các công thức đó
-phải viết lại cho đúng 20-bit/4-mức và mục này phải cập nhật theo, chưa được coi là xong chỉ vì đã
-đổi config.
+Load: `Config.load_profiled(Path("configs/base.yaml"), Path("configs/workflow_update.yaml"))`.
 
 **Stack:** uv workspace (7 member), Python 3.14, FastAPI, Next.js 15 + Tailwind, qiskit 2.x.
 
@@ -56,7 +42,7 @@ vi phạm, hãy dừng và nói ra thay vì âm thầm làm.
    không phải return. CVaR cao = xấu. Mọi so sánh trước–sau phải cùng quy ước.
 2. **CVaR:** `VaR_α = Q_α(L)`, `CVaR_α = E[L | L ≥ VaR_α]`, α = 0.95 (Rockafellar–Uryasev).
    Đây là trung bình phần đuôi, **không phải** giá trị tại phân vị.
-3. **Không forward-fill lợi suất.** Giá thiếu xử lý theo quy tắc trong `configs/data.yaml` và
+3. **Không forward-fill lợi suất.** Giá thiếu xử lý theo quy tắc trong `configs/base.yaml` và
    phải ghi log. Không bao giờ `.ffill()` trên cột return.
 4. **Không dùng dữ liệu tương lai.** Mọi rolling feature chỉ dùng dữ liệu đến `t`. Scaler `fit`
    **chỉ** trên train rồi `transform` cho validation và test.
@@ -88,27 +74,20 @@ vi phạm, hãy dừng và nói ra thay vì âm thầm làm.
 
 ### Quantum
 
-> Quy tắc 14-16 dưới đây mô tả đúng code **hiện tại** — scope `demo_fast` (8-bit, K=3 trong 8 mã).
-> Baseline `workflow_update` (20-bit, top-10, 4 mức hành động 0/10/20/30%) cần công thức khác —
-> `g`/`C`/`c` không còn là hệ số nhị phân đơn giản mà phải tham số hóa theo 4 mức mỗi mã, và ràng
-> buộc không còn là "đúng K trong N" mà theo `configs/profiles/workflow_update.yaml` (`quantum.mode:
-> top10_four_level_actions`). Việc viết lại `formulation/` cho 20-bit **chưa thực hiện** — khi làm,
-> phải cập nhật lại mục này cho khớp, không được để CLAUDE.md mô tả sai code thật.
+> Scope SoT: `workflow_update` / `docs/workflow-v2.md` — 20-bit, top-10, 4 mức 0/10/20/30%
+> (`quantum.mode: top10_four_level_actions`). Một số helper formulation nhị phân K-of-N vẫn còn
+> trong `packages/quantum` cho verify/unit test; đường sản phẩm dùng four-level workflow.
 
-14. **`formulation/objective.py` là ground truth** (scope `demo_fast`). Hàm NumPy thuần định nghĩa
-    `f(z) = −g'z + λ₁·z'Cz + λ₂·c'z + P·(Σz − K)²`. `QuadraticProgram` và QUBO sau convert phải
-    khớp với nó.
+14. **Formulation NumPy là ground truth cho QUBO đang chạy** — `QuadraticProgram`/QUBO convert
+    phải khớp; four-level encoding theo `configs/workflow_update.yaml`.
 15. **Chạy `verify/consistency.py` trước khi tin bất kỳ kết quả QAOA nào.** Ba cách tính lệch nhau
     ⇒ dừng, sửa formulation. Đừng debug QAOA khi QUBO còn sai.
-16. **Exact solver là thước đo, không phải đối thủ.** Duyệt hết không gian trạng thái (256 với
-    8-bit `demo_fast`; 1.048.576 với 20-bit `workflow_update`) là ground truth để chấm QAOA. Không
-    bỏ để "tiết kiệm thời gian".
-17. **Nghiệm QAOA phải chấm lại bằng true CVaR** qua `qshield_risk.evaluate`, không phải bằng giá
-    trị objective. Objective thấp mà CVaR thực tế không giảm thì nghiệm vô nghĩa. Ở `workflow_update`
-    bước này là "rerank" bắt buộc (owner Phúc), theo sau bởi "local polishing" (±5pp, khóa
-    zero-action) — cả hai chưa hiện thực trong `packages/risk`.
-18. **Không tuyên bố quantum advantage.** QAOA thua exact hay thua classical thì báo cáo trung
-    thực. Đây là yêu cầu nghiệm thu, áp dụng cho cả hai profile.
+16. **Exact solver là thước đo, không phải đối thủ.** Duyệt hết không gian (2^20 với 20-bit) là
+    ground truth để chấm QAOA. Không bỏ để "tiết kiệm thời gian".
+17. **Nghiệm QAOA phải chấm lại bằng true CVaR** qua `qshield_risk.evaluate` / rerank — không chọn
+    chỉ theo QUBO energy. Rerank + local polishing (±5pp, zero-lock) là bắt buộc trên
+    `workflow_update` (owner Phúc).
+18. **Không tuyên bố quantum advantage.** QAOA thua exact hay classical thì báo cáo trung thực.
 
 ---
 
@@ -172,12 +151,15 @@ lặng không có tác dụng. Dù vậy vẫn nên dùng `.loc` / `.assign`.
 | `frontend/` | Next.js 15 + Tailwind, 5 trang | Ngọc + Tân |
 | `configs/` | Toàn bộ tham số | Ngọc duyệt |
 
+**Context chi tiết từng thư mục (cho agent):** `docs/folders/` — đọc file tương ứng trước khi sửa
+code trong thư mục đó. Policy sản phẩm: `docs/workflow-v2.md`.
+
 Trước khi sửa file trong `packages/X/`, đọc docstring đầu mỗi module — chúng mô tả trách nhiệm và
 công thức cần hiện thực.
 
 Baseline `workflow_update` thêm 2 chặng chưa có package tương ứng trong bảng trên: **rerank_polish**
 (owner Phúc, hiện thực trong `packages/risk`) và **dashboard_uat** (owner Tân + Ngọc, trong
-`backend/`+`frontend/`) — xem `configs/profiles/workflow_update.yaml` khóa `pipeline.stages` để biết
+`backend/`+`frontend/`) — xem `configs/workflow_update.yaml` khóa `pipeline.stages` để biết
 input/output từng chặng.
 
 ---
@@ -220,8 +202,9 @@ liệu. Cần biết artifact có cột gì thì đọc schema, đừng suy đo�
 | `data/processed/returns.parquet` | `schemas/returns.py` | long format (date, ticker) |
 | `data/processed/features.parquet` | `schemas/features.py` | 1 dòng / ngày |
 | `.../regime/regime_daily.parquet` | `schemas/regime.py` | 1 dòng / ngày + 3 xác suất |
-| `.../scenarios/stress_scenarios.npz` | `schemas/scenarios.py` | tensor `(S, 20, N)` — `demo_fast`: `(500, 20, 8)`; `workflow_update`: `(2000\|5000, 20, 30)` |
-| `.../risk/action_effects.csv` | `schemas/risk.py` | 1 dòng / action (`demo_fast`); `workflow_update` thêm `candidate_top10.csv` trước bước này |
+| `.../scenarios/stress_scenarios.npz` | `schemas/scenarios.py` | tensor `(S, H, N)` — `workflow_update`: `(2000\|5000, 20, 30)` |
+| `.../risk/action_effects.csv` | `schemas/risk.py` | 1 dòng / action; có `candidate_top10.csv` trước bước này |
+
 | `.../optimization/qaoa_result.json` | `schemas/optimization.py` | bitstring + metrics |
 
 Đổi schema là breaking change: sửa `contracts` trước, rồi sửa cả bên ghi lẫn bên đọc trong cùng
@@ -241,12 +224,8 @@ thật đã có trên đĩa.
 
 ## Đóng băng phạm vi
 
-**Đã bỏ khỏi danh sách đóng băng (2026-08-06, team thống nhất):** mở rộng lên 30 mã VN30 → Risk
-chọn dynamic top 10 → Quantum 20-bit, 4 mức hành động 0/10/20/30%, có rerank/local polishing. Đây
-giờ là baseline chính thức `workflow_update` (`configs/profiles/workflow_update.yaml`), không còn
-bị coi là mở rộng ngoài phạm vi — nhưng vẫn cần qua đủ 3 approval gate của profile đó trước khi dùng
-làm bằng chứng UAT/baseline. `demo_fast` (8 mã) **không bị xóa** — vẫn giữ nguyên cho debug/demo
-nhanh, luôn gắn `profile_id=demo_fast` khi báo cáo.
+Baseline SoT: `docs/workflow-v2.md` + `configs/workflow_update.yaml` (30 → top-10 → 20-bit,
+0/10/20/30%, rerank/polish). Vẫn `NON_BASELINE_RUN` đến khi đủ 3 approval gate.
 
 **Vẫn không thêm** những thứ sau trừ khi người dùng yêu cầu rõ ràng:
 
@@ -256,8 +235,8 @@ nhanh, luôn gắn `profile_id=demo_fast` khi báo cáo.
 - Quantum hardware thật (`backends/hardware.py` cố ý để trống)
 - Dữ liệu thời gian thực
 - Biểu đồ ngoài 5 khu vực dashboard đã định
-- Universe vượt quá 30 mã VN30 đã snapshot (`configs/profiles/workflow_update.yaml`), hoặc bất kỳ
-  action level nào ngoài 0/10/20/30%
+- Universe vượt quá 30 mã VN30 đã snapshot, hoặc action level ngoài 0/10/20/30%
+- Profile / scope demo 8 mã song song (đã gỡ `demo_fast`)
 
 Cổng nghiệm thu cuối ngày 4 chưa đạt ⇒ mọi việc trên dừng vô điều kiện, tập trung tích hợp.
 
@@ -299,4 +278,4 @@ Cổng nghiệm thu cuối ngày 4 chưa đạt ⇒ mọi việc trên dừng v�
 
 Prototype dự thi, **không phải sản phẩm tư vấn đầu tư**. Hệ thống mô tả kịch bản rủi ro, không đưa
 khuyến nghị mua bán. Mọi kết luận phải nằm trong phạm vi bằng chứng mà artifact hỗ trợ. Giới hạn
-ghi tại `docs/limitations.md`, disclaimer tại `docs/product/disclaimer.md`.
+ghi tại `docs/workflow-v2.md` §24, disclaimer tại `docs/disclaimer.md`.

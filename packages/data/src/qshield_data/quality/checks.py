@@ -74,7 +74,7 @@ def check_no_pre_listing(prices: pd.DataFrame, universe: pd.DataFrame) -> dict:
 def check_universe_count(universe: pd.DataFrame, expected: int) -> dict:
     """DQ-005 — universe khớp số mã đã khóa (AC-DAT-001, PR-DAT-001).
 
-    `expected` PHẢI truyền từ `configs/universe.yaml["expected_ticker_count"]` — không hard-code
+    `expected` PHẢI truyền từ `configs/base.yaml["expected_ticker_count"]` — không hard-code
     (universe hiện tại đang khóa 8 mã theo CLAUDE.md, không phải 30 như thiết kế PSS/PRS gốc).
     """
     n_uni = len(universe)

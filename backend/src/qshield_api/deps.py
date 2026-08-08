@@ -83,7 +83,7 @@ def get_workflow_repository() -> WorkflowRepository:
 
 
 def get_universe_tickers() -> list[str]:
-    """Danh sách ticker đã khóa (`configs/universe.yaml`) — dùng cho `portfolio.validate_
+    """Danh sách ticker đã khóa (`configs/base.yaml`) — dùng cho `portfolio.validate_
     portfolio`. Không qua `infrastructure/` riêng (feature `portfolio` không cần — xem
     docs/architecture/backend_hexagonal_design.md §1.4)."""
     cfg = get_app_config()

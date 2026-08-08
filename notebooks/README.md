@@ -16,7 +16,7 @@ Chạy theo thứ tự khi cần tái lập timing / smoke:
 | 05 | `05_pipeline_workflow_update.ipynb` | Pipeline end-to-end |
 | 06 | `06_qaoa_scaling_and_depth.ipynb` | Narrative: exact scaling + QAOA depth scan |
 
-Mặc định override: `configs/provisional/workflow_update_downstream.yaml` (`NON_BASELINE_RUN`).
+Mặc định override: `configs/workflow_update.yaml` (`NON_BASELINE_RUN`).
 
 ## Đã gỡ (2026-08-07)
 
