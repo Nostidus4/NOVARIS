@@ -9,7 +9,7 @@ của riêng nó, và chặn chặng scenarios (PR-REG-015).
 Ngưỡng volatility lấy từ phân vị trên DÒNG TRAIN (quy tắc 4) — ngày test biến động cực đại không
 được phép làm dịch ngưỡng.
 
-Luật (PROVISIONAL, `configs/regime.yaml: fallback`, chờ Ngọc/Phúc duyệt):
+Luật (PROVISIONAL, `configs/base.yaml: fallback`, chờ Ngọc/Phúc duyệt):
     stress   ⇐ volatility >= q(train) VÀ drawdown <= ngưỡng
     volatile ⇐ volatility >= q(train)
     normal   ⇐ còn lại

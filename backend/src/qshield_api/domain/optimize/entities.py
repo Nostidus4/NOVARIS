@@ -1,6 +1,6 @@
 # Đỗ Ngọc Tân - OptimizeJob + OptimizeJobRequest + OptimizeResult (workflow_update).
 """`OptimizeResult` map từ artifact `workflow_benchmark.json` (+ optional true_benchmark),
-không còn phụ thuộc schema demo_fast `qaoa_result.json`.
+không phụ thuộc schema legacy `qaoa_result.json` đơn lẻ.
 """
 
 from __future__ import annotations

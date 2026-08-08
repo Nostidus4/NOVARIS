@@ -2,7 +2,7 @@
 """Schema `qaoa_result.json` — SPEC ĐI TRƯỚC, `packages/quantum/` còn là scaffold.
 
 `qaoa_energy_by_seed` bắt buộc ≥ 10 seed (CLAUDE.md: "Không bỏ để tiết kiệm thời gian", giới hạn
-mục 4 docs/limitations.md: "không được cherry-pick seed tốt nhất"). `true_cvar_before`/`after` PHẢI
+mục 4 CLAUDE.md / docs/workflow-v2.md §16: "không được cherry-pick seed tốt nhất"). `true_cvar_before`/`after` PHẢI
 đến từ `qshield_risk.evaluate` (chấm lại bằng CVaR thật), không phải suy ra từ objective value
 (CLAUDE.md quy tắc 17).
 """
@@ -44,5 +44,5 @@ def validate_qaoa_result(result: QaoaResult) -> None:
     if len(result.qaoa_energy_by_seed) < _MIN_SEEDS:
         raise ValueError(
             f"qaoa_energy_by_seed chỉ có {len(result.qaoa_energy_by_seed)} seed, "
-            f"cần tối thiểu {_MIN_SEEDS} (docs/limitations.md §4: không cherry-pick seed)."
+            f"cần tối thiểu {_MIN_SEEDS} (CLAUDE.md / docs/workflow-v2.md §16: không cherry-pick seed)."
         )

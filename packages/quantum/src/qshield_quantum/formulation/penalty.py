@@ -1,6 +1,6 @@
 # Đỗ Ngọc Tân - P·(Σz − K)² — ép đúng K=3 hành động được chọn.
 """Khai triển penalty `P·(Σz − K)²` thành dạng QUBO (ma trận vuông + tuyến tính + hằng số), và đề
-xuất một giá trị `P` đủ lớn khi config chưa khóa (`configs/quantum.yaml: penalty.P` hiện đang
+xuất một giá trị `P` đủ lớn khi config chưa khóa (`configs/base.yaml: penalty.P` hiện đang
 `null` — TBD-006 trong `docs/product/mvp_scope.md` §23).
 
 Dùng chung bởi `formulation/qubo.py` và `formulation/qiskit_program.py` để đảm bảo cả hai đường

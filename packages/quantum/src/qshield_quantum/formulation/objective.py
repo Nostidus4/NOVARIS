@@ -1,7 +1,7 @@
 # Đỗ Ngọc Tân - f(z) NumPy thuần — ĐÂY LÀ GROUND TRUTH. QuadraticProgram và QUBO sau convert phải khớp với hàm này.
 """Ground truth của bài toán tối ưu: `f(z) = -g'z + λ1·z'Cz + λ2·c'z + P·(Σz − K)²`.
 
-Phạm vi đã khóa (CLAUDE.md, `docs/limitations.md` §1): 8 mã, K=3, MỘT mức hành động duy nhất (giảm
+Phạm vi đã khóa (CLAUDE.md, `docs/workflow-v2.md` §2): 8 mã, K=3, MỘT mức hành động duy nhất (giảm
 20% vị thế). `z_i ∈ {0,1}` là "có chọn hành động i hay không" — không phải mã hóa nhiều mức hành
 động như thiết kế PSS gốc (xem `plan.md` §0).
 

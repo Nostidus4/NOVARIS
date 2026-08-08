@@ -141,11 +141,11 @@ def run_all(config_path: Path, *, mock: bool = False) -> str | None:
 def run_downstream(
     config_path: Path,
     profile_path: Path,
-    override_path: Path,
+    override_path: Path | None = None,
     *,
     mock: bool = False,
 ) -> str | None:
-    """Run the provisional four-level branch from Risk handoff through final accounting.
+    """Run the four-level branch from Risk handoff through final accounting.
 
     This intentionally does not run Data/Regime/Scenarios. It consumes the current scenario
     artifact, or deterministic mock scenarios when requested, and scales dimensions from
@@ -161,12 +161,9 @@ def run_downstream(
     logger = ctx.logger
     resolved_config_path = ctx.resolve_config_path(cfg, config_path)
     mock_flag = ["--mock"] if mock else []
-    profile_args = [
-        "--profile",
-        str(profile_path),
-        "--override",
-        str(override_path),
-    ]
+    profile_args = ["--profile", str(profile_path)]
+    if override_path is not None:
+        profile_args.extend(["--override", str(override_path)])
     stages = (
         (
             "risk_workflow",
@@ -209,7 +206,7 @@ def run_downstream(
 def run_workflow_update(
     config_path: Path,
     profile_path: Path,
-    override_path: Path,
+    override_path: Path | None = None,
     *,
     run_data: bool = False,
     quantum_mode: str = "exact",
@@ -233,12 +230,9 @@ def run_workflow_update(
     ctx = PipelineRunContext(cfg)
     logger = ctx.logger
     resolved_config_path = ctx.resolve_config_path(cfg, config_path)
-    profile_args = [
-        "--profile",
-        str(profile_path),
-        "--override",
-        str(override_path),
-    ]
+    profile_args = ["--profile", str(profile_path)]
+    if override_path is not None:
+        profile_args.extend(["--override", str(override_path)])
     stages: list[tuple[str, str, str, list[str]]] = []
     if run_data:
         stages.append(("data", "qshield_data.cli", "build", profile_args))

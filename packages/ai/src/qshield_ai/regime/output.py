@@ -53,7 +53,7 @@ UNRESOLVED_DECISIONS = (
     "IN-RISK-02 (ngày đánh giá t)",
     "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
     "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
-    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)",
+    "IN-PO-04 (duyệt configs/base.yaml + scenarios.yaml)",
 )
 
 

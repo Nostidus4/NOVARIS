@@ -53,7 +53,7 @@ def _write_downstream_configs(tmp_path: Path) -> tuple[Path, Path, Path]:
         yaml.safe_dump(
             {
                 "profile": {
-                    "id": "workflow_update_downstream",
+                    "id": "workflow_update",
                     "status": "NON_BASELINE_RUN",
                 },
                 "runtime": {
