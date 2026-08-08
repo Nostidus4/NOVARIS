@@ -31,7 +31,7 @@ Data (30 mã) → Regime → Scenarios → Risk (top 10) → QUBO 20-bit → Exa
 |---|---|
 | Python | 3.14 (`uv` tự tải nếu thiếu) |
 | [uv](https://docs.astral.sh/uv/) | ≥ 0.11 |
-| Node.js | ≥ 20 |
+| Node.js | ≥ 20 (CI Pages dùng 24) |
 | Yarn | 1.x (Classic) |
 | Docker | tùy chọn — chạy FE + BE |
 
