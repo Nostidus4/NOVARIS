@@ -29,7 +29,7 @@ from qshield_contracts.schemas.downstream import (
 def _provenance() -> ArtifactProvenance:
     return ArtifactProvenance(
         run_id="run_test",
-        profile_id="workflow_update_downstream",
+        profile_id="workflow_update",
         profile_status="NON_BASELINE_RUN",
         config_version="test-v1",
         config_hash="config-sha256",
@@ -55,7 +55,7 @@ def test_candidate_top10_accepts_explicit_underfilled_runtime() -> None:
     data = pd.DataFrame(
         {
             "run_id": ["run_test"] * count,
-            "profile_id": ["workflow_update_downstream"] * count,
+            "profile_id": ["workflow_update"] * count,
             "profile_status": ["NON_BASELINE_RUN"] * count,
             "config_version": ["test-v1"] * count,
             "config_hash": ["config-sha256"] * count,
@@ -117,7 +117,7 @@ def test_objective_samples_require_full_16_bit_structured_design() -> None:
         rows.append(
             {
                 "run_id": "run_test",
-                "profile_id": "workflow_update_downstream",
+                "profile_id": "workflow_update",
                 "profile_status": "NON_BASELINE_RUN",
                 "config_version": "test-v1",
                 "config_hash": "config-sha256",
@@ -182,7 +182,7 @@ def test_reranked_candidates_accept_generic_16_bit_rows() -> None:
     data = pd.DataFrame(
         {
             "run_id": ["run_test", "run_test"],
-            "profile_id": ["workflow_update_downstream"] * 2,
+            "profile_id": ["workflow_update"] * 2,
             "profile_status": ["NON_BASELINE_RUN"] * 2,
             "config_version": ["test-v1"] * 2,
             "config_hash": ["config-sha256"] * 2,

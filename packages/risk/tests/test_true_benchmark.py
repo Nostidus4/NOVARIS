@@ -110,7 +110,7 @@ def test_build_true_benchmark_scores_three_solvers() -> None:
     payload = build_true_benchmark(
         identity={
             "run_id": "test",
-            "profile_id": "workflow_update_downstream",
+            "profile_id": "workflow_update",
             "profile_status": "NON_BASELINE_RUN",
             "config_version": "test",
             "config_hash": "abc",
@@ -199,7 +199,7 @@ def test_qubo_hash_mismatch_fails_fast() -> None:
         build_true_benchmark(
             identity={
                 "run_id": "test",
-                "profile_id": "workflow_update_downstream",
+                "profile_id": "workflow_update",
                 "profile_status": "NON_BASELINE_RUN",
                 "config_version": "test",
                 "config_hash": "abc",

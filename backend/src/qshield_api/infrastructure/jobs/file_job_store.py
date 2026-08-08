@@ -103,7 +103,7 @@ def _result_to_dict(result: OptimizeResult) -> dict[str, Any]:
 
 
 def _result_from_dict(payload: dict[str, Any]) -> OptimizeResult:
-    # Backward-compatible with older job JSON that still has demo_fast fields.
+    # Backward-compatible with older job JSON field shapes.
     if "source_artifact" not in payload and "k_actions" in payload:
         return OptimizeResult(
             bitstring=str(payload["bitstring"]),

@@ -209,7 +209,7 @@ uv run ruff check packages/risk
 uv run mypy packages/risk/src/qshield_risk
 ```
 
-Run thật chỉ hợp lệ khi Scenario Gate PASS và `configs/risk.yaml` có approved cost/tolerance values.
+Run thật chỉ hợp lệ khi Scenario Gate PASS và `configs/base.yaml` có approved cost/tolerance values.
 Không thay `null` bằng một con số ngầm chỉ để lệnh chạy qua.
 
 ## 11. Deferred, không có trong v1

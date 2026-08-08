@@ -72,14 +72,14 @@ def run_downstream_command(
         "configs/base.yaml", "--config", help="Base config path"
     ),
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Product profile path",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE override path",
+        help="Optional extra YAML deep-merged after profile",
     ),
     mock: bool = typer.Option(
         False, "--mock", help="Use deterministic current eight-ticker scenario fixture"
@@ -87,7 +87,12 @@ def run_downstream_command(
 ) -> None:
     """Run Risk selection/sampling → generic Quantum → true rerank/local polishing."""
     try:
-        run_id = run_downstream(Path(config), Path(profile), Path(override), mock=mock)
+        run_id = run_downstream(
+            Path(config),
+            Path(profile),
+            Path(override) if override else None,
+            mock=mock,
+        )
     except (StageError, ValueError) as exc:
         typer.echo(f"✗ {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -103,14 +108,14 @@ def run_workflow_update_command(
         "configs/base.yaml", "--config", help="Base config path"
     ),
     profile: str = typer.Option(
-        "configs/profiles/workflow_update.yaml",
+        "configs/workflow_update.yaml",
         "--profile",
         help="Product profile path",
     ),
-    override: str = typer.Option(
-        "configs/provisional/workflow_update_downstream.yaml",
+    override: str | None = typer.Option(
+        None,
         "--override",
-        help="Explicit NON_BASELINE override path",
+        help="Optional extra YAML deep-merged after profile",
     ),
     run_data: bool = typer.Option(
         False,
@@ -128,7 +133,7 @@ def run_workflow_update_command(
         run_id = run_workflow_update(
             Path(config),
             Path(profile),
-            Path(override),
+            Path(override) if override else None,
             run_data=run_data,
             quantum_mode=quantum_mode,
         )

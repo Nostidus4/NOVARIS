@@ -29,7 +29,7 @@ def action_effects_to_arrays(
     if list(ordered["ticker"]) != tickers:
         raise ValueError(
             f"Thứ tự ticker trong action_effects ({list(ordered['ticker'])}) không khớp "
-            f"configs/universe.yaml ({tickers}) — bitstring sẽ decode sai mã."
+            f"configs/base.yaml ({tickers}) — bitstring sẽ decode sai mã."
         )
     return ordered["g"].to_numpy(dtype=float), ordered["c"].to_numpy(dtype=float)
 

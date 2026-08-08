@@ -8,8 +8,15 @@ NOVARIS Q-SHIELD Risk Intelligence Console (Next.js 15/16 + Tailwind 4).
 # API (repo root)
 uv run uvicorn qshield_api.main:app --reload --port 8000
 
-# Frontend
-cd frontend && npm run dev
+# Frontend (Yarn — không dùng npm install)
+cd frontend && yarn install && yarn dev
+```
+
+Docker (FE + BE):
+
+```bash
+docker compose up --build
+# UI http://localhost:3000 · API http://localhost:8000/health
 ```
 
 Environment:
@@ -52,11 +59,9 @@ UI shell matches `NOVARIS_QSHIELD_Host3000.html`.
 
 ## Deploy GitHub Pages
 
-Chi tiết đầy đủ: [`docs/deploy-github-pages.md`](../docs/deploy-github-pages.md).
-
 ```bash
 # Build giống CI (sinh frontend/out, basePath /NOVARIS)
-cd frontend && npm run build:pages
+cd frontend && yarn build:pages
 ```
 
 Workflow: `.github/workflows/deploy-pages.yml` — push `main`/`master` hoặc Run workflow thủ công.

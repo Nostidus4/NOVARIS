@@ -1,19 +1,15 @@
-"""Rank candidates for the dynamic top-N selection step (`workflow_update` baseline).
+"""Rank candidates for the dynamic top-N selection step (`workflow_update`).
 
-Output columns match `configs/profiles/workflow_update.yaml` (`risk.candidate_selection.
-required_columns`) — this is a NEW artifact (`candidate_top10.csv`) not yet in
-`qshield_contracts.schemas.risk` (that module still only covers the `demo_fast`-shaped
-`action_effects.csv`/`pairwise_effects.csv`).
+Output columns match `configs/workflow_update.yaml` (`risk.candidate_selection.
+required_columns`) — artifact `candidate_top10.csv` (schema may still be catching up in
+`qshield_contracts.schemas.risk`).
 
-Generic in N, not hard-coded to "10": when the configured universe has ``N <= output_candidates``
-(today: 8 <= 10, per `configs/profiles/demo_fast.yaml` — "toan bo 8 ma duoc dua vao risk/quantum
-demo"), every ticker is selected and nothing is filtered. Real ranking only takes effect once the
-universe grows past `output_candidates` (30-ticker `workflow_update` scope).
+Generic in N: when the configured universe has ``N <= output_candidates``, every ticker is
+selected. Real ranking takes effect once the universe grows past `output_candidates`
+(30-ticker `workflow_update` scope → top 10).
 
-`demo_fast` only computes ONE action level (`action_reduction_pct`, locked at 20%) — the 10%/30%
-`marginal_CVaR_reduction_*` columns required by `workflow_update` are left `NaN` with an explanatory
-`note` rather than fabricated; that math needs the 4-level action grid, not built yet (CLAUDE.md
-"Quantum" section preamble).
+Four-level marginal CVaR columns (10%/20%/30%) are required by `workflow_update`; leave
+unavailable levels as `NaN` with an explanatory `note` rather than fabricating numbers.
 """
 
 from __future__ import annotations

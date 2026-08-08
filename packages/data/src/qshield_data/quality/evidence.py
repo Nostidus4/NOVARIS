@@ -21,7 +21,7 @@ def build_adjusted_close_evidence_report(
     """Trả 1 dòng / ticker với method, evidence_flag và notes audit được.
 
     Flags:
-    - ``ADJ_REGISTERED`` — có corporate action đã đăng ký thủ công trong configs/data.yaml;
+    - ``ADJ_REGISTERED`` — có corporate action đã đăng ký thủ công trong configs/base.yaml;
     - ``ADJ_VENDOR`` — nguồn Yahoo (có Adj Close vendor), chưa có cross-check owner;
     - ``ADJ_UNVERIFIED`` — nguồn DNSE (giả định Close≈Adj Close theo repo hiện tại) hoặc mã
       cold-start / cần verify trước UAT.

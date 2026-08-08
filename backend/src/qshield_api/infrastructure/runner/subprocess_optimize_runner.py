@@ -22,7 +22,6 @@ from qshield_contracts.paths import ArtifactPaths
 
 from qshield_api.config import (
     DEFAULT_CONFIG_PATH,
-    DEFAULT_OVERRIDE_PATH,
     DEFAULT_PROFILE_PATH,
 )
 from qshield_api.domain.optimize.entities import OptimizeResult
@@ -65,7 +64,6 @@ class SubprocessOptimizeRunner:
         override_path.write_text(
             yaml.safe_dump(
                 {
-                    "extends": str(Path(DEFAULT_OVERRIDE_PATH).resolve()),
                     "artifacts": {"mode": "runs"},
                     "run_id": run_id,
                 },

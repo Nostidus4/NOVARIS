@@ -6,8 +6,8 @@ tụ; thêm sau nếu benchmark cho thấy cần).
 API đã verify khớp `docs/runbook/troubleshooting.md` §2 — `qiskit.primitives.Sampler` (V1) đã bị
 xóa khỏi qiskit 2.x, PHẢI dùng `StatevectorSampler`.
 
-Chạy TOÀN BỘ seed trong danh sách, không cherry-pick (CLAUDE.md quy tắc 18 / `docs/limitations.md`
-§4: "không được cherry-pick seed tốt nhất").
+Chạy TOÀN BỘ seed trong danh sách, không cherry-pick (CLAUDE.md quy tắc 18 / `docs/workflow-v2.md`
+§16: "không được cherry-pick seed tốt nhất").
 """
 
 from __future__ import annotations
@@ -171,7 +171,7 @@ def solve_qaoa(
     if len(seeds) < minimum_seeds:
         raise ValueError(
             f"Chỉ có {len(seeds)} seed, cần tối thiểu {minimum_seeds} "
-            "(CLAUDE.md quy tắc 18 / docs/limitations.md §4: không cherry-pick seed)."
+            "(CLAUDE.md quy tắc 18 / docs/workflow-v2.md §16: không cherry-pick seed)."
         )
     was_enabled = gc.isenabled()
     gc.disable()
