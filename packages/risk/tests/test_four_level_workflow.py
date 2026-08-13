@@ -6,7 +6,11 @@ import numpy as np
 import pytest
 from qshield_risk.candidates import candidate_order, select_four_level_candidates
 from qshield_risk.objective import COMPONENT_NAMES, financial_objective
-from qshield_risk.rerank import polish_reductions, rerank_candidates
+from qshield_risk.rerank import (
+    build_financial_baselines,
+    polish_reductions,
+    rerank_candidates,
+)
 from qshield_risk.sampling import sample_objective, structured_bit_vectors
 
 
@@ -163,3 +167,68 @@ def test_materiality_and_rerank_top_n() -> None:
     ]
     reranked = rerank_candidates(pool, cube, tickers, weights, 0.0, tickers[:2], cfg)
     assert len(reranked) == 1
+
+
+def test_true_rerank_prioritizes_policy_feasibility_and_builds_baselines() -> None:
+    cube, tickers, weights = _inputs()
+    cfg = _config()
+    cfg["risk_policy"] = {
+        "policy_version": "test-v1",
+        "status": "PROVISIONAL_TEST",
+        "risk_appetite": "balanced",
+        "cash_min": 0.0,
+        "cash_max": 0.15,
+        "cvar_budget": 1.0,
+        "max_turnover": 0.5,
+        "do_not_sell": ["T0"],
+        "per_asset_reduction_caps": {"T0": 0.0},
+    }
+    reranked = rerank_candidates(
+        [
+            {"bitstring": "1000", "qubo_energy": -10.0, "feasible": True},
+            {"bitstring": "0010", "qubo_energy": 1.0, "feasible": True},
+        ],
+        cube,
+        tickers,
+        weights,
+        0.0,
+        tickers[:2],
+        cfg,
+    )
+    assert bool(reranked.iloc[0]["feasible"]) is True
+    assert reranked.iloc[0]["bitstring"] == "0010"
+
+
+def test_rerank_deduplicates_bitstrings_without_losing_solver_provenance() -> None:
+    cube, tickers, weights = _inputs()
+    cfg = _config()
+    reranked = rerank_candidates(
+        [
+            {
+                "bitstring": "1000",
+                "qubo_energy": 0.2,
+                "source_solver": "qaoa_seed_11",
+                "probability": 0.4,
+            },
+            {
+                "bitstring": "1000",
+                "qubo_energy": 0.1,
+                "source_solver": "exact",
+            },
+        ],
+        cube,
+        tickers,
+        weights,
+        0.0,
+        tickers[:2],
+        cfg,
+    )
+
+    assert len(reranked) == 1
+    assert reranked.iloc[0]["source_solver"] == "exact,qaoa_seed_11"
+    assert len(reranked.iloc[0]["solver_provenance"]) == 2
+    assert reranked.iloc[0]["qubo_energy"] == pytest.approx(0.1)
+
+    baselines = build_financial_baselines(cube, tickers, weights, 0.0, cfg)
+    assert baselines["baseline"].tolist() == ["no_action", "pro_rata", "greedy"]
+    assert bool(baselines.iloc[0]["feasible"]) is True
