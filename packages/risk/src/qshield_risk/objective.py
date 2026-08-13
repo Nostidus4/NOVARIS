@@ -13,7 +13,16 @@ from qshield_risk.actions import TradeState, apply_reductions
 from qshield_risk.costs import CostRates
 from qshield_risk.evaluate import confidence_levels, required_float
 from qshield_risk.metrics import RiskMetrics, alpha_key, risk_metrics_from_wealth
-from qshield_risk.paths import portfolio_wealth_paths, validate_scenario_cube
+from qshield_risk.paths import (
+    asset_growth_paths,
+    portfolio_wealth_from_growth,
+    validate_scenario_cube,
+)
+from qshield_risk.policy import (
+    ConstraintViolation,
+    RiskPolicy,
+    evaluate_policy_constraints,
+)
 from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_order
 
 COMPONENT_NAMES = (
@@ -47,6 +56,9 @@ class FinancialObjective:
     reductions: tuple[float, ...]
     trade: TradeState
     constraint_violations: tuple[str, ...] = ()
+    constraint_details: tuple[ConstraintViolation, ...] = ()
+    policy_metadata: dict[str, Any] | None = None
+    status: str = "FEASIBLE"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -63,6 +75,9 @@ class FinancialObjective:
             "stock_weights_after": self.trade.stock_weights.tolist(),
             "cash_weight_after": self.trade.cash_weight,
             "constraint_violations": list(self.constraint_violations),
+            "constraint_details": [item.to_dict() for item in self.constraint_details],
+            "policy_metadata": self.policy_metadata,
+            "status": self.status,
         }
 
 
@@ -119,6 +134,40 @@ def financial_objective(
         expected_horizon=int(config.get("horizon_days", 20)),
         expected_assets=len(tickers),
     )
+    return financial_objective_from_growth(
+        reductions,
+        asset_growth_paths(cube),
+        tickers,
+        weights,
+        cash_weight,
+        config,
+    )
+
+
+def financial_objective_from_growth(
+    reductions: npt.ArrayLike,
+    growth_paths: npt.ArrayLike,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    config: Mapping[str, Any],
+) -> FinancialObjective:
+    """Evaluate the canonical objective while reusing validated asset growth paths."""
+    tickers = validate_ticker_order(ticker_order)
+    growth = np.asarray(growth_paths, dtype=float)
+    expected_horizon = int(config.get("horizon_days", 20))
+    expected_shape_tail = (expected_horizon, len(tickers))
+    if (
+        growth.ndim != 3
+        or growth.shape[0] == 0
+        or growth.shape[1:] != expected_shape_tail
+        or not np.isfinite(growth).all()
+        or np.any(growth <= 0.0)
+    ):
+        raise ValueError(
+            "[risk.objective] growth_paths must have finite positive shape "
+            f"(scenario, {expected_horizon}, {len(tickers)}), got {growth.shape}."
+        )
     tolerance = required_float(config, "weight_sum_tolerance")
     aligned = align_portfolio_weights(
         weights, tickers, cash_weight, tolerance=tolerance
@@ -132,10 +181,13 @@ def financial_objective(
     specs = _objective_specs(config)
     rates = CostRates.from_config(config)
     maximum = required_float(config, "maximum_reduction")
-    target_cash = required_float(config, "target_cash_increment")
+    policy = RiskPolicy.from_config(config)
+    target_cash = (
+        required_float(config, "target_cash_increment") if policy is None else None
+    )
     if maximum > 1.0 or maximum < 0.0:
         raise ValueError("[risk.objective] maximum_reduction must be in [0, 1].")
-    if target_cash < 0.0:
+    if target_cash is not None and target_cash < 0.0:
         raise ValueError("[risk.objective] target_cash_increment must be non-negative.")
     trade = apply_reductions(
         aligned,
@@ -147,13 +199,34 @@ def financial_objective(
     )
     levels = confidence_levels(config)
     before = risk_metrics_from_wealth(
-        portfolio_wealth_paths(cube, aligned, cash_weight), levels
+        portfolio_wealth_from_growth(growth, aligned, cash_weight), levels
     )
     after = risk_metrics_from_wealth(
-        portfolio_wealth_paths(cube, trade.stock_amounts, trade.cash_amount), levels
+        portfolio_wealth_from_growth(growth, trade.stock_amounts, trade.cash_amount),
+        levels,
     )
     primary_key = alpha_key(required_float(config, "cvar_alpha"))
     cash_increment = trade.cash_amount - float(cash_weight)
+    cash_deviation = (
+        abs(cash_increment - target_cash)
+        if policy is None and target_cash is not None
+        else policy.cash_band_deviation(trade.cash_weight) if policy is not None else 0.0
+    )
+    details = (
+        evaluate_policy_constraints(
+            policy,
+            ticker_order=tickers,
+            weights=weights,
+            reductions=values,
+            trade=trade,
+            after=after,
+            primary_alpha=required_float(config, "cvar_alpha"),
+            tolerance=tolerance,
+        )
+        if policy is not None
+        else ()
+    )
+    legacy_violations = tuple(f"{item.code}: {item.message}" for item in details)
     raw_values = {
         "cvar": after.cvar[primary_key],
         "return_sacrifice": max(
@@ -162,7 +235,7 @@ def financial_objective(
         "transaction_cost": trade.costs.total,  # fee+spread only (TL-008)
         "turnover": trade.turnover,
         "liquidity_penalty": trade.costs.liquidity_penalty,
-        "cash_budget_deviation": abs(cash_increment - target_cash),
+        "cash_budget_deviation": cash_deviation,
     }
     components: dict[str, ObjectiveComponent] = {}
     for name in COMPONENT_NAMES:
@@ -185,4 +258,8 @@ def financial_objective(
         after=after,
         reductions=tuple(float(value) for value in values),
         trade=trade,
+        constraint_violations=legacy_violations,
+        constraint_details=details,
+        policy_metadata=policy.to_dict() if policy is not None else None,
+        status="INFEASIBLE_POLICY" if details else "FEASIBLE",
     )
