@@ -1,5 +1,10 @@
 # Risk Engine v1
 
+> **Compatibility documentation only.** Tài liệu này mô tả API nhị phân 8 mã/K=3 của Risk v1.
+> Profile `workflow_update` không dùng K=3; flow triển khai V2 nằm tại
+> [`RISK_WORKFLOW_IMPLEMENTATION_PLAN.md`](RISK_WORKFLOW_IMPLEMENTATION_PLAN.md) và Product SoT là
+> [`docs/workflow-v2.md`](../../docs/workflow-v2.md).
+
 Tài liệu này mô tả implementation hiện tại trong `packages/risk/`. Nguồn chuẩn cho hợp đồng liên
 module vẫn là `packages/contracts/`; các tài liệu product rộng hơn không được hiểu là tính năng đã
 implement nếu chúng nằm trong phần **Deferred** bên dưới.
