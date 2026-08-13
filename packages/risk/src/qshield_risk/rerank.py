@@ -11,6 +11,7 @@ import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 
 from qshield_risk.objective import FinancialObjective, financial_objective
+from qshield_risk.policy import RiskPolicy
 from qshield_risk.portfolio import validate_ticker_order
 from qshield_risk.sampling import decode_four_level_bits
 
@@ -20,7 +21,7 @@ def materiality_from_cvar(
     cvar_after: float,
     *,
     threshold: float = 0.01,
-) -> dict[str, float | bool]:
+) -> dict[str, float | bool | str]:
     """TL-018 — relative true-CVaR reduction after hedge (loss convention: lower after is better)."""
     if not np.isfinite(cvar_before) or not np.isfinite(cvar_after):
         raise ValueError("[risk.materiality] CVaR values must be finite.")
@@ -36,6 +37,9 @@ def materiality_from_cvar(
         "true_cvar_relative_reduction": relative,
         "materiality_met": met,
         "improvement_claim_allowed": met,
+        "recommendation_status": (
+            "IMPROVES_CVAR" if met else "NO_MATERIAL_IMPROVEMENT"
+        ),
     }
 
 
@@ -60,16 +64,45 @@ def rerank_candidates(
         )
     indices = [tickers.index(ticker) for ticker in candidate_order]
 
-    distinct: dict[str, Mapping[str, Any]] = {}
+    distinct: dict[str, dict[str, Any]] = {}
     for item in candidate_pool:
         if item.get("feasible", True) is not True:
             continue
         bitstring = str(item.get("bitstring", ""))
-        if bitstring in distinct:
-            continue
         bits = np.asarray([int(char) for char in bitstring], dtype=int)
         decode_four_level_bits(bits, candidate_count=len(candidate_order))
-        distinct[bitstring] = item
+        provenance = {
+            key: item.get(key)
+            for key in (
+                "source_solver",
+                "probability",
+                "count",
+                "qubo_energy",
+                "fallback_status",
+            )
+            if item.get(key) is not None
+        }
+        if bitstring not in distinct:
+            distinct[bitstring] = {
+                **dict(item),
+                "solver_provenance": [provenance],
+            }
+            continue
+        existing = distinct[bitstring]
+        existing["solver_provenance"].append(provenance)
+        sources = {
+            str(source)
+            for source in (existing.get("source_solver"), item.get("source_solver"))
+            if source
+        }
+        existing["source_solver"] = ",".join(sorted(sources))
+        energies = [
+            float(value)
+            for value in (existing.get("qubo_energy"), item.get("qubo_energy"))
+            if value is not None
+        ]
+        if energies:
+            existing["qubo_energy"] = min(energies)
     if not distinct:
         raise ValueError(
             "[risk.rerank] candidate pool has no distinct feasible bitstrings."
@@ -102,6 +135,11 @@ def rerank_candidates(
             "liquidity_penalty": result.trade.costs.liquidity_penalty,
             "cash_budget_deviation": result.components["cash_budget_deviation"].raw,
             "constraint_violations": result.constraint_violations,
+            "constraint_details": tuple(
+                violation.to_dict() for violation in result.constraint_details
+            ),
+            "feasible": not result.constraint_violations,
+            "policy_status": result.status,
         }
         rows.append(row)
     frame = pd.DataFrame(rows)
@@ -111,8 +149,8 @@ def rerank_candidates(
         frame["surrogate_rank"] = pd.NA
     # TL-016 tie-break: true objective, then true CVaR, then cash transaction cost
     frame = frame.sort_values(
-        ["true_objective", "true_cvar", "transaction_cost", "bitstring"],
-        ascending=[True, True, True, True],
+        ["feasible", "true_objective", "true_cvar", "transaction_cost", "bitstring"],
+        ascending=[False, True, True, True, True],
         kind="stable",
     ).reset_index(drop=True)
     top_n = int((config.get("reranking") or {}).get("top_distinct_feasible", 0) or 0)
@@ -187,6 +225,27 @@ def polish_reductions(
     active = np.flatnonzero(quantum > 0.0)
     lower = np.maximum(0.0, quantum - max_adjustment)
     upper = np.minimum(maximum_reduction, quantum + max_adjustment)
+    policy = RiskPolicy.from_config(config)
+    if policy is not None:
+        caps = policy.per_asset_reduction_caps or {}
+        upper = np.asarray(
+            [
+                max(
+                    float(lower[index]),
+                    min(float(upper[index]), caps.get(ticker, maximum_reduction)),
+                )
+                for index, ticker in enumerate(tickers)
+            ],
+            dtype=float,
+        )
+
+    def is_better(candidate: FinancialObjective, incumbent: FinancialObjective) -> bool:
+        candidate_feasible = not candidate.constraint_violations
+        incumbent_feasible = not incumbent.constraint_violations
+        if candidate_feasible != incumbent_feasible:
+            return candidate_feasible
+        return candidate.value < incumbent.value - 1e-15
+
     while True:
         improved = False
         for index in active:
@@ -201,10 +260,10 @@ def polish_reductions(
                 result = financial_objective(
                     trial, scenarios, tickers, weights, cash_weight, config
                 )
-                if result.value < best_result.value - 1e-15:
+                if is_better(result, best_result):
                     best_values = trial
                     best_result = result
-            if best_result.value < current_result.value - 1e-15:
+            if is_better(best_result, current_result):
                 current = best_values
                 current_result = best_result
                 improved = True
@@ -243,3 +302,86 @@ def polish_reductions(
         polishing_dependency=float(dependency),
         actions=actions,
     )
+
+
+def build_financial_baselines(
+    scenarios: npt.ArrayLike,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    config: Mapping[str, Any],
+) -> pd.DataFrame:
+    """Evaluate no-action, pro-rata and deterministic greedy direct-financial baselines."""
+    tickers = validate_ticker_order(ticker_order)
+    maximum = float(config.get("maximum_reduction", 0.30))
+    zero = np.zeros(len(tickers), dtype=float)
+    no_action = financial_objective(
+        zero, scenarios, tickers, weights, cash_weight, config
+    )
+    policy = RiskPolicy.from_config(config)
+
+    pro_rata: np.ndarray = zero.copy()
+    if policy is not None and cash_weight < policy.cash_min:
+        stock_total = sum(float(weights[ticker]) for ticker in tickers)
+        required = policy.cash_min - cash_weight
+        fraction = min(maximum, required / stock_total) if stock_total > 0.0 else 0.0
+        pro_rata[:] = fraction
+        caps = policy.per_asset_reduction_caps or {}
+        pro_rata = np.asarray(
+            [min(value, caps.get(ticker, maximum)) for value, ticker in zip(pro_rata, tickers, strict=True)],
+            dtype=float,
+        )
+    pro_rata_result = financial_objective(
+        pro_rata, scenarios, tickers, weights, cash_weight, config
+    )
+
+    greedy = zero.copy()
+    baseline_cvar = no_action.components["cvar"].raw
+    gains: list[tuple[float, str, int]] = []
+    for index, ticker in enumerate(tickers):
+        trial = zero.copy()
+        trial[index] = min(0.10, maximum)
+        evaluated = financial_objective(
+            trial, scenarios, tickers, weights, cash_weight, config
+        )
+        gains.append((baseline_cvar - evaluated.components["cvar"].raw, ticker, index))
+    gains.sort(key=lambda item: (-item[0], item[1]))
+    greedy_result = no_action
+    caps = (policy.per_asset_reduction_caps or {}) if policy is not None else {}
+    for _, ticker, index in gains:
+        cap = min(maximum, (caps or {}).get(ticker, maximum))
+        while greedy[index] + 0.10 <= cap + 1e-12:
+            trial = greedy.copy()
+            trial[index] = min(cap, greedy[index] + 0.10)
+            evaluated = financial_objective(
+                trial, scenarios, tickers, weights, cash_weight, config
+            )
+            if evaluated.value > greedy_result.value + 1e-15 and not greedy_result.constraint_violations:
+                break
+            greedy = trial
+            greedy_result = evaluated
+            if not evaluated.constraint_violations:
+                break
+        if not greedy_result.constraint_violations:
+            break
+
+    rows = []
+    for name, reductions, result in (
+        ("no_action", zero, no_action),
+        ("pro_rata", pro_rata, pro_rata_result),
+        ("greedy", greedy, greedy_result),
+    ):
+        rows.append(
+            {
+                "baseline": name,
+                "reductions": tuple(float(value) for value in reductions),
+                "true_objective": result.value,
+                "true_cvar": result.components["cvar"].raw,
+                "turnover": result.trade.turnover,
+                "transaction_cost": result.trade.costs.total,
+                "feasible": not result.constraint_violations,
+                "constraint_violations": result.constraint_violations,
+                "status": result.status,
+            }
+        )
+    return pd.DataFrame(rows)

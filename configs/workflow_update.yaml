@@ -488,8 +488,19 @@ runtime:
     total_decision_bits: 20
     structured_sample_count: 211
 num_scenarios: 5000
+tail_uncertainty:
+  method: percentile_bootstrap_scenario_losses
+  confidence_level: 0.95
+  bootstrap_resamples: 1000
+  seed: 4101
+  low_tail_threshold: 50
+  uncertainty_scope: scenario_monte_carlo_only
 horizon_days: 20
 block_length: 5
+# Workflow V2 inputs are external owner-approved artifacts. Null keeps this profile
+# explicitly analysis-only; real runs must override both paths.
+eligibility_artifact: null
+risk_policy_artifact: null
 weight_sum_tolerance: 1.0e-08
 maximum_reduction: 0.3
 target_cash_increment: 0.1
@@ -548,8 +559,26 @@ candidate_selection:
     baseline_contribution: 1.0
     transaction_cost: 1.0
     liquidity_penalty: 1.0
+candidate_gate:
+  status: PROVISIONAL
+  coverage_metric: marginal_CVaR_reduction_20pct
+  coverage_at_n_min: 0.70
+  median_overlap_at_n_min: 0.70
+  worst_overlap_at_n_min: 0.50
+  stability_rankings_path: null
+  sensitivity_counts:
+  - 12
+  - 15
 objective_sampling:
   policy_version: decision-package-structured-v2
+  train_random_count: 500
+  validation_count: 500
+  holdout_count: 1000
+  chunk_size: 64
+  seeds:
+    train: 1101
+    validation: 2202
+    holdout: 3303
 reranking:
   top_distinct_feasible: 20
   tie_break:
@@ -606,12 +635,19 @@ encoding:
     '11': 30
   candidate_order_filename: candidate_order.json
 artifacts:
+  baseline_risk: baseline_risk.json
+  candidate_topn: candidate_topn.csv
+  candidate_order: candidate_order.json
+  candidate_gate: candidate_gate.json
   risk_summary: risk_summary.json
-  objective_samples: objective_samples.parquet
+  objective_samples: true_objective_samples.parquet
+  objective_sample_manifest: objective_sample_manifest.json
   qubo_model: qubo_model.json
   exact_result: exact_solution.json
   qaoa_result: qaoa_results.json
   reranked_candidates: reranked_candidates.csv
+  financial_baselines: financial_baselines.csv
+  portfolio_shortlist_top3: portfolio_shortlist_top3.json
   final_recommendation: final_recommendation.json
   workflow_benchmark: workflow_benchmark.json
   true_benchmark: true_benchmark.json

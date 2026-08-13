@@ -139,10 +139,14 @@ def evaluate(
         tolerance=tolerance,
     )
     before = risk_metrics_from_wealth(
-        portfolio_wealth_paths(cube, aligned, cash_weight), levels
+        portfolio_wealth_paths(cube, aligned, cash_weight),
+        levels,
+        uncertainty_config=config if config.get("tail_uncertainty") is not None else None,
     )
     after = risk_metrics_from_wealth(
-        portfolio_wealth_paths(cube, trade.stock_amounts, trade.cash_amount), levels
+        portfolio_wealth_paths(cube, trade.stock_amounts, trade.cash_amount),
+        levels,
+        uncertainty_config=config if config.get("tail_uncertainty") is not None else None,
     )
 
     expected_k = int(config.get("k_actions", 3))
