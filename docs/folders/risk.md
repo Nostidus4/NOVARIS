@@ -3,6 +3,10 @@
 **Owner:** Liêu Hoài Phúc
 **Vai trò:** CVaR / chi phí / ranking candidate / surrogate samples / rerank / true-objective.
 **Workflow-v2:** §12–14 (cash/risk/top-N/action), §17 (walk-forward metrics).
+**Implementation flow:** [`packages/risk/RISK_WORKFLOW_IMPLEMENTATION_PLAN.md`](../../packages/risk/RISK_WORKFLOW_IMPLEMENTATION_PLAN.md).
+
+`packages/risk/RISK_ENGINE.md` mô tả compatibility path Risk v1 (8 mã/K=3). Không dùng tài liệu
+legacy đó làm flow triển khai cho profile `workflow_update`.
 
 ## Nhiệm vụ
 

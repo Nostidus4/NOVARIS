@@ -68,7 +68,8 @@ def apply_actions(
     """Execute selected sales once, before the scenario horizon, on pre-trade NAV=1.
 
     For each selected asset ``i``, gross sale is ``reduction_pct * current_weight_i``. Proceeds
-    move to cash and fee, spread and liquidity penalty are deducted exactly once. The function
+    move to cash; fee and spread are deducted exactly once. Liquidity penalty remains a separate
+    objective component under TL-008 and is not deducted from cash. The function
     does not rebalance again during the scenario horizon and never auto-normalizes invalid input.
     """
     stocks = np.asarray(stock_weights, dtype=float)
