@@ -63,11 +63,27 @@ def portfolio_wealth_paths(
     ``(scenario, horizon)`` and remains measured against pre-trade NAV=1.
     """
     cube = validate_scenario_cube(scenarios)
+    return portfolio_wealth_from_growth(
+        asset_growth_paths(cube), stock_amounts, cash_amount
+    )
+
+
+def portfolio_wealth_from_growth(
+    growth_paths: npt.ArrayLike,
+    stock_amounts: npt.ArrayLike,
+    cash_amount: float,
+) -> FloatArray:
+    """Mark portfolio wealth from precomputed asset growth paths."""
+    growth = np.asarray(growth_paths, dtype=float)
+    if growth.ndim != 3 or 0 in growth.shape or not np.isfinite(growth).all():
+        raise ValueError(
+            "[risk.paths] growth_paths must be a finite non-empty 3D array."
+        )
     stocks = np.asarray(stock_amounts, dtype=float)
-    if stocks.ndim != 1 or stocks.shape[0] != cube.shape[2]:
+    if stocks.ndim != 1 or stocks.shape[0] != growth.shape[2]:
         raise ValueError(
             f"[risk.paths] stock_amounts shape={stocks.shape} does not match "
-            f"asset count={cube.shape[2]}."
+            f"asset count={growth.shape[2]}."
         )
     if not np.isfinite(stocks).all() or np.any(stocks < 0.0):
         raise ValueError("[risk.paths] stock amounts must be finite and non-negative.")
@@ -75,4 +91,4 @@ def portfolio_wealth_paths(
         raise ValueError(
             f"[risk.paths] cash amount must be finite and non-negative, got {cash_amount!r}."
         )
-    return np.einsum("shi,i->sh", asset_growth_paths(cube), stocks) + float(cash_amount)
+    return np.einsum("shi,i->sh", growth, stocks) + float(cash_amount)

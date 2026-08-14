@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 import typer
 from qshield_contracts.config import Config  # type: ignore[import-untyped]
 from qshield_contracts.enums import ArtifactMode, Stage  # type: ignore[import-untyped]
@@ -27,6 +27,7 @@ from qshield_contracts.schemas.risk import (  # type: ignore[import-untyped]
 )
 from qshield_contracts.validate import validate_or_raise  # type: ignore[import-untyped]
 
+from qshield_risk.candidate_gate import evaluate_candidate_gate
 from qshield_risk.candidates import (
     candidate_order,
     select_candidates,
@@ -34,27 +35,72 @@ from qshield_risk.candidates import (
 )
 from qshield_risk.costs import CostRates
 from qshield_risk.effects import build_effects
-from qshield_risk.evaluate import required_float
-from qshield_risk.metrics import alpha_key
+from qshield_risk.evaluate import confidence_levels, required_float
+from qshield_risk.metrics import RiskMetrics, alpha_key, risk_metrics_from_wealth
 from qshield_risk.objective import financial_objective
-from qshield_risk.paths import validate_scenario_cube
+from qshield_risk.paths import portfolio_wealth_paths, validate_scenario_cube
+from qshield_risk.policy import RiskPolicy
 from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_order
 from qshield_risk.rerank import (
+    build_financial_baselines,
     materiality_from_cvar,
     polish_reductions,
     rerank_candidates,
 )
-from qshield_risk.sampling import sample_objective
+from qshield_risk.sampling import sample_objective_dataset
 from qshield_risk.true_benchmark import build_true_benchmark
 
 app = typer.Typer(help="Q-SHIELD Risk Engine CLI.")
 
-_CANONICAL_OUTPUTS = (
+_V1_OUTPUTS = (
     "baseline_risk.json",
     "action_effects.csv",
     "pairwise_effects.csv",
-    "candidate_top10.csv",
 )
+
+_V2_OUTPUTS = (
+    "baseline_risk.json",
+    "candidate_top10.csv",
+    "candidate_topn.csv",
+    "candidate_order.json",
+    "candidate_gate.json",
+    "risk_summary.json",
+    "qubo_objective_samples.parquet",
+    "true_objective_samples.parquet",
+    "objective_sample_manifest.json",
+    "reranked_candidates.csv",
+    "financial_baselines.csv",
+    "portfolio_shortlist_top3.json",
+    "final_recommendation.json",
+    "true_benchmark.json",
+)
+
+_PREPARE_OUTPUTS = (
+    "baseline_risk.json",
+    "candidate_top10.csv",
+    "candidate_topn.csv",
+    "candidate_order.json",
+    "candidate_gate.json",
+    "risk_summary.json",
+    "qubo_objective_samples.parquet",
+    "true_objective_samples.parquet",
+    "objective_sample_manifest.json",
+)
+
+
+def _pending_output(stage_dir: Path, filename: str) -> Path:
+    return stage_dir / f".{filename}.pending"
+
+
+def _cleanup_pending(stage_dir: Path, filenames: tuple[str, ...]) -> None:
+    for filename in filenames:
+        _pending_output(stage_dir, filename).unlink(missing_ok=True)
+
+
+def _publish_pending(stage_dir: Path, filenames: tuple[str, ...]) -> None:
+    """Atomically replace canonical files after the complete output set validates."""
+    for filename in filenames:
+        _pending_output(stage_dir, filename).replace(stage_dir / filename)
 
 
 @app.callback()
@@ -238,7 +284,7 @@ def effects(
     stage_dir = paths.stage_dir(Stage.RISK)
 
     if paths.mode == ArtifactMode.DEV:
-        for filename in _CANONICAL_OUTPUTS:
+        for filename in _V1_OUTPUTS:
             (stage_dir / filename).unlink(missing_ok=True)
 
     try:
@@ -304,7 +350,7 @@ def effects(
                 "units": "decimal_nav",
             }
         )
-    except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+    except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as exc:
         logger.error("Risk effects failed: %s", exc)
         raise typer.BadParameter(str(exc)) from exc
 
@@ -408,9 +454,140 @@ def _workflow_identity(config: Config, context: RunContext) -> dict[str, str]:
 
 
 def _load_workflow_config(config: str, profile: str, override: str | None) -> Config:
-    return Config.load_profiled(
+    loaded = Config.load_profiled(
         Path(config), Path(profile), Path(override) if override else None
     )
+    policy_path = loaded.get("risk_policy_artifact")
+    if policy_path:
+        path = Path(str(policy_path))
+        if not path.exists():
+            raise FileNotFoundError(f"[risk.policy] policy artifact not found: {path}.")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise TypeError("[risk.policy] policy artifact must contain a JSON object.")
+        loaded["risk_policy"] = payload
+    return loaded
+
+
+def _eligibility_snapshot(
+    config: Config,
+    tickers: tuple[str, ...],
+    manifest: dict[str, Any],
+    weights: dict[str, float],
+    *,
+    mock: bool,
+    tolerance: float,
+) -> tuple[dict[str, bool], dict[str, str], dict[str, str]]:
+    """Read point-in-time Data eligibility; mock runs use an explicit local fixture."""
+    if mock:
+        mock_eligibility = {ticker: weights[ticker] > tolerance for ticker in tickers}
+        mock_reasons = {
+            ticker: "MOCK_ELIGIBLE" if mock_eligibility[ticker] else "MOCK_NOT_HELD"
+            for ticker in tickers
+        }
+        return mock_eligibility, mock_reasons, {}
+
+    paths_cfg = config.get("paths") or {}
+    data_root = Path(str(paths_cfg.get("data_root", "data")))
+    configured = config.get("eligibility_artifact")
+    path = Path(str(configured)) if configured else data_root / "processed" / "eligibility_daily.parquet"
+    if not path.exists():
+        raise FileNotFoundError(f"[risk.eligibility] artifact not found: {path}.")
+    frame = pd.read_parquet(path)
+    required = {"date", "ticker", "eligible_flag", "reason_code"}
+    missing = sorted(required - set(frame.columns))
+    if missing:
+        raise ValueError(f"[risk.eligibility] artifact missing columns: {missing}.")
+    evaluation_raw = manifest.get("evaluation_date")
+    if evaluation_raw is None:
+        raise ValueError("[risk.eligibility] scenario manifest evaluation_date is required.")
+    evaluation_date = pd.Timestamp(evaluation_raw).normalize()
+    frame = frame.copy()
+    frame["date"] = pd.to_datetime(frame["date"]).dt.normalize()
+    frame = frame.loc[frame["date"] <= evaluation_date]
+    if frame.empty:
+        raise ValueError(
+            f"[risk.eligibility] no point-in-time rows available by {evaluation_date.date()}."
+        )
+    snapshot_date = frame["date"].max()
+    frame = frame.loc[frame["date"] == snapshot_date]
+    if frame["ticker"].duplicated().any():
+        raise ValueError("[risk.eligibility] duplicate ticker rows in evaluation snapshot.")
+    by_ticker = frame.set_index(frame["ticker"].astype(str))
+    missing_tickers = sorted(set(tickers) - set(by_ticker.index))
+    if missing_tickers:
+        raise ValueError(f"[risk.eligibility] snapshot missing tickers: {missing_tickers}.")
+    eligibility: dict[str, bool] = {}
+    reasons: dict[str, str] = {}
+    sectors: dict[str, str] = {}
+    for ticker in tickers:
+        row = by_ticker.loc[ticker]
+        trade_flag = bool(row.get("trade_eligible_flag", True))
+        model_flag = bool(row.get("model_eligible_flag", row["eligible_flag"]))
+        eligibility[ticker] = bool(row["eligible_flag"]) and trade_flag and model_flag
+        reasons[ticker] = str(row["reason_code"])
+        if "sector" in frame.columns and pd.notna(row.get("sector")):
+            sectors[ticker] = str(row["sector"])
+    return eligibility, reasons, sectors
+
+
+def _ranking_variants(config: Config) -> dict[str, list[str]] | None:
+    raw = config.get("candidate_gate") or {}
+    path_value = raw.get("stability_rankings_path")
+    if not path_value:
+        return None
+    path = Path(str(path_value))
+    if not path.exists():
+        raise FileNotFoundError(f"[risk.candidate_gate] stability artifact not found: {path}.")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not all(isinstance(value, list) for value in payload.values()):
+        raise TypeError("[risk.candidate_gate] stability artifact must map labels to ticker lists.")
+    return {str(key): [str(ticker) for ticker in value] for key, value in payload.items()}
+
+
+def _handoff_sample_frame(
+    frame: pd.DataFrame,
+    *,
+    identity: dict[str, str],
+    order_hash: str,
+    policy_version: str,
+    seed: int | None,
+    artifact_metadata: dict[str, Any] | None = None,
+) -> pd.DataFrame:
+    result = frame.copy()
+    mapping = {
+        "intercept": "intercept",
+        "main": "main_effect",
+        "pairwise": "pairwise_effect",
+        "random_stratified": "random",
+    }
+    result["sample_kind"] = result["sample_type"].map(mapping).fillna("random")
+    result["actions_json"] = result["decoded_actions"].map(
+        lambda value: json.dumps(value, sort_keys=True)
+    )
+    component_columns = [
+        column
+        for column in result.columns
+        if column.endswith(("_raw", "_scaled", "_weight", "_contribution"))
+    ]
+    result["components_json"] = result.apply(
+        lambda row: json.dumps(
+            {column: row[column] for column in component_columns}, sort_keys=True
+        ),
+        axis=1,
+    )
+    result["scalar_objective"] = result["objective"]
+    result["violations_json"] = result["constraint_violations"].map(
+        lambda value: json.dumps(list(value))
+    )
+    result["seed"] = pd.Series([seed] * len(result), dtype="Int64")
+    result["policy_version"] = policy_version
+    result["candidate_order_hash"] = order_hash
+    for key, value in identity.items():
+        result[key] = value
+    for key, value in (artifact_metadata or {}).items():
+        result[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+    return result
 
 
 def _workflow_inputs(
@@ -432,6 +609,60 @@ def _workflow_inputs(
     )
     weights, cash_weight = _portfolio(config, ticker_order)
     return cube, ticker_order, manifest, weights, cash_weight
+
+
+def _uncertain_metrics(
+    cube: np.ndarray,
+    stock_amounts: np.ndarray,
+    cash_amount: float,
+    config: Config,
+) -> RiskMetrics:
+    """Compute report-only bootstrap uncertainty outside high-volume objective sampling."""
+    uncertainty = config if config.get("tail_uncertainty") is not None else None
+    return risk_metrics_from_wealth(
+        portfolio_wealth_paths(cube, stock_amounts, cash_amount),
+        confidence_levels(config),
+        uncertainty_config=uncertainty,
+    )
+
+
+def _solver_candidate_pool(
+    qaoa_payload: dict[str, Any],
+    exact_payload: dict[str, Any] | None,
+    benchmark_payload: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Merge exact, QAOA and classical candidates while retaining source provenance."""
+    entries: list[dict[str, Any]] = []
+    for item in qaoa_payload.get("candidate_pool", []):
+        entries.append(
+            {
+                **item,
+                "qubo_energy": float(item.get("energy", item.get("qubo_energy"))),
+                "feasible": bool(item.get("feasible", True)),
+                "source_solver": ",".join(item.get("sources", [])),
+            }
+        )
+    if exact_payload is not None:
+        for item in exact_payload.get("top_feasible_candidates", []):
+            entries.append(
+                {
+                    **item,
+                    "qubo_energy": float(item.get("energy")),
+                    "feasible": bool(item.get("feasible", True)),
+                    "source_solver": "exact",
+                }
+            )
+    if benchmark_payload is not None and benchmark_payload.get("classical_bitstring"):
+        entries.append(
+            {
+                "bitstring": str(benchmark_payload["classical_bitstring"]),
+                "qubo_energy": float(benchmark_payload["classical_energy"]),
+                "feasible": bool(benchmark_payload.get("classical_feasible", True)),
+                "source_solver": "classical",
+                "fallback_status": benchmark_payload.get("fallback_status"),
+            }
+        )
+    return entries
 
 
 @app.command("prepare-workflow")
@@ -462,6 +693,9 @@ def prepare_workflow(
     logger = context.logger("risk_workflow")
     paths.ensure(Stage.RISK)
     stage_dir = paths.stage_dir(Stage.RISK)
+    for filename in _V2_OUTPUTS:
+        (stage_dir / filename).unlink(missing_ok=True)
+    _cleanup_pending(stage_dir, _PREPARE_OUTPUTS)
     try:
         identity = _workflow_identity(cfg, context)
         cube, tickers, manifest, weights, cash_weight = _workflow_inputs(
@@ -471,7 +705,14 @@ def prepare_workflow(
             (cfg.get("candidate_selection") or {}).get("output_candidates", 10)
         )
         tolerance = required_float(cfg, "weight_sum_tolerance")
-        eligibility = {ticker: float(weights[ticker]) > tolerance for ticker in tickers}
+        eligibility, ineligible_reasons, sectors = _eligibility_snapshot(
+            cfg,
+            tickers,
+            manifest,
+            weights,
+            mock=mock,
+            tolerance=tolerance,
+        )
         frame = select_four_level_candidates(
             cube,
             tickers,
@@ -480,33 +721,67 @@ def prepare_workflow(
             eligibility,
             cfg,
             output_candidates=output_candidates,
+            ineligible_reasons=ineligible_reasons,
         )
         selected_count = int(frame["selected_top10"].sum())
         if selected_count <= 0:
             raise ValueError("[risk.workflow] no held-eligible candidates.")
+        gate = evaluate_candidate_gate(
+            frame,
+            cfg,
+            output_candidates=output_candidates,
+            ranking_variants=_ranking_variants(cfg),
+            sectors=sectors or None,
+        )
+        policy = RiskPolicy.from_config(cfg)
+        policy_version = policy.policy_version if policy is not None else "UNAPPROVED_POLICY"
+        parent_hashes = {
+            "scenario_manifest": hashlib.sha256(
+                json.dumps(manifest, sort_keys=True, default=str).encode("utf-8")
+            ).hexdigest(),
+            "risk_policy": (
+                hashlib.sha256(
+                    json.dumps(policy.to_dict(), sort_keys=True, default=str).encode("utf-8")
+                ).hexdigest()
+                if policy is not None
+                else None
+            ),
+        }
+        artifact_metadata: dict[str, Any] = {
+            "schema_version": "risk-workflow-v2",
+            "producer": "qshield_risk",
+            "policy_version": policy_version,
+            "gate_status": gate.status,
+            "parent_hashes": parent_hashes,
+        }
         frame["eligible_status"] = frame["eligible_status"].eq("eligible")
         for key, value in identity.items():
             frame[key] = value
+        for key, value in artifact_metadata.items():
+            frame[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
         validate_candidate_top10(frame, expected_candidates=selected_count)
-        candidate_path = stage_dir / "candidate_top10.csv"
+        candidate_path = _pending_output(stage_dir, "candidate_top10.csv")
         frame.to_csv(candidate_path, index=False)
+        frame.to_csv(_pending_output(stage_dir, "candidate_topn.csv"), index=False)
+
+        gate_payload = {**identity, **artifact_metadata, **gate.to_dict()}
+        _pending_output(stage_dir, "candidate_gate.json").write_text(
+            json.dumps(gate_payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
 
         ordered = candidate_order(frame)
-        selected_contribution = float(
-            frame.loc[frame["selected_top10"], "baseline_CVaR_contribution"].abs().sum()
-        )
-        total_contribution = float(frame["baseline_CVaR_contribution"].abs().sum())
-        coverage = (
-            min(1.0, selected_contribution / total_contribution)
-            if total_contribution > 0.0
-            else 0.0
-        )
         order_payload = {
             **identity,
+            **artifact_metadata,
             "candidate_count": selected_count,
             "bits_per_candidate": 2,
             "total_decision_bits": 2 * selected_count,
-            "risk_coverage": coverage,
+            "risk_coverage": gate.coverage_at_n,
+            "candidate_gate_status": gate.status,
+            "candidate_gate_baseline_handoff_allowed": gate.baseline_handoff_allowed,
+            "baseline_handoff_allowed": False,
+            "handoff_status": "ANALYSIS_ONLY_NON_BASELINE_RUN",
             "underfilled": selected_count < output_candidates,
             "deviation": (
                 f"UNDERFILLED_CANDIDATES_{selected_count}_OF_{output_candidates}"
@@ -521,71 +796,94 @@ def prepare_workflow(
         )
         order_hash = hashlib.sha256(order_json.encode("utf-8")).hexdigest()
         order_payload["candidate_order_hash"] = order_hash
-        (stage_dir / "candidate_order.json").write_text(
+        _pending_output(stage_dir, "candidate_order.json").write_text(
             json.dumps(order_payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
 
         selected_tickers = [str(item["ticker"]) for item in ordered]
-        samples = sample_objective(
+        dataset = sample_objective_dataset(
             cube,
             tickers,
             weights,
             cash_weight,
             selected_tickers,
             cfg,
+            candidate_order_hash=order_hash,
         )
-        samples["sample_kind"] = samples["sample_type"].map(
-            {
-                "intercept": "intercept",
-                "main": "main_effect",
-                "pairwise": "pairwise_effect",
-            }
-        )
-        samples["actions_json"] = samples["decoded_actions"].map(
-            lambda value: json.dumps(value, sort_keys=True)
-        )
-        component_columns = [
-            column
-            for column in samples.columns
-            if column.endswith(("_raw", "_scaled", "_weight", "_contribution"))
-        ]
-        samples["components_json"] = samples.apply(
-            lambda row: json.dumps(
-                {column: row[column] for column in component_columns}, sort_keys=True
-            ),
-            axis=1,
-        )
-        samples["scalar_objective"] = samples["objective"]
-        samples["violations_json"] = samples["constraint_violations"].map(
-            lambda value: json.dumps(list(value))
-        )
-        samples["feasible"] = samples["constraint_violations"].map(
-            lambda value: not value
-        )
-        samples["seed"] = pd.Series([pd.NA] * len(samples), dtype="Int64")
-        samples["policy_version"] = str(
-            (cfg.get("objective_sampling") or {}).get(
-                "policy_version", "provisional-structured-v1"
+        sampling_cfg = cfg.get("objective_sampling") or {}
+        split_seeds = sampling_cfg.get("seeds") or {}
+        required_split_seeds = ("train", "validation", "holdout")
+        if any(split_seeds.get(name) is None for name in required_split_seeds):
+            raise ValueError(
+                "[risk.prepare_workflow] objective sampling split seeds are required."
             )
+        train = _handoff_sample_frame(
+            dataset.train,
+            identity=identity,
+            order_hash=order_hash,
+            policy_version=policy_version,
+            seed=int(split_seeds["train"]),
+            artifact_metadata=artifact_metadata,
         )
-        samples["candidate_order_hash"] = order_hash
-        for key, value in identity.items():
-            samples[key] = value
-        validate_objective_samples(samples, expected_bit_count=2 * selected_count)
-        samples_path = stage_dir / "qubo_objective_samples.parquet"
-        samples.to_parquet(samples_path, index=False)
+        validation = _handoff_sample_frame(
+            dataset.validation,
+            identity=identity,
+            order_hash=order_hash,
+            policy_version=policy_version,
+            seed=int(split_seeds["validation"]),
+            artifact_metadata=artifact_metadata,
+        )
+        holdout = _handoff_sample_frame(
+            dataset.holdout,
+            identity=identity,
+            order_hash=order_hash,
+            policy_version=policy_version,
+            seed=int(split_seeds["holdout"]),
+            artifact_metadata=artifact_metadata,
+        )
+        validate_objective_samples(train, expected_bit_count=2 * selected_count)
+        samples_path = _pending_output(stage_dir, "qubo_objective_samples.parquet")
+        train.to_parquet(samples_path, index=False)
+        combined = pd.concat((train, validation, holdout), ignore_index=True)
+        combined.to_parquet(
+            _pending_output(stage_dir, "true_objective_samples.parquet"), index=False
+        )
+        _pending_output(stage_dir, "objective_sample_manifest.json").write_text(
+            json.dumps(
+                {**identity, **artifact_metadata, **dataset.manifest},
+                ensure_ascii=False,
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
 
         baseline = financial_objective(
             np.zeros(len(tickers)), cube, tickers, weights, cash_weight, cfg
         )
+        baseline_metrics = _uncertain_metrics(
+            cube,
+            np.asarray([weights[ticker] for ticker in tickers], dtype=float),
+            cash_weight,
+            cfg,
+        )
         warnings = [
             "PROVISIONAL financial/candidate parameters; NON_BASELINE_RUN.",
         ]
+        if policy is None:
+            warnings.append("UNAPPROVED_POLICY: compatibility cash target is analysis-only.")
+        warnings.append("SELL_TAX_POLICY_MISSING: baseline promotion is blocked.")
         if selected_count < output_candidates:
             warnings.append(str(order_payload["deviation"]))
+        if gate.status != "PASS":
+            warnings.append(
+                f"CANDIDATE_GATE_{gate.status}: baseline Quantum handoff blocked; "
+                "analysis handoff only."
+            )
         risk_summary = {
             **identity,
+            **artifact_metadata,
             "input_source": "mock" if mock else "real",
             "evaluation_date": manifest.get("evaluation_date"),
             "scenario_count": int(cube.shape[0]),
@@ -597,12 +895,42 @@ def prepare_workflow(
             "total_decision_bits": 2 * selected_count,
             "cvar_alpha_primary": required_float(cfg, "cvar_alpha"),
             "loss_sign_convention": "positive_is_loss",
-            "metrics": baseline.before.to_dict(),
-            "target_cash_increment": required_float(cfg, "target_cash_increment"),
+            "metrics": baseline_metrics.to_dict(),
+            "risk_policy": baseline.policy_metadata,
+            "target_cash_increment": (
+                required_float(cfg, "target_cash_increment")
+                if baseline.policy_metadata is None
+                else None
+            ),
+            "candidate_gate": gate.to_dict(),
+            "baseline_handoff_allowed": False,
+            "handoff_status": "ANALYSIS_ONLY_NON_BASELINE_RUN",
             "quantum_constraints": (cfg.get("quantum_constraints") or {}),
             "warnings": warnings,
         }
-        (stage_dir / "risk_summary.json").write_text(
+        primary_key = alpha_key(required_float(cfg, "cvar_alpha"))
+        baseline_payload = {
+            **identity,
+            **artifact_metadata,
+            "input_source": "mock" if mock else "real",
+            "evaluation_date": manifest.get("evaluation_date"),
+            "alpha": required_float(cfg, "cvar_alpha"),
+            "var_0": baseline.before.var[primary_key],
+            "cvar_0": baseline.before.cvar[primary_key],
+            "portfolio_weights": weights,
+            "cash_weight": cash_weight,
+            "ticker_order": list(tickers),
+            "risk_metrics": baseline_metrics.to_dict(),
+            "risk_policy": baseline.policy_metadata,
+            "constraint_violations": list(baseline.constraint_violations),
+            "constraint_details": [item.to_dict() for item in baseline.constraint_details],
+            "status": baseline.status,
+        }
+        _pending_output(stage_dir, "baseline_risk.json").write_text(
+            json.dumps(baseline_payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+        _pending_output(stage_dir, "risk_summary.json").write_text(
             json.dumps(risk_summary, ensure_ascii=False, indent=2, default=str),
             encoding="utf-8",
         )
@@ -612,19 +940,22 @@ def prepare_workflow(
             {
                 **identity,
                 "stage": "risk_workflow",
-                "gate_status": "PASS",
+                "gate_status": gate.status,
                 "candidate_count": selected_count,
                 "bit_count": 2 * selected_count,
-                "structured_sample_count": len(samples),
+                "structured_sample_count": int(dataset.manifest["structured_count"]),
+                "objective_sample_count": len(combined),
                 "deviation": order_payload["deviation"],
             }
         )
-    except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+        _publish_pending(stage_dir, _PREPARE_OUTPUTS)
+    except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+        _cleanup_pending(stage_dir, _PREPARE_OUTPUTS)
         logger.error("Risk workflow preparation failed: %s", exc)
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(
         f"[risk/workflow] candidates={selected_count}, bits={2 * selected_count}, "
-        f"samples={len(samples)} -> {stage_dir}"
+        f"samples={len(combined)}, candidate_gate={gate.status} -> {stage_dir}"
     )
 
 
@@ -655,6 +986,13 @@ def rerank_polish(
     paths.ensure(Stage.RISK)
     risk_dir = paths.stage_dir(Stage.RISK)
     optimization_dir = paths.stage_dir(Stage.QUBO)
+    for filename in (
+        "reranked_candidates.csv",
+        "financial_baselines.csv",
+        "portfolio_shortlist_top3.json",
+        "final_recommendation.json",
+    ):
+        (risk_dir / filename).unlink(missing_ok=True)
     try:
         identity = _workflow_identity(cfg, context)
         cube, tickers, manifest, weights, cash_weight = _workflow_inputs(
@@ -669,17 +1007,30 @@ def rerank_polish(
         model_payload = json.loads(
             (optimization_dir / "qubo_model.json").read_text(encoding="utf-8")
         )
+        exact_payload = _load_optional_json(optimization_dir / "exact_solution.json")
+        benchmark_payload = _load_optional_json(
+            optimization_dir / "workflow_benchmark.json"
+        )
+        expected_order_hash = str(order_payload.get("candidate_order_hash", ""))
+        model_order_hash = str(model_payload.get("candidate_order_hash", ""))
+        if model_order_hash and model_order_hash != expected_order_hash:
+            raise ValueError(
+                "[risk.rerank] candidate_order_hash mismatch between Risk and QUBO model."
+            )
+        qubo_hash = str(model_payload.get("qubo_hash", ""))
+        if not qubo_hash:
+            raise ValueError("[risk.rerank] QUBO model must provide qubo_hash.")
+        observed_qubo_hashes = {
+            str(payload["qubo_hash"])
+            for payload in (qaoa_payload, exact_payload, benchmark_payload)
+            if payload is not None and payload.get("qubo_hash")
+        }
+        if observed_qubo_hashes and observed_qubo_hashes != {qubo_hash}:
+            raise ValueError(
+                f"[risk.rerank] qubo_hash mismatch: {sorted(observed_qubo_hashes)}."
+            )
         ordered_tickers = [str(item["ticker"]) for item in order_payload["candidates"]]
-        raw_pool = qaoa_payload.get("candidate_pool", [])
-        pool = [
-            {
-                **item,
-                "qubo_energy": float(item.get("energy", item.get("qubo_energy"))),
-                "feasible": True,
-                "source_solver": ",".join(item.get("sources", [])),
-            }
-            for item in raw_pool
-        ]
+        pool = _solver_candidate_pool(qaoa_payload, exact_payload, benchmark_payload)
         reranked = rerank_candidates(
             pool,
             cube,
@@ -689,9 +1040,29 @@ def rerank_polish(
             ordered_tickers,
             cfg,
         )
+        policy = RiskPolicy.from_config(cfg)
+        rerank_metadata: dict[str, Any] = {
+            "schema_version": "risk-workflow-v2",
+            "producer": "qshield_risk",
+            "policy_version": (
+                policy.policy_version if policy is not None else "UNAPPROVED_POLICY"
+            ),
+            "parent_hashes": {
+                "scenario_manifest": hashlib.sha256(
+                    json.dumps(manifest, sort_keys=True, default=str).encode("utf-8")
+                ).hexdigest(),
+                "candidate_order": expected_order_hash,
+                "qubo": qubo_hash,
+            },
+            "gate_status": (
+                "PASS" if bool(reranked["feasible"].astype(bool).any()) else "FAIL"
+            ),
+        }
         for key, value in identity.items():
             reranked[key] = value
-        reranked["qubo_hash"] = str(model_payload.get("qubo_hash", ""))
+        for key, value in rerank_metadata.items():
+            reranked[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+        reranked["qubo_hash"] = qubo_hash
         reranked["violations_json"] = reranked["constraint_violations"].map(
             lambda value: json.dumps(list(value))
         )
@@ -700,9 +1071,75 @@ def rerank_polish(
         serializable["decoded_actions"] = serializable["decoded_actions"].map(
             lambda value: json.dumps(value, sort_keys=True)
         )
+        if "solver_provenance" in serializable:
+            serializable["solver_provenance"] = serializable["solver_provenance"].map(
+                lambda value: json.dumps(value, sort_keys=True)
+            )
         serializable.to_csv(reranked_path, index=False)
 
-        winner = reranked.iloc[0]
+        baselines = build_financial_baselines(
+            cube, tickers, weights, cash_weight, cfg
+        )
+        for key, value in {**identity, **rerank_metadata}.items():
+            baselines[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+        baselines_serializable = baselines.copy()
+        baselines_serializable["reductions"] = baselines_serializable["reductions"].map(
+            lambda value: json.dumps(list(value))
+        )
+        baselines_serializable["constraint_violations"] = baselines_serializable[
+            "constraint_violations"
+        ].map(lambda value: json.dumps(list(value)))
+        baselines_serializable.to_csv(
+            risk_dir / "financial_baselines.csv", index=False
+        )
+        top_three = serializable.head(3).to_dict(orient="records")
+        (risk_dir / "portfolio_shortlist_top3.json").write_text(
+            json.dumps(
+                {
+                    **identity,
+                    **rerank_metadata,
+                    "shortlist_type": "action_portfolios",
+                    "does_not_change_asset_top_n": True,
+                    "candidates": top_three,
+                },
+                ensure_ascii=False,
+                indent=2,
+                default=str,
+            ),
+            encoding="utf-8",
+        )
+
+        feasible_rows = reranked.loc[reranked["feasible"].astype(bool)]
+        if feasible_rows.empty:
+            infeasible_payload = {
+                **identity,
+                **rerank_metadata,
+                "status": "INFEASIBLE_POLICY",
+                "recommendation_available": False,
+                "candidate_order_hash": order_payload["candidate_order_hash"],
+                "qubo_hash": model_payload.get("qubo_hash"),
+                "candidate_pool_size": len(reranked),
+                "warnings": [
+                    "No solver candidate passed the canonical Risk policy constraints."
+                ],
+            }
+            (risk_dir / "final_recommendation.json").write_text(
+                json.dumps(infeasible_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            context.write_metrics(
+                {
+                    **identity,
+                    "stage": "rerank_polish",
+                    "gate_status": "FAIL",
+                    "status": "INFEASIBLE_POLICY",
+                    "candidate_pool_size": len(reranked),
+                }
+            )
+            typer.echo("[risk/rerank] INFEASIBLE_POLICY; no final recommendation.")
+            return
+
+        winner = feasible_rows.iloc[0]
         candidate_reductions = dict(winner["decoded_actions"])
         full_quantum = np.zeros(len(tickers), dtype=float)
         ticker_index = {ticker: index for index, ticker in enumerate(tickers)}
@@ -744,6 +1181,18 @@ def rerank_polish(
         primary_key = alpha_key(required_float(cfg, "cvar_alpha"))
         cvar_before = polished.polished_objective.before.cvar[primary_key]
         cvar_after = polished.polished_objective.after.cvar[primary_key]
+        before_uncertain = _uncertain_metrics(
+            cube,
+            np.asarray([weights[ticker] for ticker in tickers], dtype=float),
+            cash_weight,
+            cfg,
+        )
+        after_uncertain = _uncertain_metrics(
+            cube,
+            polished.polished_objective.trade.stock_amounts,
+            polished.polished_objective.trade.cash_amount,
+            cfg,
+        )
         materiality_cfg = cfg.get("materiality") or {}
         materiality = materiality_from_cvar(
             float(cvar_before),
@@ -763,6 +1212,9 @@ def rerank_polish(
             )
         final_payload = {
             **identity,
+            **rerank_metadata,
+            "status": materiality["recommendation_status"],
+            "recommendation_available": True,
             "evaluation_date": manifest.get("evaluation_date"),
             "requested_solver": str(qaoa_payload.get("requested_solver", "qaoa")),
             "actual_solver": str(qaoa_payload.get("actual_solver", "qaoa")),
@@ -785,6 +1237,8 @@ def rerank_polish(
             },
             "cvar_before": polished.polished_objective.before.cvar,
             "cvar_after": polished.polished_objective.after.cvar,
+            "risk_metrics_before": before_uncertain.to_dict(),
+            "risk_metrics_after": after_uncertain.to_dict(),
             "true_cvar_before": cvar_before,
             "true_cvar_after": cvar_after,
             "expected_return_before": polished.polished_objective.before.expected_horizon_return,
@@ -797,6 +1251,14 @@ def rerank_polish(
             "objective_improvement": polished.objective_improvement,
             "polishing_dependency": polished.polishing_dependency,
             "constraints_passed": not polished.polished_objective.constraint_violations,
+            "constraint_violations": list(
+                polished.polished_objective.constraint_violations
+            ),
+            "constraint_details": [
+                item.to_dict()
+                for item in polished.polished_objective.constraint_details
+            ],
+            "risk_policy": polished.polished_objective.policy_metadata,
             **materiality,
             "warnings": warnings,
         }
@@ -808,14 +1270,18 @@ def rerank_polish(
             {
                 **identity,
                 "stage": "rerank_polish",
-                "gate_status": "PASS",
+                "gate_status": (
+                    "PASS"
+                    if not polished.polished_objective.constraint_violations
+                    else "FAIL"
+                ),
                 "candidate_pool_size": len(reranked),
                 "winning_bitstring": bitstring,
                 "true_cvar_before": final_payload["true_cvar_before"],
                 "true_cvar_after": final_payload["true_cvar_after"],
             }
         )
-    except (FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+    except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as exc:
         logger.error("Risk rerank/polish failed: %s", exc)
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(
@@ -875,6 +1341,7 @@ def benchmark_true(
     artifact_names = cfg.get("artifacts") or {}
     true_name = str(artifact_names.get("true_benchmark", "true_benchmark.json"))
     out_path = risk_dir / true_name
+    out_path.unlink(missing_ok=True)
     try:
         identity = _workflow_identity(cfg, context)
         cube, tickers, manifest, weights, cash_weight = _workflow_inputs(
@@ -904,6 +1371,24 @@ def benchmark_true(
         )
         payload["evaluation_date"] = manifest.get("evaluation_date")
         payload["input_source"] = "mock" if mock else "real"
+        policy = RiskPolicy.from_config(cfg)
+        payload.update(
+            {
+                "schema_version": "risk-workflow-v2",
+                "producer": "qshield_risk",
+                "policy_version": (
+                    policy.policy_version if policy is not None else "UNAPPROVED_POLICY"
+                ),
+                "parent_hashes": {
+                    "scenario_manifest": hashlib.sha256(
+                        json.dumps(manifest, sort_keys=True, default=str).encode("utf-8")
+                    ).hexdigest(),
+                    "candidate_order": payload["candidate_order_hash"],
+                    "qubo": payload["qubo_hash"],
+                },
+                "gate_status": "NON_BASELINE_EVIDENCE",
+            }
+        )
         out_path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, default=str),
             encoding="utf-8",

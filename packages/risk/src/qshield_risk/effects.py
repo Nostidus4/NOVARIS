@@ -65,7 +65,9 @@ def build_effects(
     zero_rates = CostRates(0.0, 0.0, 0.0)
 
     baseline = risk_metrics_from_wealth(
-        portfolio_wealth_paths(cube, aligned, cash_weight), levels
+        portfolio_wealth_paths(cube, aligned, cash_weight),
+        levels,
+        uncertainty_config=config if config.get("tail_uncertainty") is not None else None,
     )
     cvar_0 = baseline.cvar[primary_key]
     gains: dict[int, float] = {}
