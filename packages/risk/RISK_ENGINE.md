@@ -1,5 +1,10 @@
 # Risk Engine v1
 
+> **Compatibility documentation only.** Tài liệu này mô tả API nhị phân 8 mã/K=3 của Risk v1.
+> Profile `workflow_update` không dùng K=3; flow triển khai V2 nằm tại
+> [`RISK_WORKFLOW_IMPLEMENTATION_PLAN.md`](RISK_WORKFLOW_IMPLEMENTATION_PLAN.md) và Product SoT là
+> [`docs/workflow-v2.md`](../../docs/workflow-v2.md).
+
 Tài liệu này mô tả implementation hiện tại trong `packages/risk/`. Nguồn chuẩn cho hợp đồng liên
 module vẫn là `packages/contracts/`; các tài liệu product rộng hơn không được hiểu là tính năng đã
 implement nếu chúng nằm trong phần **Deferred** bên dưới.
@@ -124,15 +129,18 @@ Cost rates là decimal rates trên gross sold notional:
 fee_cost       = gross_sales * fee
 spread_cost    = gross_sales * spread
 liquidity_cost = gross_sales * liquidity_penalty
-total_cost     = fee_cost + spread_cost + liquidity_cost
+cash_cost      = fee_cost + spread_cost
 ```
+
+Theo accounting decision TL-008, `liquidity_cost` là objective component riêng; không bị trừ khỏi
+cash/NAV như transaction cost lần thứ hai.
 
 Post-trade accounting:
 
 ```text
 stock_amount_after[i] = current_weight_i - sale_i
-cash_amount_after     = cash_before + gross_sales - total_cost
-NAV_after             = 1 - total_cost
+cash_amount_after     = cash_before + gross_sales - cash_cost
+NAV_after             = 1 - cash_cost
 ```
 
 Amounts phải reconcile về `NAV_after`. Normalized post-trade weights được tính bằng cách chia amounts
