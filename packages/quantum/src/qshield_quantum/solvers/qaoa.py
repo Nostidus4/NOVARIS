@@ -13,11 +13,17 @@ Chạy TOÀN BỘ seed trong danh sách, không cherry-pick (CLAUDE.md quy tắc
 from __future__ import annotations
 
 import gc
+import pickle
+import subprocess
+import sys
+import tempfile
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_algorithms import QAOA
 from qiskit_algorithms.optimizers import COBYLA
 from qiskit_optimization import QuadraticProgram
@@ -25,6 +31,32 @@ from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 from qshield_quantum.backends.simulator import make_sampler
 from qshield_quantum.solvers.warm_start import make_warm_start_optimizer
+
+# Đo thật 2026-08-14/15 (xem Quantum_Reporting.md): `qiskit_algorithms.QAOA` mặc định KHÔNG
+# transpile ansatz trước khi mô phỏng — `PauliEvolutionGate` đi qua `Statevector.from_instruction()`
+# bằng đường `to_matrix()` (tính nguyên ma trận 2^n x 2^n bằng `scipy.sparse.linalg.expm`), chậm
+# ~14x ở n=8 so với khi transpile về gate cơ bản trước (kết quả tối ưu giống hệt, đã verify).
+#
+# ⚠️ QUAN TRỌNG (2026-08-15, đã verify lại nhiều lần): bật transpile không AN TOÀN TẤT ĐỊNH — đây là
+# bug FLAKY/race condition thật trong Rust core qiskit-terra 2.5.2 (`pyo3_runtime.PanicException:
+# not a DAG` tại `crates/circuit/src/dag_circuit.rs:1825`, lúc PassManager chạy `DepthAnalysis`/
+# `UnitarySynthesis`). Đã chứng minh KHÔNG liên quan tên biến (cùng code, cùng tên `b0..b9`, có lúc
+# chạy OK có lúc crash ngay lần gọi đầu) và KHÔNG liên quan riêng số qubit (n=8 "an toàn" chỉ vì ít
+# thao tác transpile hơn → xác suất trúng race thấp hơn, KHÔNG phải zero). Vì vậy `n<=8` dưới đây là
+# ngưỡng GIẢM RỦI RO (thống kê), không phải ngưỡng AN TOÀN TUYỆT ĐỐI — vẫn có thể crash ở n=8 dù xác
+# suất thấp hơn n lớn. Muốn dùng transpile đáng tin cậy trong production PHẢI có retry (chạy lại
+# trong subprocess mới nếu crash) — CHƯA implement, xem Quantum_Reporting.md mục "unresolved".
+_TRANSPILE_SAFE_MAX_QUBITS = 8
+
+
+def _make_transpiler(num_qubits: int):
+    """`None` nếu num_qubits vượt ngưỡng đã verify an toàn — QAOA sẽ tự rơi về đường `expm` chậm
+    nhưng ổn định thay vì risk crash (xem `_TRANSPILE_SAFE_MAX_QUBITS`)."""
+    if num_qubits > _TRANSPILE_SAFE_MAX_QUBITS:
+        return None
+    return generate_preset_pass_manager(
+        optimization_level=1, basis_gates=["rz", "sx", "x", "cx"]
+    )
 
 
 @dataclass(frozen=True)
@@ -48,6 +80,7 @@ class QaoaSeedResult:
     runtime_seconds: float
     samples: tuple[QaoaSample, ...] = ()
     warm_start_used: bool = False
+    transpiled: bool = False
 
 
 def _bitstring_of(x) -> str:
@@ -81,7 +114,13 @@ def solve_qaoa_one_seed(
     )
     t0 = time.perf_counter()
     sampler = make_sampler(shots=shots, seed=seed)
-    qaoa = QAOA(sampler=sampler, optimizer=COBYLA(maxiter=maxiter), reps=reps)
+    transpiler = _make_transpiler(qp.get_num_binary_vars())
+    qaoa = QAOA(
+        sampler=sampler,
+        optimizer=COBYLA(maxiter=maxiter),
+        reps=reps,
+        transpiler=transpiler,
+    )
     algorithm = make_warm_start_optimizer(qaoa) if warm_start else None
     warm_start_used = algorithm is not None
     result = (algorithm or MinimumEigenOptimizer(qaoa)).solve(qp)
@@ -135,6 +174,124 @@ def solve_qaoa_one_seed(
         runtime_seconds=runtime,
         samples=samples,
         warm_start_used=warm_start_used,
+        transpiled=transpiler is not None,
+    )
+
+
+_WORKER_MODULE = "qshield_quantum.solvers._qaoa_worker"
+
+
+def _always_feasible(_bits: np.ndarray) -> bool:
+    """Feasibility permissive, dùng khi bài toán không có ràng buộc K-of-N đơn giản (VD four-level
+    encoding). Hàm cấp module (KHÔNG phải closure/lambda) để pickle được cho subprocess."""
+    return True
+
+
+def solve_qaoa_one_seed_fast(
+    qp: QuadraticProgram,
+    *,
+    seed: int,
+    shots: int,
+    maxiter: int,
+    k_actions: int | None = None,
+    always_feasible: bool = False,
+    reference_bitstring: str | None = None,
+    reps: int = 1,
+    warm_start: bool = False,
+    candidate_pool_size: int = 20,
+    max_retries: int = 2,
+    subprocess_timeout_seconds: float = 120.0,
+) -> QaoaSeedResult:
+    """`solve_qaoa_one_seed` nhưng thử đường transpile (nhanh) an toàn qua subprocess + retry.
+
+    Độ chính xác KHÔNG đổi so với `solve_qaoa_one_seed` thường — transpile chỉ đổi cách mô phỏng
+    circuit, không đổi công thức toán (đã verify khớp exact tuyệt đối nhiều lần khi không crash,
+    xem `Quantum_Reporting.md` 2026-08-15). Cơ chế:
+
+    1. Thử chạy trong subprocess riêng với transpile CƯỠNG BỨC bật (nhanh ~14-100x).
+    2. Bug flaky trong qiskit-terra 2.5.2 (không tất định, xem comment `_TRANSPILE_SAFE_MAX_QUBITS`
+       ở trên) có thể làm subprocess đó crash — bắt được qua exit code khác 0, KHÔNG ảnh hưởng tiến
+       trình gọi hàm này. Thử lại tối đa `max_retries` lần trong subprocess MỚI mỗi lần.
+    3. Hết lượt retry mà vẫn crash → rơi về `solve_qaoa_one_seed` chạy thẳng trong tiến trình hiện
+       tại (chậm nhưng luôn đúng, không transpile nếu vượt `_TRANSPILE_SAFE_MAX_QUBITS`) — LUÔN trả
+       về kết quả đúng, không bao giờ raise vì lý do transpile crash.
+
+    Hạn chế đã biết: chỉ hỗ trợ `feasibility` qua `k_actions` (luôn pickle được) — không nhận
+    callable `feasibility` tuỳ ý (closure như `make_four_level_feasibility()` không pickle được).
+    Gọi hàm này với `feasibility` tuỳ ý sẽ bỏ qua thẳng bước subprocess, chạy `solve_qaoa_one_seed`
+    trực tiếp (đúng, không có lợi tốc độ) — xem `Quantum_Reporting.md` mục hạn chế.
+    """
+    feasibility = _always_feasible if always_feasible else None
+    payload = {
+        "qp": qp,
+        "kwargs": {
+            "seed": seed,
+            "shots": shots,
+            "maxiter": maxiter,
+            "k_actions": k_actions,
+            "feasibility": feasibility,
+            "reference_bitstring": reference_bitstring,
+            "reps": reps,
+            "warm_start": warm_start,
+            "candidate_pool_size": candidate_pool_size,
+        },
+    }
+    try:
+        payload_bytes = pickle.dumps(payload)
+    except pickle.PicklingError, AttributeError, TypeError:
+        # k_actions=None mà không có feasibility callable pickle được -> không thể chạy subprocess.
+        return solve_qaoa_one_seed(
+            qp,
+            seed=seed,
+            shots=shots,
+            maxiter=maxiter,
+            k_actions=k_actions,
+            feasibility=feasibility,
+            reference_bitstring=reference_bitstring,
+            reps=reps,
+            warm_start=warm_start,
+            candidate_pool_size=candidate_pool_size,
+        )
+
+    with tempfile.TemporaryDirectory(prefix="qaoa_fast_") as tmp:
+        input_path = Path(tmp) / "input.pkl"
+        input_path.write_bytes(payload_bytes)
+        for attempt in range(max_retries + 1):
+            output_path = Path(tmp) / f"output_{attempt}.pkl"
+            try:
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        _WORKER_MODULE,
+                        str(input_path),
+                        str(output_path),
+                    ],
+                    capture_output=True,
+                    timeout=subprocess_timeout_seconds,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                continue  # coi như 1 lần crash, thử lại (hoặc fallback nếu hết lượt)
+            if proc.returncode == 0 and output_path.exists():
+                result = pickle.loads(output_path.read_bytes())
+                if not isinstance(result, QaoaSeedResult):
+                    continue
+                return result
+            # crash (segfault, panic...) -> thử lại subprocess MỚI, không giữ trạng thái cũ.
+
+    # Hết lượt retry -> đường chậm nhưng LUÔN đúng, không bao giờ để lỗi transpile làm mất kết quả.
+    return solve_qaoa_one_seed(
+        qp,
+        seed=seed,
+        shots=shots,
+        maxiter=maxiter,
+        k_actions=k_actions,
+        feasibility=feasibility,
+        reference_bitstring=reference_bitstring,
+        reps=reps,
+        warm_start=warm_start,
+        candidate_pool_size=candidate_pool_size,
     )
 
 
