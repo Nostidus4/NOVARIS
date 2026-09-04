@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from scipy.stats import kendalltau, spearmanr  # type: ignore[import-untyped]
 
+from qshield_risk.candidates import reselect_top_n
+
 
 @dataclass(frozen=True)
 class CandidateGateResult:
@@ -57,7 +59,9 @@ def _coverage_at_rank(frame: pd.DataFrame, column: str, count: int) -> float:
     return _positive_coverage(frame[column], selected)
 
 
-def _rank_correlations(base: Sequence[str], variant: Sequence[str]) -> tuple[float, float]:
+def _rank_correlations(
+    base: Sequence[str], variant: Sequence[str]
+) -> tuple[float, float]:
     common = [ticker for ticker in base if ticker in set(variant)]
     if len(common) < 2:
         return 0.0, 0.0
@@ -91,7 +95,9 @@ def evaluate_candidate_gate(
     }
     missing = sorted(required - set(candidate_frame.columns))
     if missing:
-        raise ValueError(f"[risk.candidate_gate] candidate frame missing columns: {missing}.")
+        raise ValueError(
+            f"[risk.candidate_gate] candidate frame missing columns: {missing}."
+        )
     if output_candidates <= 0:
         raise ValueError("[risk.candidate_gate] output_candidates must be positive.")
     raw = config.get("candidate_gate")
@@ -107,8 +113,13 @@ def evaluate_candidate_gate(
             "[risk.candidate_gate] all provisional gate thresholds are required."
         )
     thresholds = {name: float(raw[name]) for name in threshold_names}
-    if any(not np.isfinite(value) or not 0.0 <= value <= 1.0 for value in thresholds.values()):
-        raise ValueError("[risk.candidate_gate] thresholds must be finite and in [0, 1].")
+    if any(
+        not np.isfinite(value) or not 0.0 <= value <= 1.0
+        for value in thresholds.values()
+    ):
+        raise ValueError(
+            "[risk.candidate_gate] thresholds must be finite and in [0, 1]."
+        )
 
     frame = candidate_frame.copy()
     selected = frame["selected_top10"].astype(bool)
@@ -126,7 +137,9 @@ def evaluate_candidate_gate(
             frame["eligible_status"].isin((True, "eligible", "MODEL_ELIGIBLE")),
             "ticker",
         ].astype(str)
-        eligible_sectors = {sectors[ticker] for ticker in eligible_tickers if ticker in sectors}
+        eligible_sectors = {
+            sectors[ticker] for ticker in eligible_tickers if ticker in sectors
+        }
         selected_sectors = {
             sectors[ticker]
             for ticker in frame.loc[selected, "ticker"].astype(str)
@@ -161,20 +174,30 @@ def evaluate_candidate_gate(
 
     reasons: list[str] = []
     if selected_count < output_candidates:
-        reasons.append(f"UNDERFILLED_CANDIDATES_{selected_count}_OF_{output_candidates}")
+        reasons.append(
+            f"UNDERFILLED_CANDIDATES_{selected_count}_OF_{output_candidates}"
+        )
     if coverage_at_n < thresholds["coverage_at_n_min"]:
         reasons.append("COVERAGE_BELOW_THRESHOLD")
     if not overlaps:
         reasons.append("STABILITY_NOT_EVALUATED")
     else:
-        if median_overlap is not None and median_overlap < thresholds["median_overlap_at_n_min"]:
+        if (
+            median_overlap is not None
+            and median_overlap < thresholds["median_overlap_at_n_min"]
+        ):
             reasons.append("MEDIAN_OVERLAP_BELOW_THRESHOLD")
-        if worst_overlap is not None and worst_overlap < thresholds["worst_overlap_at_n_min"]:
+        if (
+            worst_overlap is not None
+            and worst_overlap < thresholds["worst_overlap_at_n_min"]
+        ):
             reasons.append("WORST_OVERLAP_BELOW_THRESHOLD")
 
     hard_fail = any(reason != "STABILITY_NOT_EVALUATED" for reason in reasons)
     status = "FAIL" if hard_fail else "NOT_EVALUATED" if reasons else "PASS"
-    sensitivity_counts = tuple(int(value) for value in (raw.get("sensitivity_counts", (12, 15)) or ()))
+    sensitivity_counts = tuple(
+        int(value) for value in (raw.get("sensitivity_counts", (12, 15)) or ())
+    )
     sensitivity = {
         f"coverage_at_{count}": _coverage_at_rank(
             frame, _COVERAGE_COLUMNS["marginal_20"], count
@@ -199,4 +222,82 @@ def evaluate_candidate_gate(
         reasons=tuple(reasons),
         baseline_handoff_allowed=status == "PASS",
         analysis_handoff_allowed=selected_count > 0,
+    )
+
+
+def select_dynamic_candidate_count(
+    candidate_frame: pd.DataFrame,
+    config: Mapping[str, Any],
+    *,
+    candidate_counts: Sequence[int],
+    ranking_variants: Mapping[str, Sequence[str]] | None,
+    sectors: Mapping[str, str] | None = None,
+) -> tuple[int, CandidateGateResult, dict[str, Any]]:
+    """CR-WF2-005 dynamic-N: the smallest N in `candidate_counts` passing coverage AND stability.
+
+    `evaluate_candidate_gate`'s ranking/coverage columns do not depend on N (see
+    `qshield_risk.candidates.reselect_top_n`), so each candidate N is evaluated by moving the
+    same ranked frame's selection cutoff — no re-ranking, and no re-running the (expensive)
+    marginal-CVaR candidate scoring. Thresholds are never lowered to force a PASS: if every N
+    fails, the smallest requested N's result is returned with a FAIL/NOT_EVALUATED status and a
+    `selection_reason` explaining the exhaustion, so the artifact reports evidence, not a
+    hidden decision.
+    """
+    if not candidate_counts:
+        raise ValueError("[risk.candidate_gate] candidate_counts must be non-empty.")
+    ordered_counts = sorted({int(count) for count in candidate_counts})
+    attempts: dict[str, Any] = {}
+    for count in ordered_counts:
+        gate = evaluate_candidate_gate(
+            reselect_top_n(candidate_frame, count),
+            config,
+            output_candidates=count,
+            ranking_variants=ranking_variants,
+            sectors=sectors,
+        )
+        attempts[str(count)] = {
+            "status": gate.status,
+            "coverage_at_n": gate.coverage_at_n,
+            "median_overlap_at_n": gate.median_overlap_at_n,
+            "worst_overlap_at_n": gate.worst_overlap_at_n,
+            "reasons": list(gate.reasons),
+        }
+        if gate.status == "PASS":
+            return (
+                count,
+                gate,
+                {
+                    "candidates_tried": ordered_counts,
+                    "selected_n": count,
+                    "selection_reason": (
+                        f"smallest N in {ordered_counts} passing both coverage and stability."
+                    ),
+                    "attempts": attempts,
+                },
+            )
+
+    # Exhausted: fall back to the smallest (originally requested) N rather than silently
+    # reporting against a larger, more permissive one nobody asked for. Thresholds are not
+    # lowered — the FAIL/NOT_EVALUATED status and its reasons are preserved verbatim.
+    fallback_count = ordered_counts[0]
+    fallback_gate = evaluate_candidate_gate(
+        reselect_top_n(candidate_frame, fallback_count),
+        config,
+        output_candidates=fallback_count,
+        ranking_variants=ranking_variants,
+        sectors=sectors,
+    )
+    return (
+        fallback_count,
+        fallback_gate,
+        {
+            "candidates_tried": ordered_counts,
+            "selected_n": fallback_count,
+            "selection_reason": (
+                f"no N in {ordered_counts} passed both coverage and stability; reporting the "
+                f"smallest requested N={fallback_count} as evidence (thresholds were not "
+                "lowered to force a pass)."
+            ),
+            "attempts": attempts,
+        },
     )

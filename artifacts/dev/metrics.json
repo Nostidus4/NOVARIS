@@ -1,21 +1,14 @@
 {
-  "run_id": "run_20260807_155122",
-  "profile_id": "workflow_update_downstream",
+  "run_id": "run_20260814_215342",
+  "profile_id": "workflow_update",
   "profile_status": "NON_BASELINE_RUN",
-  "config_version": "workflow-update-decision-package-v3",
-  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
-  "stage": "true_benchmark",
-  "gate_status": "PASS",
-  "qubo_hash": "17e39af0d73a935574d8cf952f7369f2765df340e1fe81b15f070b4d10e0db2d",
-  "requested_solver": "qaoa",
-  "actual_solver": "exact",
-  "financial_ranking": [
-    "classical",
-    "exact"
-  ],
-  "solvers_available": {
-    "exact": true,
-    "qaoa": false,
-    "classical": true
-  }
+  "config_version": "workflow-update-v4",
+  "config_hash": "4927c3fe08d19d2036c8570bb9d9f8b0ddb632226911ba297b529327902f37b2",
+  "stage": "risk_workflow",
+  "gate_status": "FAIL",
+  "candidate_count": 10,
+  "bit_count": 20,
+  "structured_sample_count": 211,
+  "objective_sample_count": 2211,
+  "deviation": null
 }

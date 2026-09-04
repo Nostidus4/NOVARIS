@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from qshield_api.domain.optimize.entities import OptimizeResult
+from qshield_api.domain.optimize.entities import OptimizeJobRequest, OptimizeResult
 
 
 class OptimizeRunner(Protocol):
-    def run(self, job_id: str) -> OptimizeResult: ...
+    def run(self, job_id: str, request: OptimizeJobRequest) -> OptimizeResult: ...

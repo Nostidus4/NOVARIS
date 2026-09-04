@@ -1,0 +1,302 @@
+{
+  "run_id": "run_20260904_071414",
+  "profile_id": "workflow_update",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-v4",
+  "config_hash": "4927c3fe08d19d2036c8570bb9d9f8b0ddb632226911ba297b529327902f37b2",
+  "evaluation_date": "2026-07-30",
+  "input_source": "real",
+  "candidate_order": [
+    "MWG",
+    "GVR",
+    "BSR",
+    "PLX",
+    "GAS",
+    "VRE",
+    "SSI",
+    "HDB",
+    "CTG",
+    "BID"
+  ],
+  "bit_count": 20,
+  "structured_sample_count": 211,
+  "component_ablation": [
+    {
+      "disabled_component": null,
+      "objective": 0.6473878321837923,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "cvar",
+      "objective": 0.03337500031662509,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "return_sacrifice",
+      "objective": 0.6473878321837923,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "transaction_cost",
+      "objective": 0.6411378321900423,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "turnover",
+      "objective": 0.6223878322087922,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "liquidity_penalty",
+      "objective": 0.6461378321850423,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    },
+    {
+      "disabled_component": "cash_budget_deviation",
+      "objective": 0.6465128318346671,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "active_candidates": 10,
+      "hamming_to_max_sell": 0,
+      "is_max_sell": true,
+      "is_no_action": false
+    }
+  ],
+  "target_cash_sweep": [
+    {
+      "target_cash_increment": 0.02,
+      "max_reachable_cash": 0.09999999989999998,
+      "target_at_or_above_ceiling": false,
+      "objective": 0.7156462943971118,
+      "levels_pct": [
+        30.0,
+        30.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reduction_sum_pct": 60.0,
+      "is_max_sell": false
+    },
+    {
+      "target_cash_increment": 0.04,
+      "max_reachable_cash": 0.09999999989999998,
+      "target_at_or_above_ceiling": false,
+      "objective": 0.6918113187242476,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reduction_sum_pct": 120.0,
+      "is_max_sell": false
+    },
+    {
+      "target_cash_increment": 0.06,
+      "max_reachable_cash": 0.09999999989999998,
+      "target_at_or_above_ceiling": false,
+      "objective": 0.6726883654979164,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "reduction_sum_pct": 180.0,
+      "is_max_sell": false
+    },
+    {
+      "target_cash_increment": 0.08,
+      "max_reachable_cash": 0.09999999989999998,
+      "target_at_or_above_ceiling": false,
+      "objective": 0.6590247140165323,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        0.0,
+        0.0
+      ],
+      "reduction_sum_pct": 240.0,
+      "is_max_sell": false
+    },
+    {
+      "target_cash_increment": 0.1,
+      "max_reachable_cash": 0.09999999989999998,
+      "target_at_or_above_ceiling": true,
+      "objective": 0.6473878321837923,
+      "levels_pct": [
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0,
+        30.0
+      ],
+      "reduction_sum_pct": 300.0,
+      "is_max_sell": true
+    }
+  ],
+  "economic_sanity": {
+    "expected_return_no_action": 0.015609485406856036,
+    "expected_return_max_sell": 0.016133745277306332,
+    "selling_increases_expected_return": true,
+    "candidates_with_negative_expected_return": {},
+    "candidate_count": 10,
+    "flag": "SELLING_INCREASES_EXPECTED_RETURN",
+    "note": "Cash yield giả định 0% (CR-WF2-003 chưa duyệt). Nếu cờ bật, điều tra scenario cube trước khi điều chỉnh objective."
+  },
+  "landscape": {
+    "sample_count": 2211,
+    "objective_vs_reduction_correlation": -0.999052172213351,
+    "component_contribution_span": {
+      "cvar": 0.11386918276423141,
+      "return_sacrifice": 0.003240666411136652,
+      "transaction_cost": 0.0054166666612500015,
+      "turnover": 0.021666666645000006,
+      "liquidity_penalty": 0.0010833333322500002,
+      "cash_budget_deviation": 0.3025749996974251
+    },
+    "dominant_component": "cash_budget_deviation",
+    "dominant_span_over_cvar": 2.6572158713381926,
+    "local_minima_in_sample": 244,
+    "states_with_sampled_neighbours": 639,
+    "note": "local_minima đếm TRÊN TẬP MẪU, không phải toàn bộ 2^d — chỉ so được giữa các run dùng cùng bộ mẫu."
+  },
+  "status": "DIAGNOSTIC_ONLY_NON_BASELINE_RUN",
+  "note": "Chẩn đoán để owner (Phúc/Ngọc) chốt tham số tài chính. Module này KHÔNG đổi target_cash_increment hay weight/scale — xem plan.md CR-WF2-002."
+}

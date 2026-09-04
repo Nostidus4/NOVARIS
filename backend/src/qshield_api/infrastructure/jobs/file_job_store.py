@@ -21,6 +21,7 @@ from qshield_contracts.config import Config
 
 from qshield_api.domain.optimize.entities import (
     OptimizeJob,
+    OptimizeJobRequest,
     OptimizeJobStatus,
     OptimizeResult,
 )
@@ -47,6 +48,10 @@ class FileOptimizeJobRepository:
             "status": str(job.status),
             "created_at": job.created_at.isoformat(),
             "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+            "request": {
+                "weights": dict(job.request.weights),
+                "cash_weight": job.request.cash_weight,
+            },
             "error": job.error,
             "result": _result_to_dict(job.result) if job.result is not None else None,
         }
@@ -59,6 +64,9 @@ class FileOptimizeJobRepository:
         if not path.exists():
             return None
         payload = json.loads(path.read_text(encoding="utf-8"))
+        # Job JSON ghi trước khi có personalization (P0-5) không có khóa "request" — mặc định
+        # rỗng, chỉ ảnh hưởng bookkeeping của job cũ đã DONE/FAILED, không re-run.
+        request_payload = payload.get("request") or {}
         return OptimizeJob(
             job_id=payload["job_id"],
             status=OptimizeJobStatus(payload["status"]),
@@ -67,6 +75,13 @@ class FileOptimizeJobRepository:
                 datetime.fromisoformat(payload["finished_at"])
                 if payload["finished_at"]
                 else None
+            ),
+            request=OptimizeJobRequest(
+                weights={
+                    str(k): float(v)
+                    for k, v in dict(request_payload.get("weights") or {}).items()
+                },
+                cash_weight=float(request_payload.get("cash_weight") or 0.0),
             ),
             result=_result_from_dict(payload["result"]) if payload["result"] else None,
             error=payload["error"],
@@ -99,6 +114,10 @@ def _result_to_dict(result: OptimizeResult) -> dict[str, Any]:
         "true_cvar_before": result.true_cvar_before,
         "true_cvar_after": result.true_cvar_after,
         "source_artifact": result.source_artifact,
+        "personalization_status": result.personalization_status,
+        "personalization_note": result.personalization_note,
+        "requested_portfolio_hash": result.requested_portfolio_hash,
+        "evaluated_portfolio_hash": result.evaluated_portfolio_hash,
     }
 
 
@@ -134,6 +153,16 @@ def _result_from_dict(payload: dict[str, Any]) -> OptimizeResult:
                 else float(payload["true_cvar_after"])
             ),
             source_artifact="legacy_qaoa_result.json",
+            personalization_status=str(
+                payload.get("personalization_status") or "NOT_APPLIED"
+            ),
+            personalization_note=(
+                None
+                if payload.get("personalization_note") is None
+                else str(payload["personalization_note"])
+            ),
+            requested_portfolio_hash=str(payload.get("requested_portfolio_hash") or ""),
+            evaluated_portfolio_hash=str(payload.get("evaluated_portfolio_hash") or ""),
         )
     return OptimizeResult(
         bitstring=str(payload["bitstring"]),
@@ -176,4 +205,14 @@ def _result_from_dict(payload: dict[str, Any]) -> OptimizeResult:
             else float(payload["true_cvar_after"])
         ),
         source_artifact=str(payload["source_artifact"]),
+        personalization_status=str(
+            payload.get("personalization_status") or "NOT_APPLIED"
+        ),
+        personalization_note=(
+            None
+            if payload.get("personalization_note") is None
+            else str(payload["personalization_note"])
+        ),
+        requested_portfolio_hash=str(payload.get("requested_portfolio_hash") or ""),
+        evaluated_portfolio_hash=str(payload.get("evaluated_portfolio_hash") or ""),
     )

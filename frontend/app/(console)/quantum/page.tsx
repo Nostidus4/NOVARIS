@@ -5,6 +5,7 @@ import {
   Scale,
   Sparkles,
   SlidersHorizontal,
+  TriangleAlert,
 } from "lucide-react";
 import { loadConsoleQuantum } from "@/lib/api";
 import { Btn, PageHead } from "@/components/ui/PageHead";
@@ -46,6 +47,26 @@ export default async function QuantumPage() {
         Exact solver là thước đo chuẩn, QAOA là bên thách thức — kết quả ở đây không chứng minh
         quantum advantage.
       </ReadOnlyNote>
+
+      {data && data.online && data.actual_solver !== "qaoa" ? (
+        <div className="solver-warning-banner">
+          <TriangleAlert size={18} />
+          <div>
+            <div className="solver-warning-banner-title">
+              Không có kết quả QAOA trong lần chạy này
+            </div>
+            <div className="solver-warning-banner-copy">
+              Solver thực tế đã sinh ra các con số dưới đây là{" "}
+              <strong>{data.actual_solver ?? "unknown"}</strong>, không phải QAOA.{" "}
+              {data.fallback_reason
+                ? `Lý do: ${data.fallback_reason}.`
+                : "Không có fallback_reason nào được artifact ghi lại."}{" "}
+              Mọi nhãn &quot;solver reduction&quot; bên dưới mô tả nghiệm của solver này (thường
+              là brute-force exact), không phải QAOA.
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="card card-pad">
         <div className="card-head">
@@ -92,9 +113,26 @@ export default async function QuantumPage() {
             </div>
             <div className="callout">
               <div className="card-label">Constraints</div>
-              <div className="metric-value" style={{ color: "var(--success)", fontSize: 23 }}>
-                {data?.constraints_passed ? "PASS" : "CHECK"}
+              <div
+                className="metric-value"
+                style={{
+                  color: !data?.constraints_evaluated
+                    ? "var(--muted)"
+                    : data?.constraints_passed
+                      ? "var(--success)"
+                      : "var(--warning)",
+                  fontSize: 23,
+                }}
+              >
+                {!data?.constraints_evaluated
+                  ? "NOT_EVALUATED"
+                  : data?.constraints_passed
+                    ? "PASS"
+                    : "FAIL"}
               </div>
+              {!data?.constraints_evaluated ? (
+                <div className="card-sub">Không có quantum_constraints/risk_policy nào được encode.</div>
+              ) : null}
             </div>
             <div className="callout">
               <div className="card-label">Exact energy</div>
@@ -107,11 +145,15 @@ export default async function QuantumPage() {
             <div className="callout">
               <div className="card-label">Feasible rate</div>
               <div className="metric-value" style={{ fontSize: 23 }}>
-                {data?.mean_feasibility_rate !== null &&
-                data?.mean_feasibility_rate !== undefined
-                  ? data.mean_feasibility_rate.toFixed(2)
-                  : "—"}
+                {!data?.constraints_evaluated ||
+                data?.mean_feasibility_rate === null ||
+                data?.mean_feasibility_rate === undefined
+                  ? "n/a"
+                  : data.mean_feasibility_rate.toFixed(2)}
               </div>
+              {!data?.constraints_evaluated ? (
+                <div className="card-sub">n/a — no constraints encoded</div>
+              ) : null}
             </div>
           </div>
         </article>
@@ -154,15 +196,37 @@ export default async function QuantumPage() {
       <section className="card card-pad section-gap">
         <div className="card-head">
           <div>
+            <div className="card-label">Polishing dependency</div>
+            <div className="card-title">Solver vs. classical local polish contribution</div>
+            <div className="card-sub">
+              Tỷ lệ phần cải thiện CVaR đến từ bước polish cổ điển (±5pp, zero-lock) thay vì từ
+              solver (exact/QAOA). Càng cao nghĩa là phần cải thiện càng đến từ polish, không phải
+              từ solver.
+            </div>
+          </div>
+        </div>
+        <div className="callout primary">
+          <div className="card-label">polishing_dependency</div>
+          <div className="metric-value" style={{ fontSize: 28 }}>
+            {data?.polishing_dependency !== null && data?.polishing_dependency !== undefined
+              ? `${(data.polishing_dependency * 100).toFixed(1)}%`
+              : "—"}
+          </div>
+        </div>
+      </section>
+
+      <section className="card card-pad section-gap">
+        <div className="card-head">
+          <div>
             <div className="card-label">Action reconciliation</div>
-            <div className="card-title">Raw quantum/exact vs polished final action</div>
+            <div className="card-title">Solver output vs. polished final action</div>
             <div className="card-sub">
               Lọc nhanh những mã mà polish lệch khỏi nghiệm solver để soát lại ràng buộc.
             </div>
           </div>
           <span className="tag good">{actions.length} rows</span>
         </div>
-        <ActionTable rows={actions} />
+        <ActionTable rows={actions} sourceSolver={data?.actual_solver ?? null} />
       </section>
 
       <section className="section-gap">

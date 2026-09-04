@@ -230,5 +230,39 @@ def test_rerank_deduplicates_bitstrings_without_losing_solver_provenance() -> No
     assert reranked.iloc[0]["qubo_energy"] == pytest.approx(0.1)
 
     baselines = build_financial_baselines(cube, tickers, weights, 0.0, cfg)
-    assert baselines["baseline"].tolist() == ["no_action", "pro_rata", "greedy"]
+    assert baselines["baseline"].tolist() == [
+        "no_action",
+        "pro_rata",
+        "greedy",
+        "cash_target_only",
+        "risk_only",
+        "max_sell",
+    ]
     assert bool(baselines.iloc[0]["feasible"]) is True
+
+
+def test_new_baselines_expose_cash_vs_risk_tradeoff() -> None:
+    """cash_target_only vs risk_only is the decisive P0-1 diagnostic (see rerank.py docstring)."""
+    cube, tickers, weights = _inputs()
+    cfg = (
+        _config()
+    )  # target_cash_increment=0.0, zero transaction cost, all assets loss-making.
+    baselines = build_financial_baselines(cube, tickers, weights, 0.0, cfg)
+    by_name = {row["baseline"]: row for _, row in baselines.iterrows()}
+
+    # max_sell is the trivial hard upper bound: every candidate at the 30% ceiling.
+    assert by_name["max_sell"]["reductions"] == pytest.approx((0.30, 0.30, 0.30))
+
+    # Zero transaction cost + strictly loss-making assets: selling more always lowers CVaR, so
+    # risk_only (minimize cvar alone) matches the trivial max_sell upper bound exactly.
+    assert by_name["risk_only"]["reductions"] == pytest.approx((0.30, 0.30, 0.30))
+    assert by_name["risk_only"]["true_cvar"] == pytest.approx(
+        by_name["max_sell"]["true_cvar"]
+    )
+
+    # target_cash_increment=0.0 and zero transaction cost: the only zero-deviation point is
+    # no action at all, so cash_target_only must reproduce no_action exactly.
+    assert by_name["cash_target_only"]["reductions"] == pytest.approx((0.0, 0.0, 0.0))
+    assert by_name["cash_target_only"]["true_objective"] == pytest.approx(
+        by_name["no_action"]["true_objective"]
+    )

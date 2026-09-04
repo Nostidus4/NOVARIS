@@ -565,7 +565,17 @@ candidate_gate:
   coverage_at_n_min: 0.70
   median_overlap_at_n_min: 0.70
   worst_overlap_at_n_min: 0.50
+  # P1-5: null = dùng artifact ranking có sẵn. Khi null, Risk TỰ SINH variants bằng bootstrap
+  # trên truc scenario voi stability_seeds duoi day. Khong co seeds => gate bao
+  # STABILITY_NOT_EVALUATED trung thuc thay vi tu doan mot bo seed.
   stability_rankings_path: null
+  stability_seeds:
+  - 101
+  - 202
+  - 303
+  - 404
+  - 505
+  stability_block_length: 5
   sensitivity_counts:
   - 12
   - 15
@@ -596,6 +606,10 @@ materiality:
   rule: improvement only if true CVaR falls by >=1% relative after cost
 quantum_constraints: {}
 performance_budget:
+  # Thong luong exact do tren may tham chieu: 2^20 = 1.048.576 trang thai trong 4,6s.
+  # Dung de tu choi handoff co so bit vuot ngan sach exact (VD dynamic-N nang len 30 bit = 2^30).
+  # Doi may => do lai; day la con so KY THUAT, khong phai tham so tai chinh.
+  exact_states_per_second: 228000
   reference_hardware:
     label: team_benchmark_reference
     note: Fill cpu/ram/os when recording GATE-08 numbers on one machine.

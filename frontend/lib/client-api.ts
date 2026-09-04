@@ -43,6 +43,12 @@ export type OptimizeJob = {
     true_cvar_after: number | null;
     fallback_reason: string | null;
     source_artifact: string;
+    // P0-5: job luôn chạy trên handoff Risk trên đĩa — các trường dưới nói rõ liệu handoff đó
+    // có khớp danh mục (weights/cash_weight) người dùng vừa gửi lên hay không.
+    personalization_status: "MATCHED_HANDOFF" | "NOT_APPLIED" | string;
+    personalization_note: string | null;
+    requested_portfolio_hash: string;
+    evaluated_portfolio_hash: string;
   } | null;
 };
 

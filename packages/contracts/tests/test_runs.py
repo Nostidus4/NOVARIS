@@ -49,3 +49,40 @@ def test_logger_writes_to_logs_txt(tmp_path: Path) -> None:
     log_path = ctx.artifact_paths.run_root / "logs.txt"
     assert log_path.exists()
     assert "hello from test" in log_path.read_text(encoding="utf-8")
+
+
+def test_second_run_context_with_same_run_id_still_writes_its_own_logs(
+    tmp_path: Path,
+) -> None:
+    """`logging.getLogger` là registry toàn cục theo tiến trình, còn tên logger chỉ gồm
+    `run_id` + `name`. Hai run KHÁC `run_root` nhưng TRÙNG `run_id` (dev mode, hai tmp_path)
+    vì thế nhận cùng một đối tượng logger. Nếu chỉ kiểm `if not logger.handlers`, run thứ hai
+    tái dùng `FileHandler` cũ trỏ vào `run_root` CŨ và `logs.txt` của nó không bao giờ tồn tại —
+    mất lặng lẽ một trong 4 file metadata bắt buộc (CLAUDE.md quy tắc 13). Bug này từng làm
+    `test_run_context_metadata_is_written` (packages/ai) fail tuỳ thứ tự chạy test.
+    """
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    fixed_run_id = "shared_run_id"
+
+    def _context(root: Path) -> RunContext:
+        paths = ArtifactPaths(
+            {"artifacts": {"mode": "runs", "root": str(root / "artifacts")}},
+            run_id=fixed_run_id,
+        )
+        return RunContext({}, paths)
+
+    first = _context(first_root)
+    first.logger("stage").info("from first run")
+
+    second = _context(second_root)
+    second.logger("stage").info("from second run")
+
+    assert first.run_id == second.run_id, "tiền đề của test: hai run trùng run_id"
+    first_log = first.artifact_paths.run_root / "logs.txt"
+    second_log = second.artifact_paths.run_root / "logs.txt"
+    assert first_log.exists()
+    assert second_log.exists(), "run thứ hai phải có logs.txt của riêng nó"
+    assert "from second run" in second_log.read_text(encoding="utf-8")
+    # Handler cũ phải bị đóng, không được tiếp tục ghi vào run_root cũ.
+    assert "from second run" not in first_log.read_text(encoding="utf-8")

@@ -172,3 +172,60 @@ def test_build_generic_benchmark_one_seed_non_final() -> None:
     assert "best" in bench["energy_stats"]
     assert bench["requested_solver"] == "qaoa"
     assert bench["actual_solver"] == "qaoa"
+
+
+def _tiny_model(n: int = 5):
+    from qshield_quantum.formulation.surrogate import (
+        QuadraticSurrogate,
+        quadratic_feature_count,
+    )
+
+    return QuadraticSurrogate(
+        Q=np.zeros((n, n)),
+        linear=-np.arange(1, n + 1, dtype=float),
+        constant=0.0,
+        residual_sum_squares=0.0,
+        rank=quadratic_feature_count(n),
+        sample_count=quadratic_feature_count(n),
+    )
+
+
+def test_classical_budget_never_truncates_the_base_restart_set() -> None:
+    """P1-3: budget đã hết vẫn phải chạy đủ tập cơ sở — cắt bớt vừa làm classical yếu đi một cách
+    nhân tạo, vừa có thể trả 0 điểm xuất phát khiến hàm raise (bug đã gặp thật)."""
+    from qshield_quantum.benchmark import coordinate_descent_classical
+
+    model = _tiny_model()
+    bitstring, _energy, stats = coordinate_descent_classical(
+        model, restarts=8, seed=0, budget_seconds=1e-9
+    )
+
+    assert len(bitstring) == model.dimension
+    assert stats["restarts_run"] >= 8, "tập cơ sở phải chạy đủ bất kể budget"
+    assert stats["budget_matched"] is True
+    assert stats["objective_evaluations"] > 0
+
+
+def test_classical_reports_that_all_ones_is_a_seeded_start() -> None:
+    """Với landscape mà nghiệm tối ưu CHÍNH LÀ all-ones, classical thắng ngay ở restart thứ hai
+    mà không cần tìm kiếm. Benchmark phải công khai điều đó thay vì để người đọc suy ra."""
+    from qshield_quantum.benchmark import coordinate_descent_classical
+
+    _bits, _energy, stats = coordinate_descent_classical(
+        _tiny_model(), restarts=4, seed=0
+    )
+
+    assert stats["init_includes_all_ones"] is True
+    assert stats["init_includes_all_zeros"] is True
+
+
+def test_classical_without_budget_stays_deterministic() -> None:
+    from qshield_quantum.benchmark import coordinate_descent_classical
+
+    model = _tiny_model()
+    first = coordinate_descent_classical(model, restarts=16, seed=7)
+    second = coordinate_descent_classical(model, restarts=16, seed=7)
+
+    assert first[0] == second[0]
+    assert first[1] == pytest.approx(second[1])
+    assert first[2]["objective_evaluations"] == second[2]["objective_evaluations"]

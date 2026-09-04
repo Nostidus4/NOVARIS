@@ -5,7 +5,10 @@ from pydantic import BaseModel
 
 
 class OptimizeJobRequestDTO(BaseModel):
-    """Weights hiện chưa re-price risk theo danh mục request — job dùng handoff packages trên đĩa."""
+    """Job luôn chạy trên handoff Risk có sẵn trên đĩa — KHÔNG re-price theo `weights` này (đó là
+    việc của `packages/risk`, ngoài phạm vi backend). `weights`/`cash_weight` chỉ được dùng để đối
+    chiếu với handoff và trả về `personalization_status` trung thực trong kết quả job (P0-5).
+    """
 
     weights: dict[str, float]
     cash_weight: float = 0.0
@@ -32,6 +35,10 @@ class WorkflowOptimizeResultDTO(BaseModel):
     true_cvar_before: float | None = None
     true_cvar_after: float | None = None
     source_artifact: str
+    personalization_status: str
+    personalization_note: str | None = None
+    requested_portfolio_hash: str
+    evaluated_portfolio_hash: str
 
 
 class OptimizeJobDTO(BaseModel):

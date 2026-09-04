@@ -26,6 +26,11 @@ from qshield_ai.scenarios.bootstrap import BlockPool, ReturnPanel
 GATE_PASS = "PASS"
 GATE_WARN = "PASS_WITH_WARNINGS"
 GATE_FAIL = "FAIL"
+# Một regime bị skip (pool rỗng / không đủ cửa sổ tham chiếu) làm cổng "full stress capability"
+# không đủ dữ liệu để chấm — không phải PASS (vì có phần không kiểm định được) nhưng cũng không
+# phải FAIL (không có vi phạm nào được đo). Thứ tự ưu tiên: FAIL > INCOMPLETE > WARN > PASS —
+# xem `cli.py` (nơi ghép trạng thái theo `target_regime` với `skipped_regimes`).
+GATE_INCOMPLETE = "INCOMPLETE"
 
 # Sai số dấu phẩy động: cube hằng số (mọi phần tử BẰNG NHAU tuyệt đối) vẫn cho std ~1e-16 chứ
 # không phải 0.0 chính xác, vì tổng độ lệch bình phương trên hàng trăm phần tử tích lũy sai số

@@ -92,3 +92,28 @@
 2026-08-07 16:24:54,818 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] fit_surrogate=0.00s
 2026-08-07 16:24:57,060 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] verify_consistency=2.24s checked=4098 sampled=True
 2026-08-07 16:25:33,990 | qshield.run_20260807_162454.quantum_workflow | INFO | [timing] exact=36.93s states=1048576
+2026-08-14 21:46:30,077 | qshield.run_20260814_214629.regime | INFO | Feature frame: 1265 dòng, 2021-06-21 → 2026-07-30
+2026-08-14 21:46:37,757 | qshield.run_20260814_214629.regime | INFO | Champion seed=303, 1265 dòng regime đã ghi.
+2026-08-14 21:46:40,043 | qshield.run_20260814_214639.scenarios | INFO | Ngày đánh giá t=2026-07-30, regime mục tiêu=volatile
+2026-08-14 21:46:40,343 | qshield.run_20260814_214639.scenarios | WARNING | Bỏ qua regime stress: pool rỗng, lý do loại: {'anchor_off_calendar': 0, 'beyond_evaluation_date': 0, 'incomplete_panel': 259}
+2026-08-14 21:54:06,863 | qshield.run_20260814_215406.risk_rerank_polish | ERROR | Risk rerank/polish failed: [risk.rerank] candidate_order_hash mismatch between Risk and QUBO model.
+2026-08-14 22:01:32,480 | qshield.run_20260814_220132.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-14 22:01:32,498 | qshield.run_20260814_220132.quantum_workflow | INFO | [timing] fit_surrogate=0.02s
+2026-08-14 22:01:34,684 | qshield.run_20260814_220132.quantum_workflow | INFO | [timing] verify_consistency=2.19s checked=4098 sampled=True
+2026-08-14 22:02:11,519 | qshield.run_20260814_220132.quantum_workflow | INFO | [timing] exact=36.83s states=1048576
+2026-08-15 08:28:01,562 | qshield.run_20260815_082801.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-15 08:28:01,576 | qshield.run_20260815_082801.quantum_workflow | INFO | [timing] fit_surrogate=0.01s
+2026-08-15 08:28:03,784 | qshield.run_20260815_082801.quantum_workflow | INFO | [timing] verify_consistency=2.21s checked=4098 sampled=True
+2026-08-15 08:28:39,881 | qshield.run_20260815_082801.quantum_workflow | INFO | [timing] exact=36.10s states=1048576
+2026-08-15 08:29:11,235 | qshield.run_20260815_082911.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-15 08:29:11,247 | qshield.run_20260815_082911.quantum_workflow | INFO | [timing] fit_surrogate=0.01s
+2026-08-15 08:29:13,465 | qshield.run_20260815_082911.quantum_workflow | INFO | [timing] verify_consistency=2.22s checked=4098 sampled=True
+2026-08-15 08:29:52,064 | qshield.run_20260815_082911.quantum_workflow | INFO | [timing] exact=38.60s states=1048576
+2026-08-15 09:01:51,547 | qshield.run_20260815_090151.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-15 09:01:51,560 | qshield.run_20260815_090151.quantum_workflow | INFO | [timing] fit_surrogate=0.01s
+2026-08-15 09:01:54,156 | qshield.run_20260815_090151.quantum_workflow | INFO | [timing] verify_consistency=2.60s checked=4098 sampled=True
+2026-08-15 09:02:31,722 | qshield.run_20260815_090151.quantum_workflow | INFO | [timing] exact=37.57s states=1048576
+2026-08-15 09:08:03,622 | qshield.run_20260815_090803.quantum_workflow | INFO | Four-level workflow: 10 candidates, 20 bits, 1 QAOA seeds (shots=128, maxiter=10, NON_FINAL_CONFIG=True).
+2026-08-15 09:08:03,634 | qshield.run_20260815_090803.quantum_workflow | INFO | [timing] fit_surrogate=0.01s
+2026-08-15 09:08:05,778 | qshield.run_20260815_090803.quantum_workflow | INFO | [timing] verify_consistency=2.14s checked=4098 sampled=True
+2026-08-15 09:08:44,177 | qshield.run_20260815_090803.quantum_workflow | INFO | [timing] exact=38.40s states=1048576

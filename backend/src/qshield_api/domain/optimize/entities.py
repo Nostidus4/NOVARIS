@@ -43,6 +43,13 @@ class OptimizeResult:
     true_cvar_before: float | None
     true_cvar_after: float | None
     source_artifact: str
+    # Personalization honesty (P0-5): job luôn chạy trên handoff Risk trên đĩa, KHÔNG re-price
+    # theo `weights` request. Ba trường dưới đây nói rõ liệu handoff đó có khớp danh mục người
+    # dùng gửi lên hay không — xem `infrastructure/runner/subprocess_optimize_runner.py`.
+    personalization_status: str
+    personalization_note: str | None
+    requested_portfolio_hash: str
+    evaluated_portfolio_hash: str
 
 
 @dataclass(frozen=True)
@@ -51,5 +58,6 @@ class OptimizeJob:
     status: OptimizeJobStatus
     created_at: datetime
     finished_at: datetime | None
+    request: OptimizeJobRequest
     result: OptimizeResult | None
     error: str | None

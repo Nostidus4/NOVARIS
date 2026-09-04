@@ -1,0 +1,58 @@
+{
+  "run_id": "run_20260814_215342",
+  "profile_id": "workflow_update",
+  "profile_status": "NON_BASELINE_RUN",
+  "config_version": "workflow-update-v4",
+  "config_hash": "4927c3fe08d19d2036c8570bb9d9f8b0ddb632226911ba297b529327902f37b2",
+  "schema_version": "risk-workflow-v2",
+  "producer": "qshield_risk",
+  "policy_version": "UNAPPROVED_POLICY",
+  "gate_status": "FAIL",
+  "parent_hashes": {
+    "scenario_manifest": "0d3624c7aaeae4fe4c9f021cefba2322c4371b6ba568e278b825e35765f4c1a4",
+    "risk_policy": null
+  },
+  "sampling_policy_version": "decision-package-structured-v2",
+  "candidate_order": [
+    "MWG",
+    "GVR",
+    "BSR",
+    "PLX",
+    "GAS",
+    "VRE",
+    "SSI",
+    "HDB",
+    "CTG",
+    "BID"
+  ],
+  "candidate_order_hash": "43a5f8a00ce32c51e5419f0c63b1c44a019ea8a4e7aa1eff4d4626ff008a20d2",
+  "candidate_count": 10,
+  "bit_count": 20,
+  "structured_count": 211,
+  "requested_random_counts": {
+    "train_random": 500,
+    "validation": 500,
+    "holdout": 1000
+  },
+  "counts": {
+    "train": 711,
+    "validation": 500,
+    "holdout": 1000
+  },
+  "available_random_states": 1048365,
+  "sampling_truncated": false,
+  "sampling_warning": null,
+  "seeds": {
+    "train": 1101,
+    "validation": 2202,
+    "holdout": 3303
+  },
+  "chunk_size": 64,
+  "split_hashes": {
+    "train": "81b509e439a561996ae2fb9388cd2d1a402443ccf0e7e69c9ffd5cf0d2f07331",
+    "validation": "e787e722ad0b61c9e3436ccc23f29fe3acdd8a6239b3cd1a0199281989d6d41a",
+    "holdout": "b357151f20067d289e152ee766505f58006546340cb68ed30a3bfdf2d396dc6f"
+  },
+  "overlap_count": 0,
+  "status": "NON_BASELINE_RUN"
+}

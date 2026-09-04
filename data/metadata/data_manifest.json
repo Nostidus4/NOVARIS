@@ -1,9 +1,9 @@
 {
-  "run_id": "data_run_20260807_151404",
+  "run_id": "data_run_20260814_212903",
   "data_version": "v1.0.0",
   "universe_version": "v1.0",
   "universe_as_of": "2026-08-03",
-  "created_at": "2026-08-07T15:14:04.436523+07:00",
+  "created_at": "2026-08-14T21:29:03.191715+07:00",
   "sources": [
     "YF_PRICES",
     "DNSE_PRICES",
@@ -51,63 +51,63 @@
   "files": {
     "universe_register": {
       "path": "data/metadata/universe_30_asof_20260803.csv",
-      "sha256": "9f8e61292b022e137c7156aed4949eb34df41800428be4025d2561feb3a833eb",
-      "size_bytes": 3420,
-      "modified_at": "2026-08-07T13:50:57.864254+07:00"
+      "sha256": "c00663ec0017eb2a7acc6988bcd522c068d2385106914e564b982a40327628b7",
+      "size_bytes": 3993,
+      "modified_at": "2026-08-14T21:27:51.636145+07:00"
     },
     "source_register": {
       "path": "data/metadata/source_register.csv",
-      "sha256": "a5ee379b15fac7aecac6d60dc83800fb3ceb5b164cfbcb95210bfaf9aed09f40",
+      "sha256": "9d0052219a2a3b3ecce052fe699b42f3684538debfada31e22a009e42b54d938",
       "size_bytes": 2480,
-      "modified_at": "2026-08-07T11:20:05.163231+07:00"
+      "modified_at": "2026-08-14T21:27:51.636437+07:00"
     },
     "prices_adjusted": {
       "path": "data/processed/prices_adjusted.parquet",
-      "sha256": "4497395c17a2ab32fb85452156f90c7cce305192fea7570e6e000bab05f085c3",
-      "size_bytes": 2406213,
-      "modified_at": "2026-08-07T11:20:05.185646+07:00"
+      "sha256": "eed81c32219e3054bdcf02b1eb4a2390106328d16c598c27f2787a3e4c9b3b71",
+      "size_bytes": 2411980,
+      "modified_at": "2026-08-14T21:27:53.670633+07:00"
     },
     "returns": {
       "path": "data/processed/returns.parquet",
-      "sha256": "0a13fd60ae9213cbc3c852848f37adf27b06db83e8832dd52a95e71fa16ca23d",
-      "size_bytes": 3810173,
-      "modified_at": "2026-08-07T15:13:58.195841+07:00"
+      "sha256": "68f80dd9b8f0f69c07b1c2211969f2c57eb2189eb561406635a818d4e2ba93d7",
+      "size_bytes": 3822500,
+      "modified_at": "2026-08-14T21:28:56.582841+07:00"
     },
     "market_features": {
       "path": "data/processed/market_features.parquet",
-      "sha256": "3f8c81fbd65bc7cad75e84d4f33c2bc7156c11d272c7852e396bf65ea4371b03",
+      "sha256": "aba78936302e18fe84e6134758b2d68d82c393c5876cd3dd885f1d4e24338951",
       "size_bytes": 248836,
-      "modified_at": "2026-08-07T15:14:00.433290+07:00"
+      "modified_at": "2026-08-14T21:28:59.182946+07:00"
     },
     "eligibility_daily": {
       "path": "data/processed/eligibility_daily.parquet",
-      "sha256": "f39989def6c2c7b3d74bdf8b01ad05e0e5cb7092f3973d421480bfb3aee32c39",
-      "size_bytes": 966231,
-      "modified_at": "2026-08-07T11:20:05.168326+07:00"
+      "sha256": "9fe8c36f23e959872b3584217dc5e6255a84759f159b393e4fc6a15668ea8236",
+      "size_bytes": 966241,
+      "modified_at": "2026-08-14T21:27:58.414541+07:00"
     },
     "data_dictionary": {
       "path": "data/metadata/data_dictionary.xlsx",
-      "sha256": "24fd70ac667eefa78dd980976bbead7066870a2df84d21c5999b705154d28f35",
+      "sha256": "6f9898e65f524285f0b88d30bc7b83a0c2daf5501134fcc951746f6fee7c2f4c",
       "size_bytes": 10086,
-      "modified_at": "2026-08-07T15:14:04.358267+07:00"
+      "modified_at": "2026-08-14T21:29:03.114345+07:00"
     },
     "data_quality_report": {
       "path": "reports/data_quality_report.csv",
       "sha256": "50e97f35f9841bb4a7a8513cca3b815002ec6f9ed20afb4d1b1d9fd1eaa06ad4",
       "size_bytes": 611,
-      "modified_at": "2026-08-07T15:14:02.625867+07:00"
+      "modified_at": "2026-08-14T21:29:01.423074+07:00"
     },
     "adjusted_close_evidence_report": {
       "path": "reports/adjusted_close_evidence_report.csv",
-      "sha256": "6dc305c27db5c0d3275714c552d2264133dc4a7175c8f2df833a6dda5dd6fd6a",
-      "size_bytes": 8095,
-      "modified_at": "2026-08-07T15:14:02.627287+07:00"
+      "sha256": "762f26809973eb4234e26d6fdf2cb45bb451958557f515c3790a3ccc07180b37",
+      "size_bytes": 8622,
+      "modified_at": "2026-08-14T21:29:01.424781+07:00"
     },
     "price_limit_violations": {
       "path": "reports/price_limit_violations.csv",
-      "sha256": "cb0f82a1d0470040687cabeff1d2900179256566ac6e0446d08bec7bdc04914c",
-      "size_bytes": 7821,
-      "modified_at": "2026-08-07T15:14:02.628563+07:00"
+      "sha256": "b2a2ab0d8e4668952b74e6f33d4d4cace6d969031c902426ff036c67a4a5535d",
+      "size_bytes": 7820,
+      "modified_at": "2026-08-14T21:29:01.425844+07:00"
     }
   },
   "row_counts": {

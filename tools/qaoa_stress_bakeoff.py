@@ -131,7 +131,7 @@ def landscape_stats(model: QuadraticSurrogate) -> dict:
 
 def run_classical(model: QuadraticSurrogate, *, restarts: int, seed: int) -> dict:
     t0 = time.perf_counter()
-    bitstring, energy = coordinate_descent_classical(
+    bitstring, energy, _stats = coordinate_descent_classical(
         model, feasibility=None, restarts=restarts, seed=seed
     )
     return {

@@ -1,5 +1,15 @@
-# Đỗ Ngọc Tân - duyệt đủ 2^8 = 256 bitstring — ground truth để chấm QAOA, không được bỏ để tiết kiệm thời gian.
-"""Exact solver — duyệt ĐỦ 2⁸=256 bitstring bằng `objective.py` trực tiếp (CLAUDE.md quy tắc 16:
+# Đỗ Ngọc Tân - duyệt ĐỦ không gian nghiệm — ground truth để chấm QAOA, không được bỏ để tiết kiệm thời gian.
+"""Exact solver — HAI hàm cho HAI đường:
+
+- `solve_exact`: đường legacy K-of-N, duyệt đủ 2^n qua `objective.py` (n=8 ⇒ 256 bitstring).
+- `solve_quadratic_exact`: đường four-level đang dùng, duyệt đủ 2^(2M) trên `QuadraticSurrogate`
+  theo chunk (M=10 ⇒ 2^20 = 1.048.576 trạng thái, đo thật ~4,6s).
+
+⚠️ `solve_quadratic_exact` là ground truth CỦA SURROGATE, không phải của hàm mục tiêu tài chính
+thật. Đo 2026-09-04 trên danh mục thực tế: nghiệm tối ưu của surrogate kém nghiệm tối ưu thật
+~11% (xem `reponse.md` H.2). Ground truth tài chính là `qshield_risk` rerank/true_benchmark.
+
+(CLAUDE.md quy tắc 16:
 "thước đo, không phải đối thủ" — không qua QUBO convert, đây là ground truth độc lập).
 
 Báo cáo cả `best_feasible` (Σz=K — dùng làm optimum thật) và `best_overall` (kể cả infeasible —

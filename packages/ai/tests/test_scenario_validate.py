@@ -5,6 +5,7 @@ import pytest
 from qshield_ai.scenarios.bootstrap import BlockPool, ReturnPanel
 from qshield_ai.scenarios.validate import (
     GATE_FAIL,
+    GATE_INCOMPLETE,
     GATE_PASS,
     GATE_WARN,
     build_validation_report,
@@ -189,6 +190,15 @@ def test_violating_cube_with_small_reference_still_fails() -> None:
 def test_gate_status_prefers_fail_over_warn() -> None:
     report = pd.DataFrame({"verdict": ["PASS", "WARN", "FAIL"]})
     assert gate_status(report) == GATE_FAIL
+
+
+def test_gate_incomplete_is_a_distinct_constant_from_pass_warn_fail() -> None:
+    """Nhiệm vụ 1: `GATE_INCOMPLETE` là trạng thái riêng cho "một regime bị skip" — không phải
+    alias của PASS/WARN/FAIL. `cli.py` là nơi thật sự ghép trạng thái này với `skipped_regimes`
+    (xem `packages/ai/tests/test_cli_scenarios.py`); test này chỉ khoá giá trị hằng số.
+    """
+    assert GATE_INCOMPLETE == "INCOMPLETE"
+    assert GATE_INCOMPLETE not in {GATE_PASS, GATE_WARN, GATE_FAIL}
 
 
 # --- Hand-computed metric checks -------------------------------------------------------------

@@ -304,6 +304,65 @@ def polish_reductions(
     )
 
 
+_ACTION_LEVELS = (0.0, 0.10, 0.20, 0.30)
+
+
+def _coordinate_descent_minimize(
+    scenarios: npt.ArrayLike,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    config: Mapping[str, Any],
+    *,
+    maximum: float,
+    caps: Mapping[str, float],
+    score: Any,
+) -> tuple[np.ndarray, FinancialObjective]:
+    """Coordinate-descend the four discrete action levels to minimize a single component.
+
+    Deterministic diagnostic search (P0-1 tooling): each step evaluates every allowed level
+    {0, 0.10, 0.20, 0.30} for one ticker while holding all others fixed, keeps the level that
+    strictly lowers ``score(result)``, and repeats until no single-coordinate move improves it.
+    Because a move is only accepted when it strictly decreases the joint score and the state
+    space is finite (4 levels per ticker), the loop is guaranteed to terminate. This is a local
+    heuristic, not the global 2^(2M) exact search that the Quantum exact solver performs.
+    """
+    tickers = validate_ticker_order(ticker_order)
+    current = np.zeros(len(tickers), dtype=float)
+    current_result = financial_objective(
+        current, scenarios, tickers, weights, cash_weight, config
+    )
+    while True:
+        improved = False
+        for index, ticker in enumerate(tickers):
+            cap = min(maximum, caps.get(ticker, maximum))
+            best_level = current[index]
+            best_result = current_result
+            best_score = score(current_result)
+            for level in _ACTION_LEVELS:
+                if level > cap + 1e-12:
+                    continue
+                if np.isclose(level, current[index]):
+                    continue
+                trial = current.copy()
+                trial[index] = level
+                trial_result = financial_objective(
+                    trial, scenarios, tickers, weights, cash_weight, config
+                )
+                trial_score = score(trial_result)
+                if trial_score < best_score - 1e-15:
+                    best_score = trial_score
+                    best_level = level
+                    best_result = trial_result
+            if not np.isclose(best_level, current[index]):
+                current[index] = best_level
+                current_result = best_result
+                improved = True
+        if not improved:
+            break
+    return current, current_result
+
+
 def build_financial_baselines(
     scenarios: npt.ArrayLike,
     ticker_order: Sequence[str],
@@ -328,7 +387,10 @@ def build_financial_baselines(
         pro_rata[:] = fraction
         caps = policy.per_asset_reduction_caps or {}
         pro_rata = np.asarray(
-            [min(value, caps.get(ticker, maximum)) for value, ticker in zip(pro_rata, tickers, strict=True)],
+            [
+                min(value, caps.get(ticker, maximum))
+                for value, ticker in zip(pro_rata, tickers, strict=True)
+            ],
             dtype=float,
         )
     pro_rata_result = financial_objective(
@@ -356,7 +418,10 @@ def build_financial_baselines(
             evaluated = financial_objective(
                 trial, scenarios, tickers, weights, cash_weight, config
             )
-            if evaluated.value > greedy_result.value + 1e-15 and not greedy_result.constraint_violations:
+            if (
+                evaluated.value > greedy_result.value + 1e-15
+                and not greedy_result.constraint_violations
+            ):
                 break
             greedy = trial
             greedy_result = evaluated
@@ -365,11 +430,47 @@ def build_financial_baselines(
         if not greedy_result.constraint_violations:
             break
 
+    # cash_target_only: minimize ONLY cash_budget_deviation (P0-1 tooling — decisive test for
+    # whether the cash term alone dictates the optimum; see build_financial_baselines docstring).
+    cash_target, cash_target_result = _coordinate_descent_minimize(
+        scenarios,
+        tickers,
+        weights,
+        cash_weight,
+        config,
+        maximum=maximum,
+        caps=caps,
+        score=lambda result: result.components["cash_budget_deviation"].raw,
+    )
+
+    # risk_only: minimize ONLY cvar, ignoring the cash term entirely.
+    risk_only, risk_only_result = _coordinate_descent_minimize(
+        scenarios,
+        tickers,
+        weights,
+        cash_weight,
+        config,
+        maximum=maximum,
+        caps=caps,
+        score=lambda result: result.components["cvar"].raw,
+    )
+
+    # max_sell: hard upper bound — sell every candidate at the maximum allowed level.
+    max_sell = np.asarray(
+        [min(maximum, caps.get(ticker, maximum)) for ticker in tickers], dtype=float
+    )
+    max_sell_result = financial_objective(
+        max_sell, scenarios, tickers, weights, cash_weight, config
+    )
+
     rows = []
     for name, reductions, result in (
         ("no_action", zero, no_action),
         ("pro_rata", pro_rata, pro_rata_result),
         ("greedy", greedy, greedy_result),
+        ("cash_target_only", cash_target, cash_target_result),
+        ("risk_only", risk_only, risk_only_result),
+        ("max_sell", max_sell, max_sell_result),
     ):
         rows.append(
             {

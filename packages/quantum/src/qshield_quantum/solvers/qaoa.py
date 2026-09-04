@@ -18,14 +18,16 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_algorithms import QAOA
 from qiskit_algorithms.optimizers import COBYLA
+from qiskit_algorithms.utils import algorithm_globals  # type: ignore[import-untyped]
 from qiskit_optimization import QuadraticProgram
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
@@ -47,6 +49,14 @@ from qshield_quantum.solvers.warm_start import make_warm_start_optimizer
 # suất thấp hơn n lớn. Muốn dùng transpile đáng tin cậy trong production PHẢI có retry (chạy lại
 # trong subprocess mới nếu crash) — CHƯA implement, xem Quantum_Reporting.md mục "unresolved".
 _TRANSPILE_SAFE_MAX_QUBITS = 8
+
+
+class TranspileFallbackUnavailableError(RuntimeError):
+    """Subprocess QAOA hết lượt retry và đường in-process không dùng được ở số qubit này.
+
+    Raise thay vì lặng lẽ đi vào `expm(2^n)` — xem `solve_qaoa_one_seed_fast`. Caller
+    (`workflow.py`) bắt lỗi này, ghi `fallback_reason` và chuyển sang exact, đúng nguyên tắc
+    artifact phải tự tố cáo thứ nó không làm được."""
 
 
 def _make_transpiler(num_qubits: int):
@@ -113,6 +123,21 @@ def solve_qaoa_one_seed(
         lambda bits: int(np.rint(bits).sum()) == required_actions
     )
     t0 = time.perf_counter()
+    # ⚠️ `seed` KHÔNG đủ để tái lập nếu chỉ truyền cho sampler. Đo thật 2026-09-04: cùng
+    # `seed=101`, cùng instance, ba lần chạy trong CÙNG tiến trình cho hai bitstring khác nhau
+    # (`00111011` energy=-0.15286668 vs `00111111` energy=-0.18319979). Nguyên nhân:
+    # `make_sampler` chỉ seed việc LẤY MẪU, còn `QAOA(initial_point=None)` bốc điểm khởi tạo
+    # tham số qua `validate_initial_point` -> `algorithm_globals.random.uniform(...)`, tức một
+    # RNG TOÀN CỤC không liên quan gì tới `seed` của ta.
+    #
+    # Hệ quả nếu không seed: `optimality_gap`, `winning_bitstring`, `success_prob` trong
+    # `workflow_benchmark.json` KHÔNG tái tạo được dù artifact có đủ `registered_seeds` và
+    # `qubo_hash` — ký duyệt trên một run hash cụ thể (plan.md G3) sẽ là ký vào con số không
+    # dựng lại được.
+    #
+    # Seed chính `algorithm_globals` thay vì tự truyền `initial_point`: giữ NGUYÊN phân phối và
+    # logic bounds của qiskit (lấy từ circuit nếu có, else [-2pi, 2pi]), chỉ làm nó tất định.
+    algorithm_globals.random_seed = seed
     sampler = make_sampler(shots=shots, seed=seed)
     transpiler = _make_transpiler(qp.get_num_binary_vars())
     qaoa = QAOA(
@@ -195,6 +220,7 @@ def solve_qaoa_one_seed_fast(
     maxiter: int,
     k_actions: int | None = None,
     always_feasible: bool = False,
+    feasibility_constraints: Mapping[str, Any] | None = None,
     reference_bitstring: str | None = None,
     reps: int = 1,
     warm_start: bool = False,
@@ -216,14 +242,35 @@ def solve_qaoa_one_seed_fast(
        tại (chậm nhưng luôn đúng, không transpile nếu vượt `_TRANSPILE_SAFE_MAX_QUBITS`) — LUÔN trả
        về kết quả đúng, không bao giờ raise vì lý do transpile crash.
 
-    Hạn chế đã biết: chỉ hỗ trợ `feasibility` qua `k_actions` (luôn pickle được) — không nhận
-    callable `feasibility` tuỳ ý (closure như `make_four_level_feasibility()` không pickle được).
-    Gọi hàm này với `feasibility` tuỳ ý sẽ bỏ qua thẳng bước subprocess, chạy `solve_qaoa_one_seed`
-    trực tiếp (đúng, không có lợi tốc độ) — xem `Quantum_Reporting.md` mục hạn chế.
+    Ba cách truyền feasibility, chọn ĐÚNG MỘT (không phải closure tuỳ ý — closure không pickle
+    được cho subprocess, xem `_qaoa_worker.py`):
+
+    - `k_actions`: ràng buộc K-of-N đơn giản, luôn pickle được (worker tự dựng lambda nội bộ giống
+      `solve_qaoa_one_seed`).
+    - `always_feasible=True`: mọi bitstring đều feasible (dùng khi risk_summary không có ràng buộc
+      nào, ví dụ `workflow.py` khi `quantum_constraints` rỗng) — dùng hàm cấp module
+      `_always_feasible`, pickle được.
+    - `feasibility_constraints`: dict THUẦN (pickle được) mô tả ràng buộc four-level (khớp
+      `workflow.make_four_level_feasibility` — `min_active_candidates`, `max_active_candidates`,
+      `min_total_action_pct`, `max_total_action_pct`). Worker nhận dict này qua payload rồi tự gọi
+      `make_four_level_feasibility(constraints)` để dựng lại predicate BÊN TRONG subprocess — đây
+      là cách đúng để chạy đường nhanh khi `risk_summary["quantum_constraints"]` khác rỗng, KHÔNG
+      pickle chính callable đó.
     """
+    if always_feasible and feasibility_constraints is not None:
+        raise ValueError(
+            "Provide at most one of always_feasible / feasibility_constraints, not both."
+        )
     feasibility = _always_feasible if always_feasible else None
     payload = {
         "qp": qp,
+        # Dict THUẦN (không phải callable) — worker tự dựng predicate qua
+        # `workflow.make_four_level_feasibility`, xem docstring ở trên.
+        "feasibility_constraints": (
+            dict(feasibility_constraints)
+            if feasibility_constraints is not None
+            else None
+        ),
         "kwargs": {
             "seed": seed,
             "shots": shots,
@@ -236,17 +283,27 @@ def solve_qaoa_one_seed_fast(
             "candidate_pool_size": candidate_pool_size,
         },
     }
+
+    def _in_process_feasibility() -> Callable[[np.ndarray], bool] | None:
+        if feasibility_constraints is not None:
+            # Deferred import: tránh vòng import module-level (workflow.py import solvers.qaoa).
+            from qshield_quantum.workflow import make_four_level_feasibility
+
+            return make_four_level_feasibility(feasibility_constraints)
+        return feasibility
+
     try:
         payload_bytes = pickle.dumps(payload)
     except pickle.PicklingError, AttributeError, TypeError:
-        # k_actions=None mà không có feasibility callable pickle được -> không thể chạy subprocess.
+        # Không nên xảy ra nữa với 3 cách feasibility ở trên (đều pickle được), nhưng giữ lại như
+        # lưới an toàn cuối cùng nếu `qp` tự nó không pickle được.
         return solve_qaoa_one_seed(
             qp,
             seed=seed,
             shots=shots,
             maxiter=maxiter,
             k_actions=k_actions,
-            feasibility=feasibility,
+            feasibility=_in_process_feasibility(),
             reference_bitstring=reference_bitstring,
             reps=reps,
             warm_start=warm_start,
@@ -280,14 +337,27 @@ def solve_qaoa_one_seed_fast(
                 return result
             # crash (segfault, panic...) -> thử lại subprocess MỚI, không giữ trạng thái cũ.
 
-    # Hết lượt retry -> đường chậm nhưng LUÔN đúng, không bao giờ để lỗi transpile làm mất kết quả.
+    # Hết lượt retry. Đường in-process CHỈ là fallback thật khi nó thực sự chạy được:
+    # `_make_transpiler` trả `None` ở `num_qubits > _TRANSPILE_SAFE_MAX_QUBITS`, nên ở n=20 nó rơi
+    # vào `PauliEvolutionGate.to_matrix()` -> `scipy.sparse.linalg.expm` trên ma trận 2^20 x 2^20:
+    # đó là TREO, không phải "chậm nhưng đúng". Một treo vô hạn không thông báo là dạng lỗi tệ nhất
+    # trong cả chuỗi này — nó vừa giữ tài nguyên vừa làm artifact không bao giờ được ghi. Raise có
+    # ngữ cảnh để `workflow.py` ghi `fallback_reason` trung thực và hạ `gate_status` (P0-4b).
+    num_qubits = qp.get_num_binary_vars()
+    if num_qubits > _TRANSPILE_SAFE_MAX_QUBITS:
+        raise TranspileFallbackUnavailableError(
+            f"QAOA subprocess thất bại {max_retries + 1} lần ở {num_qubits} qubit "
+            f"(timeout={subprocess_timeout_seconds:.0f}s/lần). Đường in-process không transpile ở "
+            f"n>{_TRANSPILE_SAFE_MAX_QUBITS} nên sẽ treo trong expm(2^{num_qubits}) thay vì trả "
+            "kết quả — dừng tại đây thay vì treo vô hạn."
+        )
     return solve_qaoa_one_seed(
         qp,
         seed=seed,
         shots=shots,
         maxiter=maxiter,
         k_actions=k_actions,
-        feasibility=feasibility,
+        feasibility=_in_process_feasibility(),
         reference_bitstring=reference_bitstring,
         reps=reps,
         warm_start=warm_start,

@@ -170,7 +170,12 @@ class ConsoleQuantumDTO(BaseModel):
     online: bool
     actual_solver: str | None = None
     requested_solver: str | None = None
+    fallback_reason: str | None = None
     constraints_passed: bool | None = None
+    # True chỉ khi có ít nhất một ràng buộc quantum thực sự được encode/chấm — nếu False, frontend
+    # PHẢI hiển thị "NOT_EVALUATED" trung tính thay vì đọc `constraints_passed` như PASS/FAIL
+    # (constraints_passed luôn True một cách vô nghĩa khi không có ràng buộc nào, P2-2).
+    constraints_evaluated: bool = False
     winning_bitstring: str | None = None
     true_cvar_before: float | None = None
     true_cvar_after: float | None = None
@@ -181,6 +186,9 @@ class ConsoleQuantumDTO(BaseModel):
     optimality_gap: float | None = None
     qaoa_beats_classical: bool | None = None
     source_artifact: str | None = None
+    # Tỷ lệ phần cải thiện đến từ local polishing cổ điển thay vì từ solver — P2-4, xem
+    # `packages/risk/src/qshield_risk/rerank.py` (`PolishingResult.polishing_dependency`).
+    polishing_dependency: float | None = None
     actions: list[ActionMiniDTO] = Field(default_factory=list)
     workflow_benchmark: dict[str, Any] | None = None
     qubo_model: dict[str, Any] | None = None

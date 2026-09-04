@@ -13,7 +13,11 @@ from qshield_api.application.optimize.dto import (
     OptimizeJobRequestDTO,
     SubmitJobResponseDTO,
 )
-from qshield_api.domain.optimize.entities import OptimizeJob, OptimizeJobStatus
+from qshield_api.domain.optimize.entities import (
+    OptimizeJob,
+    OptimizeJobRequest,
+    OptimizeJobStatus,
+)
 from qshield_api.domain.optimize.repository import OptimizeJobRepository
 from qshield_api.domain.optimize.runner import OptimizeRunner
 
@@ -28,6 +32,9 @@ def submit_job(
             status=OptimizeJobStatus.QUEUED,
             created_at=datetime.now(UTC),
             finished_at=None,
+            request=OptimizeJobRequest(
+                weights=dict(request.weights), cash_weight=request.cash_weight
+            ),
             result=None,
             error=None,
         )
@@ -42,10 +49,12 @@ def run_job(
 ) -> None:
     """Chạy nền — gọi từ `BackgroundTasks` của router `optimize.py`.
 
-    ⚠️ `OptimizeJobRequestDTO.weights` chưa re-price Risk theo danh mục request. Job hiện gọi
-    `qshield-quantum workflow --exact-only` trên handoff packages (`candidate_top10` /
-    `qubo_objective_samples` / `risk_summary`) đã có trên đĩa. Muốn optimize đúng danh mục user
-    gửi lên cần thêm bước prepare-workflow theo weights — mở rộng sau.
+    Job luôn chạy `qshield-quantum workflow --exact-only` trên handoff packages
+    (`candidate_top10` / `qubo_objective_samples` / `risk_summary`) đã có trên đĩa — server
+    KHÔNG re-price Risk theo `job.request.weights` (đó là việc của `packages/risk`, ngoài phạm
+    vi backend, xem CLAUDE.md quy tắc 9). `runner.run()` tự đối chiếu `job.request` với handoff
+    và trả về `OptimizeResult.personalization_status` trung thực thay vì âm thầm dùng nhầm
+    danh mục (P0-5).
     """
     job = job_repo.get(job_id)
     if job is None:
@@ -56,12 +65,13 @@ def run_job(
             status=OptimizeJobStatus.RUNNING,
             created_at=job.created_at,
             finished_at=None,
+            request=job.request,
             result=None,
             error=None,
         )
     )
     try:
-        result = runner.run(job_id)
+        result = runner.run(job_id, job.request)
     except Exception as exc:  # noqa: BLE001 - job nền, phải bắt hết để ghi lại lỗi, không để mất job
         job_repo.save(
             OptimizeJob(
@@ -69,6 +79,7 @@ def run_job(
                 status=OptimizeJobStatus.FAILED,
                 created_at=job.created_at,
                 finished_at=datetime.now(UTC),
+                request=job.request,
                 result=None,
                 error=str(exc),
             )
@@ -80,6 +91,7 @@ def run_job(
             status=OptimizeJobStatus.DONE,
             created_at=job.created_at,
             finished_at=datetime.now(UTC),
+            request=job.request,
             result=result,
             error=None,
         )

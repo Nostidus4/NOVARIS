@@ -154,7 +154,11 @@ export type ConsoleQuantum = {
   online: boolean;
   actual_solver: string | null;
   requested_solver: string | null;
+  fallback_reason: string | null;
   constraints_passed: boolean | null;
+  // False khi không có risk_policy/quantum_constraints nào được encode — trong trường hợp đó
+  // constraints_passed luôn true một cách vô nghĩa, UI phải hiển thị NOT_EVALUATED thay vì PASS.
+  constraints_evaluated: boolean;
   winning_bitstring: string | null;
   true_cvar_before: number | null;
   true_cvar_after: number | null;
@@ -165,6 +169,9 @@ export type ConsoleQuantum = {
   optimality_gap: number | null;
   qaoa_beats_classical: boolean | null;
   source_artifact: string | null;
+  // Tỷ lệ phần cải thiện đến từ local polishing cổ điển, không phải từ solver — càng cao nghĩa
+  // là solver đóng góp càng ít.
+  polishing_dependency: number | null;
   actions: ActionMini[];
   workflow_benchmark: Record<string, unknown> | null;
   qubo_model: Record<string, unknown> | null;

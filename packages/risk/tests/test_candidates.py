@@ -171,3 +171,132 @@ def test_output_columns_match_required_columns() -> None:
         output_candidates=10,
     )
     assert list(frame.columns) == list(REQUIRED_COLUMNS)
+
+
+def _uniform_cube(n_assets: int, *, seed: int = 0):
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
+    return rng.normal(-0.001, 0.012, size=(300, 4, n_assets))
+
+
+def _cand_config() -> dict:
+    return {
+        "horizon_days": 4,
+        "cvar_alpha": 0.95,
+        "confidence_levels": [0.95],
+        "weight_sum_tolerance": 1e-8,
+        "maximum_reduction": 0.30,
+        "target_cash_increment": 0.10,
+        "transaction_cost": {
+            "fee": 0.0015,
+            "spread": 0.001,
+            "liquidity_penalty": 0.0005,
+        },
+        "financial_objective": {
+            "components": {
+                "cvar": {"weight": 1.0, "scale": 0.1},
+                "return_sacrifice": {"weight": 0.25, "scale": 0.05},
+                "transaction_cost": {"weight": 0.25, "scale": 0.01},
+                "turnover": {"weight": 0.05, "scale": 0.2},
+                "liquidity_penalty": {"weight": 0.25, "scale": 0.01},
+                "cash_budget_deviation": {"weight": 0.35, "scale": 0.1},
+            }
+        },
+        "candidate_selection": {
+            "score_weights": {
+                "marginal_10": 1.0,
+                "marginal_20": 1.0,
+                "marginal_30": 1.0,
+                "baseline_contribution": 1.0,
+                "transaction_cost": 1.0,
+                "liquidity_penalty": 1.0,
+            }
+        },
+    }
+
+
+def test_ineligible_assets_are_never_selected_as_candidates() -> None:
+    """Bất biến chưa từng có test: mã KHÔNG đủ điều kiện point-in-time không bao giờ được chọn.
+
+    `plan.md` C5 và CR-WF2-001: mã thiếu dữ liệu phải giữ residual risk hoặc bị block, KHÔNG
+    được âm thầm đem đi giao dịch. Trong repo thật, VPL bị loại vì `INSUFFICIENT_HISTORY`
+    (95 phiên) tại ngày đánh giá 2026-07-30 — nhưng nếu ai đó truyền `{t: True for t in tickers}`
+    (đúng lỗi một script benchmark từng mắc), VPL sẽ lọt vào ứng viên và **không gì báo lỗi**.
+
+    Test đặt mã không đủ điều kiện ở vị trí RỦI RO NHẤT (trọng số lớn nhất) để nó chắc chắn đứng
+    đầu bảng xếp hạng nếu eligibility bị bỏ qua.
+    """
+    from qshield_risk.candidates import select_four_level_candidates
+
+    tickers = ("AAA", "BBB", "CCC", "DDD")
+    # DDD nắm nhiều nhất ⇒ đóng góp rủi ro lớn nhất ⇒ sẽ đứng đầu nếu không bị chặn.
+    weights = {"AAA": 0.15, "BBB": 0.20, "CCC": 0.25, "DDD": 0.40}
+    cube = _uniform_cube(len(tickers), seed=3)
+    config = _cand_config()
+
+    frame = select_four_level_candidates(
+        cube,
+        tickers,
+        weights,
+        0.0,
+        {"AAA": True, "BBB": True, "CCC": True, "DDD": False},
+        config,
+        output_candidates=3,
+        ineligible_reasons={"DDD": "INSUFFICIENT_HISTORY"},
+    )
+
+    selected = set(
+        frame.loc[frame["selected_top10"].astype(bool), "ticker"].astype(str)
+    )
+    assert "DDD" not in selected, "mã không đủ điều kiện đã lọt vào ứng viên"
+
+    row = frame.loc[frame["ticker"] == "DDD"].iloc[0]
+    assert not bool(row["selected_top10"])
+    assert row["reason"] == "INSUFFICIENT_HISTORY", (
+        "phải giữ nguyên lý do loại, không nuốt mất"
+    )
+    assert "DDD" in set(frame["ticker"].astype(str)), (
+        "mã bị loại vẫn phải XUẤT HIỆN trong bảng để mang residual risk (plan C5), "
+        "không được biến mất khỏi báo cáo"
+    )
+
+    # Đối chứng: nếu eligibility bị bỏ qua thì DDD PHẢI được chọn — chứng minh test có sức phân biệt.
+    naive = select_four_level_candidates(
+        cube,
+        tickers,
+        weights,
+        0.0,
+        dict.fromkeys(tickers, True),
+        config,
+        output_candidates=3,
+    )
+    naive_selected = set(
+        naive.loc[naive["selected_top10"].astype(bool), "ticker"].astype(str)
+    )
+    assert "DDD" in naive_selected, (
+        "tiền đề của test hỏng: DDD phải được chọn khi bỏ qua eligibility, "
+        "nếu không thì assert ở trên không chứng minh điều gì"
+    )
+
+
+def test_zero_weight_assets_are_never_selected_even_when_eligible() -> None:
+    """Không nắm giữ thì không có gì để bán — nhưng vẫn phải xuất hiện kèm lý do."""
+    from qshield_risk.candidates import select_four_level_candidates
+
+    tickers = ("AAA", "BBB", "CCC")
+    weights = {"AAA": 0.5, "BBB": 0.5, "CCC": 0.0}
+    frame = select_four_level_candidates(
+        _uniform_cube(len(tickers), seed=5),
+        tickers,
+        weights,
+        0.0,
+        dict.fromkeys(tickers, True),
+        _cand_config(),
+        output_candidates=3,
+    )
+    selected = set(
+        frame.loc[frame["selected_top10"].astype(bool), "ticker"].astype(str)
+    )
+    assert "CCC" not in selected
+    assert "CCC" in set(frame["ticker"].astype(str))

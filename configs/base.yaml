@@ -192,7 +192,10 @@ tickers:
   exchange_periods:
   - exchange: HOSE
   data_source: yahoo
-  notes: ''
+  data_quality_flag: LIMITED_HISTORY
+  notes: 'IPO 24/03/2021 — thiếu crash Covid 03/2020 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md
+    §4.2). Có đủ lịch sử để train (~1400 phiên) nhưng CVaR/tail có thể unreliable do thiếu
+    một trong ba kiểu crash đã quan sát trên VN-Index — downweight khi tính risk contribution.'
 - ticker: SSI
   yahoo_symbol: SSI.VN
   company_name: SSI Securities
@@ -310,14 +313,17 @@ tickers:
 - ticker: VPL
   yahoo_symbol: VPL.VN
   company_name: VPL (placeholder — verify)
-  first_trading_date: '2025-01-01'
+  first_trading_date: '2025-05-13'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
   data_source: yahoo
-  notes: Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production
-    trong CLEAN.ipynb).
+  data_quality_flag: LIMITED_HISTORY
+  notes: 'SỬA first_trading_date so với ước lượng gốc 2025-01-01 trong CLEAN.ipynb — IPO thật
+    13/05/2025 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.1). Chỉ ~310 phiên tới 08/2026 —
+    không đủ train HMM/CVaR; cần Minh Anh/Ngọc xác nhận mã thay thế VN30 kỳ 01/2027 hoặc bỏ
+    khỏi universe (còn 29 mã). Cold-start — verify trước khi dùng cho UAT/demo.'
 - ticker: VRE
   yahoo_symbol: VRE.VN
   company_name: Vincom Retail

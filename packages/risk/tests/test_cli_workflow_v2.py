@@ -31,7 +31,11 @@ def _base(tmp_path: Path) -> dict[str, Any]:
         "weight_sum_tolerance": 1e-10,
         "maximum_reduction": 0.30,
         "target_cash_increment": 0.10,
-        "transaction_cost": {"fee": 0.001, "spread": 0.001, "liquidity_penalty": 0.0005},
+        "transaction_cost": {
+            "fee": 0.001,
+            "spread": 0.001,
+            "liquidity_penalty": 0.0005,
+        },
         "financial_objective": {
             "components": {
                 name: {"weight": 1.0 if name == "cvar" else 0.0, "scale": 1.0}
@@ -114,6 +118,9 @@ def test_prepare_workflow_writes_v2_gate_and_split_handoffs(tmp_path: Path) -> N
     assert set(samples["split"]) == {"train", "validation", "holdout"}
     assert len(samples) == 137 + 2 + 1 + 2
     assert summary["candidate_count"] == 8
+    assert summary["quantum_constraints"] == {}
+    assert summary["constraints_encoding"]["status"] == "NONE_ENCODED"
+    assert summary["constraints_encoding"]["reason"] == "risk_policy is null"
     assert summary["total_decision_bits"] == 16
     assert baseline["schema_version"] == "risk-workflow-v2"
     assert baseline["producer"] == "qshield_risk"
@@ -121,6 +128,57 @@ def test_prepare_workflow_writes_v2_gate_and_split_handoffs(tmp_path: Path) -> N
     assert "risk_metrics" in baseline
     assert (risk_dir / "candidate_topn.csv").exists()
     assert (risk_dir / "qubo_objective_samples.parquet").exists()
+
+
+def test_prepare_workflow_encodes_quantum_constraints_from_risk_policy(
+    tmp_path: Path,
+) -> None:
+    base, profile = _write_configs(tmp_path)
+    payload = yaml.safe_load(base.read_text(encoding="utf-8"))
+    policy_path = tmp_path / "risk_policy.json"
+    policy_path.write_text(
+        json.dumps(
+            {
+                "policy_version": "test-policy-v1",
+                "status": "PROVISIONAL_TEST",
+                "risk_appetite": "balanced",
+                "cash_min": 0.10,
+                "cash_max": 0.90,
+                "cvar_budget": 1.0,
+                "max_turnover": 0.90,
+            }
+        ),
+        encoding="utf-8",
+    )
+    payload["risk_policy_artifact"] = str(policy_path)
+    base.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        [
+            "prepare-workflow",
+            "--config",
+            str(base),
+            "--profile",
+            str(profile),
+            "--mock",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    risk_dir = tmp_path / "artifacts" / "dev" / "risk"
+    summary = json.loads((risk_dir / "risk_summary.json").read_text(encoding="utf-8"))
+    encoding = summary["constraints_encoding"]
+    assert encoding["status"] == "PARTIAL_ENCODED"
+    assert set(summary["quantum_constraints"]) == {
+        "min_total_action_pct",
+        "max_total_action_pct",
+    }
+    assert set(encoding["encoded_in_quantum_predicate"]) == {
+        "min_total_action_pct",
+        "max_total_action_pct",
+    }
+    assert "CVAR_BUDGET" in encoding["enforced_at_rerank_only"]
+    assert "DO_NOT_SELL" in encoding["enforced_at_rerank_only"]
 
 
 def test_solver_pool_combines_exact_qaoa_and_classical_provenance() -> None:
@@ -162,7 +220,14 @@ def test_prepare_failure_removes_stale_and_partial_canonical_outputs(
 
     result = runner.invoke(
         app,
-        ["prepare-workflow", "--config", str(base), "--profile", str(profile), "--mock"],
+        [
+            "prepare-workflow",
+            "--config",
+            str(base),
+            "--profile",
+            str(profile),
+            "--mock",
+        ],
     )
 
     assert result.exit_code != 0
@@ -213,7 +278,7 @@ def test_eligibility_snapshot_is_point_in_time_and_keeps_restricted_reason(
         ]
     ).to_parquet(path, index=False)
 
-    eligibility, reasons, _ = _eligibility_snapshot(
+    eligibility, reasons, _, provenance = _eligibility_snapshot(
         {"eligibility_artifact": str(path)},  # type: ignore[arg-type]
         ("AAA", "BBB"),
         {"evaluation_date": "2026-08-03"},
@@ -224,3 +289,17 @@ def test_eligibility_snapshot_is_point_in_time_and_keeps_restricted_reason(
 
     assert eligibility == {"AAA": False, "BBB": True}
     assert reasons["AAA"] == "TRADE_RESTRICTED"
+
+    # Provenance phải ghi lại CHÍNH ảnh chụp đã dùng, không phải ngày đánh giá.
+    # Thiếu nó thì một artifact eligibility cũ ba tháng vẫn chạy im lặng và không ai truy được
+    # (xem docstring `_eligibility_snapshot`). `snapshot_date` = 2026-08-01 < evaluation 2026-08-03
+    # nên đây đúng là trường hợp ảnh chụp CŨ, phải bị gắn cờ.
+    assert provenance["evaluation_date"] == "2026-08-03"
+    assert provenance["snapshot_date"] == "2026-08-01", (
+        "phải dùng dòng mới nhất KHÔNG vượt ngày đánh giá"
+    )
+    assert provenance["snapshot_is_stale"] is True
+    assert provenance["staleness_days"] == 2
+    assert provenance["eligible_count"] == 1 and provenance["total_count"] == 2
+    assert provenance["ineligible"] == {"AAA": "TRADE_RESTRICTED"}
+    assert str(path) in provenance["source"]

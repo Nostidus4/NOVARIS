@@ -1,10 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
 import { pct } from "@/lib/format";
 import type { ActionMini } from "@/lib/types";
 import { DataTable, type Column, type Filter } from "@/components/ui/DataTable";
 
-const COLUMNS: Column<ActionMini>[] = [
+function solverBadgeTone(solver: string | null | undefined): string {
+  return solver === "qaoa" ? "good" : "warn";
+}
+
+const BASE_COLUMNS: Column<ActionMini>[] = [
   {
     key: "ticker",
     label: "Ticker",
@@ -20,7 +25,7 @@ const COLUMNS: Column<ActionMini>[] = [
   { key: "bits", label: "Bits", render: (r) => <code>{r.bits ?? "—"}</code> },
   {
     key: "quantum_reduction",
-    label: "Quantum red.",
+    label: "Solver reduction",
     sortValue: (r) => r.quantum_reduction ?? null,
     render: (r) => pct(r.quantum_reduction, 0),
   },
@@ -54,11 +59,32 @@ const FILTERS: Filter<ActionMini>[] = [
   },
 ];
 
-export function ActionTable({ rows }: { rows: ActionMini[] }) {
+type Props = {
+  rows: ActionMini[];
+  /** `actual_solver` của run này — cột "Source solver" nhắc lại trên từng dòng để không ai đọc
+   * nhầm "Solver reduction" là kết quả QAOA khi run thực chạy exact/classical. */
+  sourceSolver?: string | null;
+};
+
+export function ActionTable({ rows, sourceSolver = null }: Props) {
+  const columns = useMemo<Column<ActionMini>[]>(
+    () => [
+      ...BASE_COLUMNS,
+      {
+        key: "source_solver",
+        label: "Source solver",
+        render: () => (
+          <span className={`tag ${solverBadgeTone(sourceSolver)}`}>{sourceSolver ?? "n/a"}</span>
+        ),
+      },
+    ],
+    [sourceSolver],
+  );
+
   return (
     <DataTable
       rows={rows}
-      columns={COLUMNS}
+      columns={columns}
       filters={FILTERS}
       rowKey={(r) => r.ticker}
       searchText={(r) => r.ticker}

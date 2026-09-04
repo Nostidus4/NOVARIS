@@ -39,8 +39,28 @@ class RunContext:
 
     def logger(self, name: str) -> logging.Logger:
         """Logger ghi ra `{run_root}/logs.txt` (append) kèm console handler — tạo một lần, tái dùng
-        cho các lần gọi sau trong cùng `RunContext`."""
+        cho các lần gọi sau trong cùng `RunContext`.
+
+        `logging.getLogger` là registry TOÀN CỤC theo tiến trình, còn tên logger chỉ gồm
+        `run_id` + `name`. Hai `RunContext` khác nhau nhưng TRÙNG `run_id` trong cùng một tiến
+        trình (VD `run_id="dev"` ở hai `tmp_path` khác nhau) vì thế nhận đúng một đối tượng
+        logger; nếu chỉ kiểm `if not logger.handlers` thì lần thứ hai tái dùng `FileHandler` cũ
+        đang trỏ vào `run_root` CŨ, và `logs.txt` của run mới KHÔNG BAO GIỜ được tạo — mất lặng
+        lẽ một trong 4 file metadata bắt buộc (CLAUDE.md quy tắc 13). Vì vậy phải so đường dẫn
+        thật của handler với `run_root` hiện tại và dựng lại khi lệch.
+        """
         logger = logging.getLogger(f"qshield.{self.run_id}.{name}")
+        log_path = self.artifact_paths.run_root / "logs.txt"
+        stale = [
+            handler
+            for handler in logger.handlers
+            if isinstance(handler, logging.FileHandler)
+            and Path(handler.baseFilename) != log_path
+        ]
+        if stale:
+            for handler in list(logger.handlers):
+                logger.removeHandler(handler)
+                handler.close()
         if not logger.handlers:
             logger.setLevel(logging.INFO)
             log_path = self.artifact_paths.run_root / "logs.txt"

@@ -15,7 +15,7 @@ MWG,MWG.VN,Thế Giới Di Động,2014-07-14,HOSE,-,[{'exchange': 'HOSE'}],yaho
 PLX,PLX.VN,Petrolimex,2017-04-21,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 SAB,SAB.VN,Sabeco,2016-12-06,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 SHB,SHB.VN,SHBank,2009-04-20,HOSE,HNX→HOSE 2021-10,"[{'exchange': 'HNX', 'until': '2021-10-10'}, {'exchange': 'HOSE', 'from': '2021-10-11'}]",dnse,"SỬA so với ước lượng gốc trong CLEAN.ipynb (ghi nhầm 2020-10) — ngày thật 11/10/2021, verify qua công bố thông tin chính thức SHB/HOSE."
-SSB,SSB.VN,SeABank,2021-03-24,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
+SSB,SSB.VN,SeABank,2021-03-24,HOSE,-,[{'exchange': 'HOSE'}],yahoo,IPO 24/03/2021 — thiếu crash Covid 03/2020 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.2). Có đủ lịch sử để train (~1400 phiên) nhưng CVaR/tail có thể unreliable do thiếu một trong ba kiểu crash đã quan sát trên VN-Index — downweight khi tính risk contribution.
 SSI,SSI.VN,SSI Securities,2007-10-29,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 STB,STB.VN,Sacombank,2006-07-12,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 TCB,TCB.VN,Techcombank,2018-06-04,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
@@ -27,5 +27,5 @@ VIC,VIC.VN,Vingroup,2007-09-19,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 VJC,VJC.VN,Vietjet Air,2017-02-28,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 VNM,VNM.VN,Vinamilk,2006-01-19,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
 VPB,VPB.VN,VPBank,2017-08-17,HOSE,-,[{'exchange': 'HOSE'}],yahoo,
-VPL,VPL.VN,VPL (placeholder — verify),2025-01-01,HOSE,-,[{'exchange': 'HOSE'}],yahoo,Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production trong CLEAN.ipynb).
+VPL,VPL.VN,VPL (placeholder — verify),2025-05-13,HOSE,-,[{'exchange': 'HOSE'}],yahoo,SỬA first_trading_date so với ước lượng gốc 2025-01-01 trong CLEAN.ipynb — IPO thật 13/05/2025 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.1). Chỉ ~310 phiên tới 08/2026 — không đủ train HMM/CVaR; cần Minh Anh/Ngọc xác nhận mã thay thế VN30 kỳ 01/2027 hoặc bỏ khỏi universe (còn 29 mã). Cold-start — verify trước khi dùng cho UAT/demo.
 VRE,VRE.VN,Vincom Retail,2017-11-06,HOSE,-,[{'exchange': 'HOSE'}],yahoo,

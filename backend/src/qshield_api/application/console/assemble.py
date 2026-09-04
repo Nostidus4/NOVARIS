@@ -63,6 +63,16 @@ def _rec(view: WorkflowArtifactView) -> dict[str, Any]:
     return dict(view.final_recommendation or {})
 
 
+def _constraints_evaluated(view: WorkflowArtifactView) -> bool:
+    """True chỉ khi `risk_summary.json` có `risk_policy` VÀ ít nhất một `quantum_constraints`
+    thực sự được encode. `configs/workflow_update.yaml` hiện để `quantum_constraints: {}` — khi
+    đó `constraints_passed` PASS luôn vô điều kiện, một tín hiệu sai (P2-2)."""
+    risk_summary = view.risk_summary or {}
+    risk_policy = risk_summary.get("risk_policy")
+    quantum_constraints = risk_summary.get("quantum_constraints")
+    return bool(risk_policy) and bool(quantum_constraints)
+
+
 def _actions(view: WorkflowArtifactView) -> list[ActionMiniDTO]:
     rec = _rec(view)
     rows = rec.get("actions") or []
@@ -493,9 +503,22 @@ def assemble_quantum(
                 else None
             )
         ),
+        fallback_reason=(
+            (
+                benchmark.fallback_reason
+                if benchmark and benchmark.fallback_reason
+                else None
+            )
+            or (
+                str(bench["fallback_reason"])
+                if bench.get("fallback_reason") is not None
+                else None
+            )
+        ),
         constraints_passed=_as_bool(rec["constraints_passed"])
         if rec.get("constraints_passed") is not None
         else None,
+        constraints_evaluated=_constraints_evaluated(view),
         winning_bitstring=(
             str(rec["winning_bitstring"])
             if rec.get("winning_bitstring") is not None
@@ -532,6 +555,7 @@ def assemble_quantum(
             benchmark.qaoa_beats_classical if benchmark is not None else None
         ),
         source_artifact=(benchmark.source_artifact if benchmark is not None else None),
+        polishing_dependency=_float_or_none(rec.get("polishing_dependency")),
         actions=sorted(_actions(view), key=lambda a: a.ticker),
         workflow_benchmark=view.workflow_benchmark,
         qubo_model=view.qubo_model,

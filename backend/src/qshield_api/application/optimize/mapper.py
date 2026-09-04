@@ -27,6 +27,10 @@ def optimize_job_to_dto(job: OptimizeJob) -> OptimizeJobDTO:
             true_cvar_before=job.result.true_cvar_before,
             true_cvar_after=job.result.true_cvar_after,
             source_artifact=job.result.source_artifact,
+            personalization_status=job.result.personalization_status,
+            personalization_note=job.result.personalization_note,
+            requested_portfolio_hash=job.result.requested_portfolio_hash,
+            evaluated_portfolio_hash=job.result.evaluated_portfolio_hash,
         )
         if job.result is not None
         else None

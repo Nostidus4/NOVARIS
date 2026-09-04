@@ -1,4 +1,5 @@
 # Nguyễn Anh Tú - smoke test CLI scenarios: cube đúng shape/khóa, gate fail thì KHÔNG ghi cube.
+import dataclasses
 import json
 from pathlib import Path
 
@@ -6,10 +7,16 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+from qshield_ai import cli as cli_module
 from qshield_ai.cli import app
 from typer.testing import CliRunner
 
-runner = CliRunner()
+# `COLUMNS` rộng để tránh rich/typer bọc dòng thông báo lỗi ở 80 cột mặc định — panel lỗi chứa
+# đường dẫn `tmp_path` của pytest (dài, nhiều cấp thư mục lồng nhau) nên vị trí wrap phụ thuộc độ
+# dài đường dẫn; ở một số độ dài, wrap cắt ngay giữa tên file (`regime_daily.parq|uet`) và làm
+# assertion `"regime_daily.parquet" in result.output` flake tùy tmp_path, không phản ánh hành vi
+# CLI thật thay đổi.
+runner = CliRunner(env={"COLUMNS": "300"})
 TICKERS = ("AAA", "BBB", "CCC", "DDD")
 
 # Ngưỡng mặc định — vô hại (giống configs/base.yaml thật), để test tập trung vào hành vi CLI
@@ -507,3 +514,147 @@ def test_manifest_records_both_sources_on_a_consistent_run(
         (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
     )
     assert manifest["input_source"] == manifest["regime_input_source"] == "mock"
+
+
+def _force_empty_pool_for(monkeypatch: pytest.MonkeyPatch, regime_name: str) -> None:
+    """Ép `build_block_pool` trả pool rỗng cho MỘT regime cụ thể, giữ nguyên mọi regime khác.
+
+    Mô phỏng đúng bằng chứng runtime đã quan sát (`scenario_manifest.json` thật: pool "stress"
+    rỗng trong khi "volatile" — target_regime — vẫn PASS) mà không cần điều khiển ngẫu nhiên của
+    dữ liệu mock để tự nhiên tạo ra một pool rỗng.
+    """
+    original_build_block_pool = cli_module.build_block_pool
+
+    def _patched(*args: object, **kwargs: object) -> object:
+        pool = original_build_block_pool(*args, **kwargs)
+        if kwargs.get("target_regime") == regime_name:
+            pool = dataclasses.replace(
+                pool, eligible_block_count=0, block_starts=pool.block_starts[:0]
+            )
+        return pool
+
+    monkeypatch.setattr(cli_module, "build_block_pool", _patched)
+
+
+def test_skipped_regime_downgrades_a_would_be_pass_to_incomplete(
+    tmp_path: Path, prepared: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Nhiệm vụ 1 (P0): `skipped_regimes` phi rỗng không được lộ ra như PASS — plan.md R04 cấm
+    "volatile PASS không đại diện cả 3 regime". `target_regime` của `_write_config`/mock fixture
+    luôn xác định là "volatile" (xem `_REGIME_ORDER`); ép pool "stress" rỗng để tái hiện đúng bằng
+    chứng runtime đã quan sát trong `artifacts/dev/scenarios/scenario_manifest.json`.
+    """
+    _force_empty_pool_for(monkeypatch, "stress")
+
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    # INCOMPLETE không phải FAIL: cube của target_regime (volatile) vẫn hợp lệ, chỉ thiếu dữ liệu
+    # của MỘT regime khác — không có lý do chặn ghi cube đã tính đúng.
+    assert result.exit_code == 0, result.output
+
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["target_regime"] == "volatile"
+    assert "stress" in manifest["skipped_regimes"]
+    assert manifest["gate_status"] == "INCOMPLETE"
+    assert manifest["gate_status"] != "PASS"
+    assert "stress" in manifest["gate_incomplete_reason"]
+
+
+def test_structural_violation_still_wins_over_incomplete(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """FAIL > INCOMPLETE trong thứ tự ưu tiên: một regime khác bị skip không được che một FAIL
+    thật của target_regime. Dùng `_IMPOSSIBLE_THRESHOLDS` (PR-SCN-013, đã có test riêng) làm
+    nguồn FAIL đáng tin cậy, cộng dồn với một skip độc lập để ép race giữa hai nhánh.
+    """
+    _force_empty_pool_for(monkeypatch, "stress")
+    config_path = _write_config(
+        tmp_path,
+        validation={
+            "reference": "regime_matched_forward_windows",
+            "min_reference_windows": 30,
+            "thresholds": _IMPOSSIBLE_THRESHOLDS,
+        },
+    )
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
+
+    result = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+    assert result.exit_code != 0  # FAIL vẫn chặn ghi cube trừ khi --force
+
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert "stress" in manifest["skipped_regimes"], (
+        "test này phải THẬT SỰ có một skip song song với FAIL, nếu không không kiểm tra được "
+        "thứ tự ưu tiên FAIL > INCOMPLETE"
+    )
+    assert manifest["gate_status"] == "FAIL"
+
+
+def test_no_skip_and_passing_metrics_still_yields_plain_pass(
+    tmp_path: Path, prepared: Path
+) -> None:
+    """Không phá hành vi cũ: không regime nào bị skip + mọi metric PASS ⇒ vẫn PASS, không tự hạ
+    xuống INCOMPLETE khi không có gì để báo cáo thiếu."""
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["skipped_regimes"] == {}
+    assert manifest["gate_status"] == "PASS"
+    assert manifest["gate_incomplete_reason"] is None
+
+
+def test_block_diversity_diagnostic_is_recorded_without_a_hard_threshold(
+    tmp_path: Path, prepared: Path
+) -> None:
+    """Nhiệm vụ 2 (P0-4d): diagnostic đa dạng block luôn có mặt cho mọi regime sinh được cube;
+    không có `scenarios.block_diversity_gate.min_unique_blocks` trong config ⇒ không suy đoán
+    ngưỡng, và diagnostic không tự ý hạ `gate_status`.
+    """
+    result = runner.invoke(app, ["scenarios", "--config", str(prepared), "--mock"])
+    assert result.exit_code == 0, result.output
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["block_diversity_gate"] == "NOT_CONFIGURED_PENDING_OWNER"
+    assert manifest["block_diversity"], "phải có diagnostic cho ít nhất một regime"
+    for diagnostics in manifest["block_diversity"].values():
+        assert (
+            diagnostics["effective_independent_windows"]
+            == diagnostics["unique_blocks_used"]
+        )
+        assert diagnostics["unique_blocks_used"] <= diagnostics["blocks_drawn"]
+    assert manifest["gate_status"] == "PASS"
+
+
+def test_block_diversity_gate_applies_a_configured_threshold_as_diagnostic_only(
+    tmp_path: Path,
+) -> None:
+    """Có config `scenarios.block_diversity_gate.min_unique_blocks` ⇒ áp dụng ngưỡng ĐÓ (không
+    tự bịa số), nhưng vẫn chỉ là diagnostic — nhiệm vụ 2 không yêu cầu wiring vào `gate_status`,
+    quyết định hard-fail còn chờ owner (Tú/Phúc)."""
+    config_path = _write_config(
+        tmp_path,
+        scenarios={"block_diversity_gate": {"min_unique_blocks": 10_000}},
+    )
+    regime_result = runner.invoke(
+        app, ["regime", "--config", str(config_path), "--mock"]
+    )
+    assert regime_result.exit_code == 0, regime_result.output
+    result = runner.invoke(app, ["scenarios", "--config", str(config_path), "--mock"])
+    assert result.exit_code == 0, result.output
+
+    manifest = json.loads(
+        (_scenario_dir(tmp_path) / "scenario_manifest.json").read_text(encoding="utf-8")
+    )
+    gate = manifest["block_diversity_gate"]
+    assert gate["min_unique_blocks"] == 10_000
+    assert gate["status"] == "BELOW_MIN_UNIQUE_BLOCKS"
+    assert gate["below_min_unique_blocks"]
+    assert manifest["gate_status"] == "PASS"

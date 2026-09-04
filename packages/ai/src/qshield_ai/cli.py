@@ -61,6 +61,7 @@ from qshield_ai.scenarios.bootstrap import (
     resolve_evaluation_date,
 )
 from qshield_ai.scenarios.validate import GATE_FAIL as SCENARIO_GATE_FAIL
+from qshield_ai.scenarios.validate import GATE_INCOMPLETE as SCENARIO_GATE_INCOMPLETE
 from qshield_ai.scenarios.validate import (
     build_validation_report,
     distribution_metrics,
@@ -618,6 +619,62 @@ def scenarios(
     )
     status = SCENARIO_GATE_FAIL if structural else distribution_gate
 
+    # Cổng chỉ chấm trên `target_regime` (AC gốc), nhưng `skipped` (regime khác không sinh được
+    # cube — pool rỗng hoặc thiếu cửa sổ tham chiếu) không được phép biến mất khỏi `status`: một
+    # PASS/WARN trong khi thiếu dữ liệu của regime khác không đại diện cho "full stress
+    # capability" (plan.md R04). Ưu tiên: FAIL > INCOMPLETE > WARN > PASS — vi phạm cấu trúc/phân
+    # phối của target_regime vẫn thắng tuyệt đối, INCOMPLETE chỉ hạ một PASS/WARN xuống, không
+    # bao giờ che một FAIL.
+    gate_incomplete_reason: str | None = None
+    if status != SCENARIO_GATE_FAIL and skipped:
+        status = SCENARIO_GATE_INCOMPLETE
+        gate_incomplete_reason = f"regimes_missing: {sorted(skipped)}"
+
+    # P0-4d: minh bạch hoá đa dạng block đã dùng cho mỗi regime SINH ĐƯỢC cube (regime bị skip
+    # không có `meta` để báo). `effective_independent_windows` = số block ĐỘC NHẤT thực sự rút ra
+    # — bootstrap vẽ lại nhiều lần từ cùng một pool không tạo thêm sự kiện lịch sử độc lập nào
+    # (plan.md §5). Đây là DIAGNOSTIC THUẦN TUÝ — không bao giờ chạm vào `status`: ngưỡng
+    # `min_unique_blocks` là quyết định của owner (Tú/Phúc), đọc từ `configs/*.yaml` khóa
+    # `scenarios.block_diversity_gate`; vắng mặt thì chỉ báo diagnostic, không suy đoán một con số
+    # và cũng không tự ý biến diagnostic này thành hard-fail của pipeline.
+    block_diversity: dict[str, dict[str, Any]] = {
+        regime_name: {
+            "unique_blocks_used": meta["unique_blocks_used"],
+            "blocks_drawn": meta["blocks_drawn"],
+            "reuse_rate": meta["reuse_rate"],
+            "effective_independent_windows": meta["unique_blocks_used"],
+        }
+        for regime_name, meta in metadata_by_regime.items()
+    }
+    scenarios_cfg = cfg.get("scenarios")
+    diversity_gate_cfg = (
+        scenarios_cfg.get("block_diversity_gate")
+        if isinstance(scenarios_cfg, dict)
+        else None
+    )
+    min_unique_blocks = (
+        diversity_gate_cfg.get("min_unique_blocks")
+        if isinstance(diversity_gate_cfg, dict)
+        else None
+    )
+    block_diversity_gate: Any
+    if min_unique_blocks is None:
+        block_diversity_gate = "NOT_CONFIGURED_PENDING_OWNER"
+    else:
+        min_unique_blocks = int(min_unique_blocks)
+        below_min = {
+            regime_name: diagnostics["unique_blocks_used"]
+            for regime_name, diagnostics in block_diversity.items()
+            if diagnostics["unique_blocks_used"] < min_unique_blocks
+        }
+        # Nhãn "OK"/"BELOW_MIN_UNIQUE_BLOCKS" cố tình khác vocab GATE_PASS/GATE_FAIL của cổng
+        # chính — đây là diagnostic riêng, không lẫn với `status` của scenario gate.
+        block_diversity_gate = {
+            "min_unique_blocks": min_unique_blocks,
+            "status": "BELOW_MIN_UNIQUE_BLOCKS" if below_min else "OK",
+            "below_min_unique_blocks": below_min,
+        }
+
     # `dict[str, Any]` (không phải `dict[str, np.ndarray]`) trước khi splat: numpy-stubs khớp sai
     # overload của `savez_compressed(file, *args, allow_pickle=..., **kwds)` khi `**kwds` mang kiểu
     # `ndarray` cụ thể, báo "expected bool" — false positive đã xác minh, không phải lỗi thật.
@@ -638,6 +695,7 @@ def scenarios(
         "run_mode": RUN_MODE_NON_BASELINE,
         "run_id": context.run_id,
         "gate_status": status,
+        "gate_incomplete_reason": gate_incomplete_reason,
         "forced": bool(force),
         # Hai trường tách nhau vì `--force` cho phép chúng lệch: `input_source` là nguồn của
         # chính run scenarios này, `regime_input_source` là nguồn của nhãn regime nó đã tiêu thụ.
@@ -664,6 +722,8 @@ def scenarios(
         "primary": metadata_by_regime[target_regime],
         "by_regime": metadata_by_regime,
         "skipped_regimes": skipped,
+        "block_diversity": block_diversity,
+        "block_diversity_gate": block_diversity_gate,
         "validation_reference": str(cfg["validation"]["reference"]),
         "unresolved_decisions": list(UNRESOLVED_DECISIONS),
     }
@@ -675,6 +735,7 @@ def scenarios(
         {
             "stage": "scenarios",
             "gate_status": status,
+            "gate_incomplete_reason": gate_incomplete_reason,
             "forced": bool(force),
             "regime_source": regime_source,
             "target_regime": target_regime,

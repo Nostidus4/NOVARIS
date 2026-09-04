@@ -19,7 +19,7 @@
     "IN-RISK-02 (ngày đánh giá t)",
     "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
     "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
-    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)"
+    "IN-PO-04 (duyệt configs/base.yaml + scenarios.yaml)"
   ],
   "seeds_reported": [
     101,
@@ -34,9 +34,9 @@
     1001
   ],
   "stability": {
-    "n_seeds": 5.0,
-    "mean_agreement": 0.8230647709320695,
-    "min_agreement": 0.5576619273301737,
+    "n_seeds": 6.0,
+    "mean_agreement": 0.8536071616640337,
+    "min_agreement": 0.5608214849921012,
     "max_agreement": 1.0
   },
   "champion": {
@@ -44,11 +44,11 @@
     "n_states": 3,
     "covariance_type": "diag",
     "converged": true,
-    "log_likelihood_train": -1539.2847833062651,
-    "log_likelihood_validation": -1864.6348672742981,
+    "log_likelihood_train": -1539.5569228230825,
+    "log_likelihood_validation": -1863.7862690450681,
     "n_parameters": 38,
-    "aic": 3154.5695666125303,
-    "bic": 3304.693983610864
+    "aic": 3155.113845646165,
+    "bic": 3305.2382626444987
   },
   "label_map": {
     "0": "stress",
@@ -61,30 +61,30 @@
       "label": "stress",
       "occupancy": 0.35071090047393366,
       "mean_return": -0.00015977549387912775,
-      "mean_volatility": 0.016344875913420674,
+      "mean_volatility": 0.01634487591342067,
       "mean_drawdown": -0.25174724405900833,
-      "mean_correlation": 0.4858189474207785,
-      "stress_score": 2.3593315118324623
+      "mean_correlation": 0.4861566259963403,
+      "stress_score": 2.3629223160173654
     },
     {
       "state_id": 1,
       "label": "volatile",
-      "occupancy": 0.3791469194312796,
-      "mean_return": -0.0008382364683013222,
-      "mean_volatility": 0.009725797598866258,
-      "mean_drawdown": -0.13128139252378393,
-      "mean_correlation": 0.3350045994618761,
-      "stress_score": 0.5965883495677284
+      "occupancy": 0.37756714060031593,
+      "mean_return": -0.0008480258749951824,
+      "mean_volatility": 0.009712392808451984,
+      "mean_drawdown": -0.13147645001197597,
+      "mean_correlation": 0.3353073324653424,
+      "stress_score": 0.5903729848199462
     },
     {
       "state_id": 2,
       "label": "normal",
-      "occupancy": 0.27014218009478674,
-      "mean_return": 0.00014656866886469185,
-      "mean_volatility": 0.009718190129581484,
-      "mean_drawdown": -0.023364133391166907,
-      "mean_correlation": 0.2627908232333082,
-      "stress_score": -2.955919861400191
+      "occupancy": 0.2717219589257504,
+      "mean_return": 0.00015444577969414856,
+      "mean_volatility": 0.00973686078294365,
+      "mean_drawdown": -0.023720520132182694,
+      "mean_correlation": 0.26301753712942316,
+      "stress_score": -2.9532953008373126
     }
   ],
   "coverage": {
@@ -98,30 +98,30 @@
     }
   },
   "occupancy": {
-    "normal": 0.2798418972332016,
-    "volatile": 0.5193675889328063,
-    "stress": 0.2007905138339921
+    "normal": 0.28063241106719367,
+    "volatile": 0.5146245059288538,
+    "stress": 0.20474308300395258
   },
   "mean_durations": {
-    "normal": 32.18181818181818,
-    "volatile": 43.8,
-    "stress": 63.5
+    "normal": 32.27272727272727,
+    "volatile": 38.294117647058826,
+    "stress": 43.166666666666664
   },
   "transition_matrix": {
     "normal": {
-      "normal": 0.9689265536723164,
-      "volatile": 0.01524390243902439,
+      "normal": 0.9690140845070423,
+      "volatile": 0.015384615384615385,
       "stress": 0.0
     },
     "volatile": {
-      "normal": 0.031073446327683617,
-      "volatile": 0.9786585365853658,
-      "stress": 0.015748031496062992
+      "normal": 0.030985915492957747,
+      "volatile": 0.9753846153846154,
+      "stress": 0.023166023166023165
     },
     "stress": {
       "normal": 0.0,
-      "volatile": 0.006097560975609756,
-      "stress": 0.984251968503937
+      "volatile": 0.009230769230769232,
+      "stress": 0.9768339768339769
     }
   }
 }

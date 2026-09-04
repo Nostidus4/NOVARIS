@@ -57,29 +57,37 @@ def test_transforms_reference_real_features(config: Config) -> None:
 
 
 def test_scenario_seed_is_not_shadowed_by_base(config: Config) -> None:
-    """`Config.load` gộp phẳng rồi cho key của base.yaml đè mọi include.
+    """`configs/scenarios.yaml` đã bị gộp thẳng vào `configs/base.yaml` (không còn `includes:`
+    riêng cho scenario) — nguồn đọc thô đổi theo, nhưng mục đích test giữ nguyên: `scenario_seed`
+    phải là một khóa TÁCH BIỆT khỏi `seed` toàn cục, và giá trị `Config` trả về phải đúng bằng
+    giá trị khai báo thô trong yaml — không bị `seed` toàn cục ghi đè một cách âm thầm.
 
-    Nếu `configs/base.yaml` khai báo lại `seed`, giá trị đó vĩnh viễn không đọc được
-    và stage scenarios sẽ im lặng dùng seed của base. Test này chặn hồi quy đó.
+    Trước đây rủi ro nằm ở thứ tự merge include (key của `base.yaml` đè mọi include). Bây giờ
+    toàn bộ nằm trong một file phẳng nên rủi ro đó không còn ở dạng cũ, nhưng vẫn đáng giữ làm
+    regression guard: nếu ai đó gộp `scenario_seed` và `seed` thành một khóa, hay lỡ xóa
+    `scenario_seed` và để code rơi về `seed` toàn cục, test này phải đỏ.
 
     NGOẠI LỆ CÓ CHỦ Ý với quy tắc "`Config` là nơi DUY NHẤT được `yaml.safe_load` trên
-    `configs/*.yaml`" (`qshield_contracts.config`). Chính lớp gộp phẳng của `Config` là thứ
-    đang được kiểm tra, nên đọc qua `Config` không thể phát hiện key bị đè — nó trả về giá
-    trị của base trong cả hai trường hợp. Bản đọc thô này chỉ dùng để assert sự VẮNG MẶT của
-    một key; không giá trị nào từ đây được đưa vào code. Không nhân bản pattern này ra ngoài
-    test: mọi nơi khác vẫn phải đi qua `Config`.
+    `configs/*.yaml`" (`qshield_contracts.config`): bản đọc thô này chỉ dùng để đối chiếu với
+    giá trị `Config` trả về, không giá trị nào từ đây được đưa vào code. Không nhân bản pattern
+    này ra ngoài test: mọi nơi khác vẫn phải đi qua `Config`.
     """
-    raw = yaml.safe_load(
-        (CONFIG_PATH.parent / "scenarios.yaml").read_text(encoding="utf-8")
+    raw = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    assert "scenario_seed" in raw, (
+        "khóa `scenario_seed` phải tồn tại độc lập trong base.yaml"
     )
-    assert "seed" not in raw, (
-        "khóa `seed` trong scenarios.yaml bị base.yaml đè — đổi tên"
+    assert "seed" in raw, (
+        "khóa `seed` toàn cục phải vẫn tồn tại tách biệt với `scenario_seed`"
+    )
+    assert config["scenario_seed"] == raw["scenario_seed"], (
+        "Config trả về scenario_seed khác giá trị khai báo thô trong base.yaml — nghi ngờ bị "
+        "`seed` toàn cục ghi đè trong lúc merge"
     )
     assert isinstance(config["scenario_seed"], int)
 
 
 def test_scenario_keys(config: Config) -> None:
-    assert config["num_scenarios"] == 500
+    assert config["num_scenarios"] == 5000
     assert config["horizon_days"] == 20
     assert config["block_length"] == 5
     assert "evaluation_date" in config

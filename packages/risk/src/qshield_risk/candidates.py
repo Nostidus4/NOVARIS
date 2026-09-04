@@ -18,6 +18,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 
 from qshield_risk.costs import CostRates, transaction_costs
@@ -285,6 +286,121 @@ def select_four_level_candidates(
     frame["underfilled_reason"] = underfilled_reason
     frame["note"] = None
     return frame.drop(columns="_eligible")
+
+
+def reselect_top_n(
+    candidate_frame: pd.DataFrame, output_candidates: int
+) -> pd.DataFrame:
+    """Recompute `selected_top10`/`underfilled_reason` for a different N (CR-WF2-005).
+
+    `select_four_level_candidates` ranks the *entire* eligible universe by `net_risk_score`
+    before ever looking at `output_candidates` — that parameter only decides where the
+    ``selected_top10`` cutoff falls. A dynamic-N sweep (try N in {10, 12, 15}, ...) therefore
+    never needs to recompute marginal CVaR reductions for every candidate N; it only needs to
+    move the cutoff on an already-ranked frame, which this function does.
+    """
+    required = {"rank", "eligible_status"}
+    missing = sorted(required - set(candidate_frame.columns))
+    if missing:
+        raise ValueError(
+            f"[risk.candidates] candidate frame missing columns: {missing}."
+        )
+    if output_candidates <= 0:
+        raise ValueError("[risk.candidates] output_candidates must be positive.")
+    frame = candidate_frame.copy()
+    eligible = (
+        frame["eligible_status"].astype(str).eq("eligible")
+        if frame["eligible_status"].dtype == object
+        else frame["eligible_status"].astype(bool)
+    )
+    eligible_count = int(eligible.sum())
+    selected_count = min(eligible_count, output_candidates)
+    frame["selected_top10"] = eligible & (
+        pd.to_numeric(frame["rank"]) <= selected_count
+    )
+    frame["underfilled_reason"] = (
+        None
+        if eligible_count >= output_candidates
+        else f"underfilled: Neligible={eligible_count} < requested={output_candidates}"
+    )
+    return frame
+
+
+def _moving_block_bootstrap_indices(
+    n_scenarios: int, *, block_length: int, rng: np.random.Generator
+) -> np.ndarray:
+    """One moving-block-bootstrap resample of scenario indices, length exactly `n_scenarios`."""
+    if n_scenarios <= 0:
+        raise ValueError("[risk.candidates] n_scenarios must be positive.")
+    if block_length <= 0 or block_length > n_scenarios:
+        raise ValueError(
+            f"[risk.candidates] block_length must be in [1, {n_scenarios}], "
+            f"got {block_length!r}."
+        )
+    n_blocks = -(-n_scenarios // block_length)  # ceil division, no extra import
+    starts = rng.integers(0, n_scenarios - block_length + 1, size=n_blocks)
+    indices = np.concatenate(
+        [np.arange(start, start + block_length) for start in starts]
+    )
+    return indices[:n_scenarios]
+
+
+def bootstrap_ranking_variants(
+    scenarios: npt.ArrayLike,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    eligibility: Mapping[str, bool],
+    config: Mapping[str, Any],
+    *,
+    seeds: Sequence[int],
+    block_length: int,
+    output_candidates: int,
+    ineligible_reasons: Mapping[str, str] | None = None,
+) -> dict[str, list[str]]:
+    """Re-rank candidates on moving-block-bootstrap resamples of the scenario cube (P1-5).
+
+    `candidate_gate.evaluate_candidate_gate`'s stability metrics (median/worst overlap, Jaccard,
+    Spearman, Kendall) need at least one alternate ranking to compare against; before this
+    function existed, `stability_rankings_path: null` meant they were silently never computed
+    (`STABILITY_NOT_EVALUATED` on every run). Each seed here resamples the *scenario* axis with a
+    moving block bootstrap (blocks of `block_length` consecutive scenarios keep any residual
+    serial structure inside a block, matching the ``block_length`` convention already used for
+    the ai package's own return-level bootstrap) and reruns `select_four_level_candidates` on the
+    resampled cube. This asks "if Monte Carlo had drawn a different finite sample of paths from
+    the same generative model, would the Top-N ranking change?" — a statement about sampling
+    noise in the already-produced cube. It does **not** regenerate scenarios or touch the HMM
+    regime model; that remains packages/ai's exclusive responsibility.
+    """
+    tickers = validate_ticker_order(ticker_order)
+    cube = validate_scenario_cube(
+        scenarios,
+        expected_horizon=int(config.get("horizon_days", 20)),
+        expected_assets=len(tickers),
+    )
+    if not seeds:
+        raise ValueError("[risk.candidates] at least one bootstrap seed is required.")
+    n_scenarios = cube.shape[0]
+    variants: dict[str, list[str]] = {}
+    for seed in seeds:
+        rng = np.random.default_rng(int(seed))
+        indices = _moving_block_bootstrap_indices(
+            n_scenarios, block_length=block_length, rng=rng
+        )
+        resampled_frame = select_four_level_candidates(
+            cube[indices],
+            tickers,
+            weights,
+            cash_weight,
+            eligibility,
+            config,
+            output_candidates=output_candidates,
+            ineligible_reasons=ineligible_reasons,
+        )
+        variants[f"seed_{int(seed)}"] = (
+            resampled_frame.sort_values("rank")["ticker"].astype(str).tolist()
+        )
+    return variants
 
 
 def candidate_order(candidate_frame: pd.DataFrame) -> list[dict[str, object]]:

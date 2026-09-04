@@ -1,13 +1,25 @@
 {
-  "run_id": "run_20260807_155002",
-  "profile_id": "workflow_update_downstream",
+  "run_id": "run_20260814_215342",
+  "profile_id": "workflow_update",
   "profile_status": "NON_BASELINE_RUN",
-  "config_version": "workflow-update-decision-package-v3",
-  "config_hash": "479517a8addf259b7e2e9ad46d29a17d1ee9d87e75b2f1e23479eaa23cdc6b8a",
+  "config_version": "workflow-update-v4",
+  "config_hash": "4927c3fe08d19d2036c8570bb9d9f8b0ddb632226911ba297b529327902f37b2",
+  "schema_version": "risk-workflow-v2",
+  "producer": "qshield_risk",
+  "policy_version": "UNAPPROVED_POLICY",
+  "gate_status": "FAIL",
+  "parent_hashes": {
+    "scenario_manifest": "0d3624c7aaeae4fe4c9f021cefba2322c4371b6ba568e278b825e35765f4c1a4",
+    "risk_policy": null
+  },
   "candidate_count": 10,
   "bits_per_candidate": 2,
   "total_decision_bits": 20,
-  "risk_coverage": 0.5863066087069677,
+  "risk_coverage": 0.5990267635911518,
+  "candidate_gate_status": "FAIL",
+  "candidate_gate_baseline_handoff_allowed": false,
+  "baseline_handoff_allowed": false,
+  "handoff_status": "ANALYSIS_ONLY_NON_BASELINE_RUN",
   "underfilled": false,
   "deviation": null,
   "bit_mapping": {
@@ -21,62 +33,62 @@
       "rank": 1,
       "ticker": "MWG",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.009146419061559937
+      "candidate_score": 0.009146353509614413
     },
     {
       "rank": 2,
       "ticker": "GVR",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.00880069164378749
+      "candidate_score": 0.00880069384415012
     },
     {
       "rank": 3,
       "ticker": "BSR",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.008370482717600533
+      "candidate_score": 0.00836257961334193
     },
     {
       "rank": 4,
       "ticker": "PLX",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.008335268998593956
+      "candidate_score": 0.008335307660245364
     },
     {
       "rank": 5,
       "ticker": "GAS",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.008148834728332251
+      "candidate_score": 0.008148919051547828
     },
     {
       "rank": 6,
       "ticker": "VRE",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.005721259398687956
+      "candidate_score": 0.005721263138928934
     },
     {
       "rank": 7,
       "ticker": "SSI",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.0054745634360435095
+      "candidate_score": 0.005474579924508381
     },
     {
       "rank": 8,
       "ticker": "HDB",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.005459872158255861
+      "candidate_score": 0.005459903035666892
     },
     {
       "rank": 9,
       "ticker": "CTG",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.004972174103265463
+      "candidate_score": 0.004972207536916297
     },
     {
       "rank": 10,
       "ticker": "BID",
       "current_weight": 0.0333333333,
-      "candidate_score": 0.0049187865244588735
+      "candidate_score": 0.004918786524458901
     }
   ],
-  "candidate_order_hash": "f6aa77efe6a238ba974a08a94ee1d93a439584df11b3ebcb2a7d5ffccc78b6b9"
+  "candidate_order_hash": "43a5f8a00ce32c51e5419f0c63b1c44a019ea8a4e7aa1eff4d4626ff008a20d2"
 }

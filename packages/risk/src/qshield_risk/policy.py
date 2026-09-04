@@ -10,6 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from qshield_risk.actions import TradeState
+from qshield_risk.costs import CostRates
 from qshield_risk.metrics import RiskMetrics, alpha_key
 
 
@@ -30,7 +31,9 @@ class ConstraintViolation:
 def _finite_number(raw: Mapping[str, Any], key: str) -> float:
     value = raw.get(key)
     if value is None or not np.isfinite(float(value)):
-        raise ValueError(f"[risk.policy] risk_policy.{key} must be explicit and finite.")
+        raise ValueError(
+            f"[risk.policy] risk_policy.{key} must be explicit and finite."
+        )
     return float(value)
 
 
@@ -71,7 +74,9 @@ class RiskPolicy:
         cvar_budget = _finite_number(raw, "cvar_budget")
         max_turnover = _finite_number(raw, "max_turnover")
         if not 0.0 <= cash_min <= cash_max <= 1.0:
-            raise ValueError("[risk.policy] cash band must satisfy 0 <= min <= max <= 1.")
+            raise ValueError(
+                "[risk.policy] cash band must satisfy 0 <= min <= max <= 1."
+            )
         if cvar_budget < 0.0:
             raise ValueError("[risk.policy] cvar_budget must be non-negative.")
         if not 0.0 <= max_turnover <= 1.0:
@@ -81,8 +86,12 @@ class RiskPolicy:
         if not isinstance(caps_raw, Mapping):
             raise TypeError("[risk.policy] per_asset_reduction_caps must be a mapping.")
         caps = {str(ticker): float(value) for ticker, value in caps_raw.items()}
-        if any(not np.isfinite(value) or not 0.0 <= value <= 1.0 for value in caps.values()):
-            raise ValueError("[risk.policy] per-asset caps must be finite and in [0, 1].")
+        if any(
+            not np.isfinite(value) or not 0.0 <= value <= 1.0 for value in caps.values()
+        ):
+            raise ValueError(
+                "[risk.policy] per-asset caps must be finite and in [0, 1]."
+            )
         liquidity_raw = raw.get("per_asset_liquidity_caps", {}) or {}
         if not isinstance(liquidity_raw, Mapping):
             raise TypeError("[risk.policy] per_asset_liquidity_caps must be a mapping.")
@@ -103,27 +112,38 @@ class RiskPolicy:
             raise ValueError("[risk.policy] minimum_trade_value must be non-negative.")
         p_stress_raw = raw.get("p_stress")
         p_stress = None if p_stress_raw is None else float(p_stress_raw)
-        if p_stress is not None and (not np.isfinite(p_stress) or not 0.0 <= p_stress <= 1.0):
+        if p_stress is not None and (
+            not np.isfinite(p_stress) or not 0.0 <= p_stress <= 1.0
+        ):
             raise ValueError("[risk.policy] p_stress must be in [0, 1].")
         posterior_raw = raw.get("regime_posterior")
         posterior = None
         if posterior_raw is not None:
             if not isinstance(posterior_raw, Mapping):
                 raise TypeError("[risk.policy] regime_posterior must be a mapping.")
-            posterior = {str(name): float(value) for name, value in posterior_raw.items()}
+            posterior = {
+                str(name): float(value) for name, value in posterior_raw.items()
+            }
             if (
                 not posterior
-                or any(not np.isfinite(value) or value < 0.0 for value in posterior.values())
+                or any(
+                    not np.isfinite(value) or value < 0.0
+                    for value in posterior.values()
+                )
                 or not np.isclose(sum(posterior.values()), 1.0, atol=1e-8)
             ):
-                raise ValueError("[risk.policy] regime_posterior must be non-negative and sum to 1.")
+                raise ValueError(
+                    "[risk.policy] regime_posterior must be non-negative and sum to 1."
+                )
         return cls(
             **text_values,
             cash_min=cash_min,
             cash_max=cash_max,
             cvar_budget=cvar_budget,
             max_turnover=max_turnover,
-            do_not_sell=tuple(str(ticker) for ticker in (raw.get("do_not_sell", ()) or ())),
+            do_not_sell=tuple(
+                str(ticker) for ticker in (raw.get("do_not_sell", ()) or ())
+            ),
             per_asset_reduction_caps=caps,
             per_asset_liquidity_caps=liquidity_caps,
             minimum_trade_value=minimum,
@@ -164,16 +184,46 @@ def evaluate_policy_constraints(
 
     amount_total = float(trade.stock_amounts.sum() + trade.cash_amount)
     if abs(amount_total - trade.nav_after) > tolerance:
-        add("ACCOUNTING_MISMATCH", "nav_after", amount_total, trade.nav_after, "Stock and cash amounts do not reconcile to NAV.")
+        add(
+            "ACCOUNTING_MISMATCH",
+            "nav_after",
+            amount_total,
+            trade.nav_after,
+            "Stock and cash amounts do not reconcile to NAV.",
+        )
     weight_total = float(trade.stock_weights.sum() + trade.cash_weight)
     if abs(weight_total - 1.0) > tolerance:
-        add("WEIGHT_SUM", "weights_after", weight_total, 1.0, "Post-trade weights do not sum to one.")
+        add(
+            "WEIGHT_SUM",
+            "weights_after",
+            weight_total,
+            1.0,
+            "Post-trade weights do not sum to one.",
+        )
     if trade.cash_weight < policy.cash_min - tolerance:
-        add("CASH_BELOW_MIN", "cash_weight_after", trade.cash_weight, policy.cash_min, "Cash weight is below the policy floor.")
+        add(
+            "CASH_BELOW_MIN",
+            "cash_weight_after",
+            trade.cash_weight,
+            policy.cash_min,
+            "Cash weight is below the policy floor.",
+        )
     if trade.cash_weight > policy.cash_max + tolerance:
-        add("CASH_ABOVE_MAX", "cash_weight_after", trade.cash_weight, policy.cash_max, "Cash weight is above the policy ceiling.")
+        add(
+            "CASH_ABOVE_MAX",
+            "cash_weight_after",
+            trade.cash_weight,
+            policy.cash_max,
+            "Cash weight is above the policy ceiling.",
+        )
     if trade.turnover > policy.max_turnover + tolerance:
-        add("TURNOVER_LIMIT", "turnover", trade.turnover, policy.max_turnover, "Turnover exceeds the policy maximum.")
+        add(
+            "TURNOVER_LIMIT",
+            "turnover",
+            trade.turnover,
+            policy.max_turnover,
+            "Turnover exceeds the policy maximum.",
+        )
 
     do_not_sell = set(policy.do_not_sell)
     caps = policy.per_asset_reduction_caps or {}
@@ -181,10 +231,22 @@ def evaluate_policy_constraints(
     for index, ticker in enumerate(tickers):
         reduction = float(values[index])
         if ticker in do_not_sell and reduction > tolerance:
-            add("DO_NOT_SELL", ticker, reduction, 0.0, f"{ticker} is protected by do-not-sell policy.")
+            add(
+                "DO_NOT_SELL",
+                ticker,
+                reduction,
+                0.0,
+                f"{ticker} is protected by do-not-sell policy.",
+            )
         cap = caps.get(ticker)
         if cap is not None and reduction > cap + tolerance:
-            add("PER_ASSET_CAP", ticker, reduction, cap, f"{ticker} reduction exceeds its approved cap.")
+            add(
+                "PER_ASSET_CAP",
+                ticker,
+                reduction,
+                cap,
+                f"{ticker} reduction exceeds its approved cap.",
+            )
         sale = float(weights[ticker]) * reduction
         liquidity_cap = liquidity_caps.get(ticker)
         if liquidity_cap is not None and sale > liquidity_cap + tolerance:
@@ -195,11 +257,199 @@ def evaluate_policy_constraints(
                 liquidity_cap,
                 f"{ticker} sale exceeds its point-in-time liquidity capacity.",
             )
-        if policy.minimum_trade_value is not None and tolerance < sale < policy.minimum_trade_value - tolerance:
-            add("MINIMUM_TRADE_VALUE", ticker, sale, policy.minimum_trade_value, f"{ticker} sale is below the minimum trade value.")
+        if (
+            policy.minimum_trade_value is not None
+            and tolerance < sale < policy.minimum_trade_value - tolerance
+        ):
+            add(
+                "MINIMUM_TRADE_VALUE",
+                ticker,
+                sale,
+                policy.minimum_trade_value,
+                f"{ticker} sale is below the minimum trade value.",
+            )
 
     primary_key = alpha_key(primary_alpha)
     cvar_after = after.cvar[primary_key]
     if cvar_after > policy.cvar_budget + tolerance:
-        add("CVAR_BUDGET", "cvar_after", cvar_after, policy.cvar_budget, "Post-trade CVaR exceeds the policy budget.")
+        add(
+            "CVAR_BUDGET",
+            "cvar_after",
+            cvar_after,
+            policy.cvar_budget,
+            "Post-trade CVaR exceeds the policy budget.",
+        )
     return tuple(violations)
+
+
+# The four keys the Quantum four-level predicate understands
+# (`qshield_quantum.workflow.make_four_level_feasibility`); anything else is ignored there.
+_QUANTUM_PREDICATE_KEYS = (
+    "min_active_candidates",
+    "max_active_candidates",
+    "min_total_action_pct",
+    "max_total_action_pct",
+)
+
+# RiskPolicy constraint codes that CANNOT be expressed through the four predicate keys above,
+# because they are either non-linear in the reductions (CVAR_BUDGET) or resolved per-ticker
+# (the four-level predicate only sees an aggregate active-count and an aggregate percentage
+# total, never which candidate carries which level).
+_RERANK_ONLY_CONSTRAINTS: dict[str, str] = {
+    "CVAR_BUDGET": (
+        "Post-trade CVaR is a non-linear function of the reduction vector (it depends on the "
+        "joint scenario distribution of the trade, not a linear combination of per-candidate "
+        "levels); it cannot be written as a bound on min/max_total_action_pct."
+    ),
+    "DO_NOT_SELL": (
+        "Per-ticker constraint; the predicate only sees an aggregate percentage total, with no "
+        "per-candidate resolution."
+    ),
+    "PER_ASSET_CAP": (
+        "Per-ticker constraint; same aggregate-only limitation as DO_NOT_SELL."
+    ),
+    "PER_ASSET_LIQUIDITY_CAP": (
+        "Per-ticker constraint; same aggregate-only limitation as DO_NOT_SELL."
+    ),
+    "MINIMUM_TRADE_VALUE": (
+        "Per-ticker constraint; same aggregate-only limitation as DO_NOT_SELL."
+    ),
+}
+
+
+def policy_to_quantum_constraints(
+    policy: RiskPolicy | None,
+    config: Mapping[str, Any],
+    *,
+    candidate_weights: Mapping[str, float],
+    cash_weight_before: float,
+) -> tuple[dict[str, float], dict[str, Any]]:
+    """Translate the RiskPolicy cash band and turnover cap into the 4-key Quantum predicate.
+
+    ``qshield_quantum.workflow.make_four_level_feasibility`` understands exactly four bounds:
+    ``min_active_candidates``, ``max_active_candidates``, ``min_total_action_pct`` and
+    ``max_total_action_pct`` — where ``total_action_pct`` is the *unweighted* sum, across
+    selected candidates, of each candidate's action level in percentage points (0/10/20/30;
+    see ``qshield_quantum.formulation.four_level.decode_action_levels``). It is **not** the
+    portfolio cash raised, because each candidate can carry a different current portfolio
+    weight ``w_i``. Cash raised (gross sales, pre-trade NAV=1) is
+    ``gross_sales = sum_i w_i * (level_i / 100)``, and the linear transaction-cost model gives
+    ``cash_increment = gross_sales * (1 - total_cost_rate)`` exactly (``qshield_risk.costs``).
+
+    Because ``min(w_i) <= w_i <= max(w_i)`` for every candidate, two *exact, unconditional*
+    inequalities hold for any bitstring, regardless of which candidates carry which level:
+
+        gross_sales >= (min_weight / 100) * total_action_pct
+        gross_sales <= (max_weight / 100) * total_action_pct
+
+    Combining these with the policy's cash band / turnover cap on ``gross_sales`` gives bounds
+    on ``total_action_pct`` that are mathematically **necessary** (never exclude a truly
+    feasible bitstring) but **not sufficient** (a bitstring inside the bounds can still violate
+    the true, weight-specific cash band, or any of the per-asset/CVaR constraints in
+    ``_RERANK_ONLY_CONSTRAINTS`` — those are re-checked exactly by
+    ``evaluate_policy_constraints`` at rerank, unchanged):
+
+        min_total_action_pct = 100 * required_min_sales / max_weight
+            where required_min_sales = max(0, cash_min - cash_weight_before) / (1 - total_cost_rate)
+        max_total_action_pct = 100 * max(0, allowed_max_sales) / min_weight
+            where allowed_max_sales = min(
+                (cash_max - cash_weight_before) / (1 - total_cost_rate),
+                max_turnover,
+            )
+
+    ``min_active_candidates``/``max_active_candidates`` have no corresponding RiskPolicy field
+    today and are left unset (reported under ``not_derivable_from_policy``).
+
+    Returns ``({}, {"status": "NONE_ENCODED", ...})`` when ``policy`` is ``None`` — there is
+    nothing approved to encode, and the artifact must say so rather than silently emitting `{}`.
+    """
+    if policy is None:
+        return {}, {
+            "status": "NONE_ENCODED",
+            "reason": "risk_policy is null",
+            "enforced_at_rerank_only": dict(_RERANK_ONLY_CONSTRAINTS),
+        }
+
+    weights = [float(value) for value in candidate_weights.values()]
+    if not weights:
+        raise ValueError(
+            "[risk.policy] candidate_weights must be non-empty to encode quantum_constraints."
+        )
+    if any(not np.isfinite(value) or value < 0.0 for value in weights):
+        raise ValueError(
+            "[risk.policy] candidate_weights must be finite and non-negative."
+        )
+    if not np.isfinite(cash_weight_before) or cash_weight_before < 0.0:
+        raise ValueError(
+            "[risk.policy] cash_weight_before must be finite and non-negative."
+        )
+    max_weight = max(weights)
+    min_weight = min(weights)
+    total_cost_rate = CostRates.from_config(config).total_rate
+    if not 0.0 <= total_cost_rate < 1.0:
+        raise ValueError(
+            "[risk.policy] total_cost_rate (fee+spread) must be in [0, 1) to invert cash "
+            f"increments; got {total_cost_rate!r}."
+        )
+
+    quantum: dict[str, float] = {}
+    encoded: dict[str, Any] = {}
+    notes: list[str] = []
+
+    required_min_sales = max(0.0, policy.cash_min - cash_weight_before) / (
+        1.0 - total_cost_rate
+    )
+    if max_weight > 0.0:
+        min_bound = 100.0 * required_min_sales / max_weight
+        quantum["min_total_action_pct"] = min_bound
+        encoded["min_total_action_pct"] = {
+            "source_policy_fields": ["cash_min"],
+            "required_min_sales": required_min_sales,
+            "max_candidate_weight": max_weight,
+            "value": min_bound,
+        }
+    elif required_min_sales > 0.0:
+        notes.append(
+            "cash_min requires selling, but every candidate has zero current weight; "
+            "min_total_action_pct cannot be derived."
+        )
+
+    allowed_from_cash = (policy.cash_max - cash_weight_before) / (1.0 - total_cost_rate)
+    allowed_max_sales = min(allowed_from_cash, policy.max_turnover)
+    if allowed_max_sales < 0.0:
+        notes.append(
+            "cash_weight_before already exceeds cash_max (or leaves no turnover budget) before "
+            "any action; max_total_action_pct pinned to 0 as the necessary bound."
+        )
+    if min_weight > 0.0:
+        max_bound = 100.0 * max(0.0, allowed_max_sales) / min_weight
+        quantum["max_total_action_pct"] = max_bound
+        encoded["max_total_action_pct"] = {
+            "source_policy_fields": ["cash_max", "max_turnover"],
+            "allowed_max_sales": max(0.0, allowed_max_sales),
+            "min_candidate_weight": min_weight,
+            "value": max_bound,
+        }
+    else:
+        notes.append(
+            "a candidate has zero current weight; max_total_action_pct cannot be derived "
+            "(that candidate's level contributes no cash bound)."
+        )
+
+    encoding: dict[str, Any] = {
+        "status": "PARTIAL_ENCODED" if quantum else "NONE_ENCODED",
+        "encoded_in_quantum_predicate": encoded,
+        "not_derivable_from_policy": {
+            "min_active_candidates": "no RiskPolicy field maps to a minimum active-candidate count.",
+            "max_active_candidates": "no RiskPolicy field maps to a maximum active-candidate count.",
+        },
+        "enforced_at_rerank_only": dict(_RERANK_ONLY_CONSTRAINTS),
+        "guarantee": (
+            "min/max_total_action_pct are necessary, not sufficient: every truly cash/turnover "
+            "-feasible bitstring satisfies them, but satisfying them does not guarantee true "
+            "feasibility. Final feasibility is always re-checked by evaluate_policy_constraints "
+            "at rerank."
+        ),
+        "notes": notes,
+    }
+    return quantum, encoding

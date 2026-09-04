@@ -212,7 +212,14 @@ def test_solve_mock_writes_valid_qaoa_result_and_metrics(tmp_path: Path) -> None
         (tmp_path / "artifacts" / "dev" / "metrics.json").read_text(encoding="utf-8")
     )
     assert metrics["penalty_is_provisional"] is True
-    assert metrics["gate_status"] == "PASS"
+    # Penalty PROVISIONAL (config `penalty: null`) + seeds PROVISIONAL (config `qaoa.seeds: null`)
+    # => gate_status phải trung thực là NON_FINAL, không phải "PASS" hard-code (P0 fix: gate_status
+    # giờ suy từ actual_solver/verify_full/seed_count/non_final, xem cli.py::_derive_gate_status).
+    assert metrics["seeds_is_provisional"] is True
+    assert metrics["gate_status"] == "NON_FINAL"
+    assert metrics["verify_full"] is True
+    assert metrics["requested_solver"] == "qaoa"
+    assert metrics["actual_solver"] in ("qaoa", "exact")
 
 
 def test_solve_without_mock_and_without_risk_fails_clearly(tmp_path: Path) -> None:

@@ -29,17 +29,20 @@ from qshield_contracts.validate import validate_or_raise  # type: ignore[import-
 
 from qshield_risk.candidate_gate import evaluate_candidate_gate
 from qshield_risk.candidates import (
+    bootstrap_ranking_variants,
     candidate_order,
+    reselect_top_n,
     select_candidates,
     select_four_level_candidates,
 )
 from qshield_risk.costs import CostRates
+from qshield_risk.diagnostics import build_objective_diagnostics
 from qshield_risk.effects import build_effects
 from qshield_risk.evaluate import confidence_levels, required_float
 from qshield_risk.metrics import RiskMetrics, alpha_key, risk_metrics_from_wealth
 from qshield_risk.objective import financial_objective
 from qshield_risk.paths import portfolio_wealth_paths, validate_scenario_cube
-from qshield_risk.policy import RiskPolicy
+from qshield_risk.policy import RiskPolicy, policy_to_quantum_constraints
 from qshield_risk.portfolio import align_portfolio_weights, validate_ticker_order
 from qshield_risk.rerank import (
     build_financial_baselines,
@@ -477,20 +480,39 @@ def _eligibility_snapshot(
     *,
     mock: bool,
     tolerance: float,
-) -> tuple[dict[str, bool], dict[str, str], dict[str, str]]:
-    """Read point-in-time Data eligibility; mock runs use an explicit local fixture."""
+) -> tuple[dict[str, bool], dict[str, str], dict[str, str], dict[str, Any]]:
+    """Read point-in-time Data eligibility; mock runs use an explicit local fixture.
+
+    Trả thêm `provenance` (P1: `risk_summary.json` trước đây KHÔNG ghi gì về eligibility).
+    Thiếu nó thì không ai truy được một run đã dùng ảnh chụp eligibility NGÀY NÀO — nếu artifact
+    cũ ba tháng, hoặc ai đó trỏ `eligibility_artifact` sang tệp khác, run vẫn chạy im lặng và
+    artifact không mang dấu vết. `snapshot_date` khác `evaluation_date` là tín hiệu phải điều tra.
+    """
     if mock:
         mock_eligibility = {ticker: weights[ticker] > tolerance for ticker in tickers}
         mock_reasons = {
             ticker: "MOCK_ELIGIBLE" if mock_eligibility[ticker] else "MOCK_NOT_HELD"
             for ticker in tickers
         }
-        return mock_eligibility, mock_reasons, {}
+        return (
+            mock_eligibility,
+            mock_reasons,
+            {},
+            {
+                "source": "MOCK_FIXTURE",
+                "eligible_count": sum(mock_eligibility.values()),
+                "total_count": len(tickers),
+            },
+        )
 
     paths_cfg = config.get("paths") or {}
     data_root = Path(str(paths_cfg.get("data_root", "data")))
     configured = config.get("eligibility_artifact")
-    path = Path(str(configured)) if configured else data_root / "processed" / "eligibility_daily.parquet"
+    path = (
+        Path(str(configured))
+        if configured
+        else data_root / "processed" / "eligibility_daily.parquet"
+    )
     if not path.exists():
         raise FileNotFoundError(f"[risk.eligibility] artifact not found: {path}.")
     frame = pd.read_parquet(path)
@@ -500,7 +522,9 @@ def _eligibility_snapshot(
         raise ValueError(f"[risk.eligibility] artifact missing columns: {missing}.")
     evaluation_raw = manifest.get("evaluation_date")
     if evaluation_raw is None:
-        raise ValueError("[risk.eligibility] scenario manifest evaluation_date is required.")
+        raise ValueError(
+            "[risk.eligibility] scenario manifest evaluation_date is required."
+        )
     evaluation_date = pd.Timestamp(evaluation_raw).normalize()
     frame = frame.copy()
     frame["date"] = pd.to_datetime(frame["date"]).dt.normalize()
@@ -512,11 +536,15 @@ def _eligibility_snapshot(
     snapshot_date = frame["date"].max()
     frame = frame.loc[frame["date"] == snapshot_date]
     if frame["ticker"].duplicated().any():
-        raise ValueError("[risk.eligibility] duplicate ticker rows in evaluation snapshot.")
+        raise ValueError(
+            "[risk.eligibility] duplicate ticker rows in evaluation snapshot."
+        )
     by_ticker = frame.set_index(frame["ticker"].astype(str))
     missing_tickers = sorted(set(tickers) - set(by_ticker.index))
     if missing_tickers:
-        raise ValueError(f"[risk.eligibility] snapshot missing tickers: {missing_tickers}.")
+        raise ValueError(
+            f"[risk.eligibility] snapshot missing tickers: {missing_tickers}."
+        )
     eligibility: dict[str, bool] = {}
     reasons: dict[str, str] = {}
     sectors: dict[str, str] = {}
@@ -528,7 +556,130 @@ def _eligibility_snapshot(
         reasons[ticker] = str(row["reason_code"])
         if "sector" in frame.columns and pd.notna(row.get("sector")):
             sectors[ticker] = str(row["sector"])
-    return eligibility, reasons, sectors
+    ineligible = {t: reasons[t] for t in tickers if not eligibility[t]}
+    provenance = {
+        "source": str(path),
+        "evaluation_date": str(evaluation_date.date()),
+        "snapshot_date": str(snapshot_date.date()),
+        "snapshot_is_stale": bool(snapshot_date.normalize() < evaluation_date),
+        "staleness_days": int((evaluation_date - snapshot_date.normalize()).days),
+        "total_count": len(tickers),
+        "eligible_count": sum(eligibility.values()),
+        "ineligible": ineligible,
+    }
+    return eligibility, reasons, sectors, provenance
+
+
+def _bootstrap_variants(
+    config: Config,
+    cube: np.ndarray,
+    tickers: tuple[str, ...],
+    weights: dict[str, float],
+    cash_weight: float,
+    eligibility: dict[str, bool],
+    *,
+    ineligible_reasons: dict[str, str] | None,
+    output_candidates: int,
+) -> dict[str, list[str]] | None:
+    """Sinh ranking variants bằng bootstrap trên trục scenario (P1-5).
+
+    Seeds/block_length lấy từ config; thiếu ⇒ trả `None` để gate báo `STABILITY_NOT_EVALUATED`
+    trung thực thay vì tự đoán một bộ seed.
+    """
+    raw = config.get("candidate_gate") or {}
+    seeds = list(raw.get("stability_seeds") or [])
+    if not seeds:
+        return None
+    return bootstrap_ranking_variants(
+        cube,
+        tickers,
+        weights,
+        cash_weight,
+        eligibility,
+        config,
+        seeds=[int(seed) for seed in seeds],
+        block_length=int(
+            raw.get("stability_block_length", config.get("block_length", 5))
+        ),
+        output_candidates=output_candidates,
+        ineligible_reasons=ineligible_reasons,
+    )
+
+
+def _resolve_dynamic_n(
+    frame: pd.DataFrame,
+    config: Config,
+    *,
+    output_candidates: int,
+    ranking_variants: dict[str, list[str]] | None,
+    sectors: dict[str, str] | None,
+):
+    """Thử N tăng dần, chọn N NHỎ NHẤT mà candidate gate PASS (CR-WF2-005).
+
+    `select_four_level_candidates` đã xếp hạng TOÀN BỘ universe trước khi cắt, nên đổi N chỉ là
+    dời điểm cắt (`reselect_top_n`) — không phải tính lại marginal CVaR. Hết danh sách vẫn fail
+    thì trả về N ban đầu kèm gate FAIL: không hạ ngưỡng, không tự nới N vô hạn.
+    """
+    raw = config.get("candidate_gate") or {}
+    ladder = [int(output_candidates)]
+    ladder.extend(
+        int(value)
+        for value in (raw.get("sensitivity_counts") or ())
+        if int(value) > output_candidates
+    )
+    attempts: list[dict[str, Any]] = []
+    first: tuple[pd.DataFrame, Any] | None = None
+    for count in ladder:
+        candidate_frame = (
+            frame if count == output_candidates else reselect_top_n(frame, count)
+        )
+        gate = evaluate_candidate_gate(
+            candidate_frame,
+            config,
+            output_candidates=count,
+            ranking_variants=ranking_variants,
+            sectors=sectors,
+        )
+        attempts.append(
+            {
+                "n": count,
+                "status": gate.status,
+                "coverage_at_n": gate.coverage_at_n,
+                "median_overlap_at_n": gate.median_overlap_at_n,
+                "worst_overlap_at_n": gate.worst_overlap_at_n,
+                "reasons": list(gate.reasons),
+            }
+        )
+        if first is None:
+            first = (candidate_frame, gate)
+        if gate.status == "PASS":
+            return (
+                candidate_frame,
+                gate,
+                {
+                    "rule": "smallest_n_passing_coverage_and_stability",
+                    "ladder": ladder,
+                    "selected_n": count,
+                    "selected_status": gate.status,
+                    "attempts": attempts,
+                },
+            )
+    assert first is not None
+    return (
+        first[0],
+        first[1],
+        {
+            "rule": "smallest_n_passing_coverage_and_stability",
+            "ladder": ladder,
+            "selected_n": ladder[0],
+            "selected_status": first[1].status,
+            "attempts": attempts,
+            "note": (
+                "Không N nào trong ladder đạt gate — giữ N ban đầu và gate FAIL. Không hạ ngưỡng "
+                "để pass (plan.md CR-WF2-005)."
+            ),
+        },
+    )
 
 
 def _ranking_variants(config: Config) -> dict[str, list[str]] | None:
@@ -538,11 +689,19 @@ def _ranking_variants(config: Config) -> dict[str, list[str]] | None:
         return None
     path = Path(str(path_value))
     if not path.exists():
-        raise FileNotFoundError(f"[risk.candidate_gate] stability artifact not found: {path}.")
+        raise FileNotFoundError(
+            f"[risk.candidate_gate] stability artifact not found: {path}."
+        )
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or not all(isinstance(value, list) for value in payload.values()):
-        raise TypeError("[risk.candidate_gate] stability artifact must map labels to ticker lists.")
-    return {str(key): [str(ticker) for ticker in value] for key, value in payload.items()}
+    if not isinstance(payload, dict) or not all(
+        isinstance(value, list) for value in payload.values()
+    ):
+        raise TypeError(
+            "[risk.candidate_gate] stability artifact must map labels to ticker lists."
+        )
+    return {
+        str(key): [str(ticker) for ticker in value] for key, value in payload.items()
+    }
 
 
 def _handoff_sample_frame(
@@ -586,7 +745,9 @@ def _handoff_sample_frame(
     for key, value in identity.items():
         result[key] = value
     for key, value in (artifact_metadata or {}).items():
-        result[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+        result[key] = (
+            json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+        )
     return result
 
 
@@ -665,6 +826,106 @@ def _solver_candidate_pool(
     return entries
 
 
+@app.command("objective-diagnostics")
+def objective_diagnostics(
+    config: str = typer.Option(
+        "configs/base.yaml", "--config", help="Base config path"
+    ),
+    profile: str = typer.Option(
+        "configs/workflow_update.yaml",
+        "--profile",
+        help="Product profile path",
+    ),
+    override: str | None = typer.Option(
+        None,
+        "--override",
+        help="Optional YAML deep-merged after profile",
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="Use deterministic scenarios for NON_BASELINE development",
+    ),
+    restarts: int = typer.Option(
+        12, "--restarts", help="Multi-start count for the diagnostic coordinate descent"
+    ),
+) -> None:
+    """Đo hình dạng hàm mục tiêu để owner chốt tham số — KHÔNG tự đổi tham số nào (P0-1).
+
+    Sinh `objective_diagnostics.json`: ablation từng thành phần, sweep target cash, landscape
+    (tương quan/biên độ/local minima) và cờ sanity kinh tế. Đây là artifact CHẨN ĐOÁN, không nằm
+    trong chuỗi bằng chứng baseline.
+    """
+    cfg = _load_workflow_config(config, profile, override)
+    paths = ArtifactPaths(cfg, run_id=_resolve_run_id(cfg))
+    context = RunContext(cfg, paths)
+    logger = context.logger("risk_objective_diagnostics")
+    paths.ensure(Stage.RISK)
+    stage_dir = paths.stage_dir(Stage.RISK)
+    try:
+        identity = _workflow_identity(cfg, context)
+        cube, tickers, manifest, weights, cash_weight = _workflow_inputs(
+            cfg, paths, mock=mock
+        )
+        order_path = stage_dir / "candidate_order.json"
+        if not order_path.exists():
+            raise FileNotFoundError(
+                f"[risk.diagnostics] thiếu {order_path} — chạy `prepare-workflow` trước."
+            )
+        order_payload = json.loads(order_path.read_text(encoding="utf-8"))
+        candidates = [str(item["ticker"]) for item in order_payload["candidates"]]
+
+        samples_path = stage_dir / "true_objective_samples.parquet"
+        samples = pd.read_parquet(samples_path) if samples_path.exists() else None
+
+        payload = build_objective_diagnostics(
+            cube,
+            tickers,
+            weights,
+            cash_weight,
+            candidates,
+            cfg,
+            samples=samples,
+            restarts=restarts,
+            seed=int(cfg.get("seed") or 0),
+        )
+        payload = {
+            **identity,
+            "evaluation_date": manifest.get("evaluation_date"),
+            "input_source": "mock" if mock else "real",
+            **payload,
+        }
+        (stage_dir / "objective_diagnostics.json").write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+        landscape = payload["landscape"]
+        sanity = payload["economic_sanity"]
+        logger.info(
+            "[diagnostics] corr(objective, reduction_sum)=%s dominant=%s sanity_flag=%s",
+            landscape.get("objective_vs_reduction_correlation"),
+            landscape.get("dominant_component"),
+            sanity.get("flag"),
+        )
+        context.write_config_snapshot()
+        context.write_metrics(
+            {
+                **identity,
+                "stage": "objective_diagnostics",
+                "gate_status": "DIAGNOSTIC_ONLY",
+                "objective_vs_reduction_correlation": landscape.get(
+                    "objective_vs_reduction_correlation"
+                ),
+                "dominant_component": landscape.get("dominant_component"),
+                "economic_sanity_flag": sanity.get("flag"),
+            }
+        )
+    except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as exc:
+        logger.error("Objective diagnostics failed: %s", exc)
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"[risk/diagnostics] OK -> {stage_dir / 'objective_diagnostics.json'}")
+
+
 @app.command("prepare-workflow")
 def prepare_workflow(
     config: str = typer.Option(
@@ -705,13 +966,15 @@ def prepare_workflow(
             (cfg.get("candidate_selection") or {}).get("output_candidates", 10)
         )
         tolerance = required_float(cfg, "weight_sum_tolerance")
-        eligibility, ineligible_reasons, sectors = _eligibility_snapshot(
-            cfg,
-            tickers,
-            manifest,
-            weights,
-            mock=mock,
-            tolerance=tolerance,
+        eligibility, ineligible_reasons, sectors, eligibility_provenance = (
+            _eligibility_snapshot(
+                cfg,
+                tickers,
+                manifest,
+                weights,
+                mock=mock,
+                tolerance=tolerance,
+            )
         )
         frame = select_four_level_candidates(
             cube,
@@ -726,22 +989,49 @@ def prepare_workflow(
         selected_count = int(frame["selected_top10"].sum())
         if selected_count <= 0:
             raise ValueError("[risk.workflow] no held-eligible candidates.")
-        gate = evaluate_candidate_gate(
+        # P1-5 + CR-WF2-005: stability trước đây KHÔNG BAO GIỜ được đánh giá vì
+        # `stability_rankings_path: null` làm `_ranking_variants` trả None, nên mọi run đều mang
+        # lý do `STABILITY_NOT_EVALUATED` và mọi metric overlap/Jaccard/Spearman đều null. Giờ
+        # variants được SINH THẬT từ bootstrap trên trục scenario, rồi dynamic-N thử N tăng dần và
+        # chọn N NHỎ NHẤT đạt CẢ coverage LẪN stability. Không đạt ⇒ giữ nguyên fail, KHÔNG hạ
+        # ngưỡng để pass run này (plan.md CR-WF2-005).
+        ranking_variants = _ranking_variants(cfg) or _bootstrap_variants(
+            cfg,
+            cube,
+            tickers,
+            weights,
+            cash_weight,
+            eligibility,
+            ineligible_reasons=ineligible_reasons,
+            output_candidates=output_candidates,
+        )
+        frame, gate, dynamic_n = _resolve_dynamic_n(
             frame,
             cfg,
             output_candidates=output_candidates,
-            ranking_variants=_ranking_variants(cfg),
+            ranking_variants=ranking_variants,
             sectors=sectors or None,
         )
+        output_candidates = int(dynamic_n["selected_n"])
+        # `selected_count` được tính TRƯỚC dynamic-N; khi ladder chọn N khác thì `frame` đã được
+        # `reselect_top_n` dời điểm cắt, nên phải đọc lại từ frame mới. Bỏ dòng này làm
+        # `validate_candidate_top10` fail với "has 15 selected rows, expected 10" (đã gặp thật
+        # khi chạy prepare-workflow end-to-end — unit test của dynamic-N không bắt được vì nó
+        # không đi qua đường validate contract).
+        selected_count = int(frame["selected_top10"].sum())
         policy = RiskPolicy.from_config(cfg)
-        policy_version = policy.policy_version if policy is not None else "UNAPPROVED_POLICY"
+        policy_version = (
+            policy.policy_version if policy is not None else "UNAPPROVED_POLICY"
+        )
         parent_hashes = {
             "scenario_manifest": hashlib.sha256(
                 json.dumps(manifest, sort_keys=True, default=str).encode("utf-8")
             ).hexdigest(),
             "risk_policy": (
                 hashlib.sha256(
-                    json.dumps(policy.to_dict(), sort_keys=True, default=str).encode("utf-8")
+                    json.dumps(policy.to_dict(), sort_keys=True, default=str).encode(
+                        "utf-8"
+                    )
                 ).hexdigest()
                 if policy is not None
                 else None
@@ -752,13 +1042,16 @@ def prepare_workflow(
             "producer": "qshield_risk",
             "policy_version": policy_version,
             "gate_status": gate.status,
+            "dynamic_n": dynamic_n,
             "parent_hashes": parent_hashes,
         }
         frame["eligible_status"] = frame["eligible_status"].eq("eligible")
         for key, value in identity.items():
             frame[key] = value
         for key, value in artifact_metadata.items():
-            frame[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            frame[key] = (
+                json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            )
         validate_candidate_top10(frame, expected_candidates=selected_count)
         candidate_path = _pending_output(stage_dir, "candidate_top10.csv")
         frame.to_csv(candidate_path, index=False)
@@ -872,7 +1165,9 @@ def prepare_workflow(
             "PROVISIONAL financial/candidate parameters; NON_BASELINE_RUN.",
         ]
         if policy is None:
-            warnings.append("UNAPPROVED_POLICY: compatibility cash target is analysis-only.")
+            warnings.append(
+                "UNAPPROVED_POLICY: compatibility cash target is analysis-only."
+            )
         warnings.append("SELL_TAX_POLICY_MISSING: baseline promotion is blocked.")
         if selected_count < output_candidates:
             warnings.append(str(order_payload["deviation"]))
@@ -881,6 +1176,18 @@ def prepare_workflow(
                 f"CANDIDATE_GATE_{gate.status}: baseline Quantum handoff blocked; "
                 "analysis handoff only."
             )
+        derived_constraints, constraints_encoding = policy_to_quantum_constraints(
+            policy,
+            cfg,
+            candidate_weights={
+                str(item["ticker"]): float(item["current_weight"]) for item in ordered
+            },
+            cash_weight_before=cash_weight,
+        )
+        quantum_constraints = {
+            **(cfg.get("quantum_constraints") or {}),
+            **derived_constraints,
+        }
         risk_summary = {
             **identity,
             **artifact_metadata,
@@ -905,7 +1212,9 @@ def prepare_workflow(
             "candidate_gate": gate.to_dict(),
             "baseline_handoff_allowed": False,
             "handoff_status": "ANALYSIS_ONLY_NON_BASELINE_RUN",
-            "quantum_constraints": (cfg.get("quantum_constraints") or {}),
+            "eligibility": eligibility_provenance,
+            "quantum_constraints": quantum_constraints,
+            "constraints_encoding": constraints_encoding,
             "warnings": warnings,
         }
         primary_key = alpha_key(required_float(cfg, "cvar_alpha"))
@@ -923,7 +1232,9 @@ def prepare_workflow(
             "risk_metrics": baseline_metrics.to_dict(),
             "risk_policy": baseline.policy_metadata,
             "constraint_violations": list(baseline.constraint_violations),
-            "constraint_details": [item.to_dict() for item in baseline.constraint_details],
+            "constraint_details": [
+                item.to_dict() for item in baseline.constraint_details
+            ],
             "status": baseline.status,
         }
         _pending_output(stage_dir, "baseline_risk.json").write_text(
@@ -1055,13 +1366,19 @@ def rerank_polish(
                 "qubo": qubo_hash,
             },
             "gate_status": (
-                "PASS" if bool(reranked["feasible"].astype(bool).any()) else "FAIL"
+                "NOT_EVALUATED"
+                if policy is None
+                else (
+                    "PASS" if bool(reranked["feasible"].astype(bool).any()) else "FAIL"
+                )
             ),
         }
         for key, value in identity.items():
             reranked[key] = value
         for key, value in rerank_metadata.items():
-            reranked[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            reranked[key] = (
+                json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            )
         reranked["qubo_hash"] = qubo_hash
         reranked["violations_json"] = reranked["constraint_violations"].map(
             lambda value: json.dumps(list(value))
@@ -1077,11 +1394,11 @@ def rerank_polish(
             )
         serializable.to_csv(reranked_path, index=False)
 
-        baselines = build_financial_baselines(
-            cube, tickers, weights, cash_weight, cfg
-        )
+        baselines = build_financial_baselines(cube, tickers, weights, cash_weight, cfg)
         for key, value in {**identity, **rerank_metadata}.items():
-            baselines[key] = json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            baselines[key] = (
+                json.dumps(value, sort_keys=True) if isinstance(value, dict) else value
+            )
         baselines_serializable = baselines.copy()
         baselines_serializable["reductions"] = baselines_serializable["reductions"].map(
             lambda value: json.dumps(list(value))
@@ -1089,9 +1406,7 @@ def rerank_polish(
         baselines_serializable["constraint_violations"] = baselines_serializable[
             "constraint_violations"
         ].map(lambda value: json.dumps(list(value)))
-        baselines_serializable.to_csv(
-            risk_dir / "financial_baselines.csv", index=False
-        )
+        baselines_serializable.to_csv(risk_dir / "financial_baselines.csv", index=False)
         top_three = serializable.head(3).to_dict(orient="records")
         (risk_dir / "portfolio_shortlist_top3.json").write_text(
             json.dumps(
@@ -1271,9 +1586,13 @@ def rerank_polish(
                 **identity,
                 "stage": "rerank_polish",
                 "gate_status": (
-                    "PASS"
-                    if not polished.polished_objective.constraint_violations
-                    else "FAIL"
+                    "NOT_EVALUATED"
+                    if policy is None
+                    else (
+                        "PASS"
+                        if not polished.polished_objective.constraint_violations
+                        else "FAIL"
+                    )
                 ),
                 "candidate_pool_size": len(reranked),
                 "winning_bitstring": bitstring,
@@ -1381,7 +1700,9 @@ def benchmark_true(
                 ),
                 "parent_hashes": {
                     "scenario_manifest": hashlib.sha256(
-                        json.dumps(manifest, sort_keys=True, default=str).encode("utf-8")
+                        json.dumps(manifest, sort_keys=True, default=str).encode(
+                            "utf-8"
+                        )
                     ).hexdigest(),
                     "candidate_order": payload["candidate_order_hash"],
                     "qubo": payload["qubo_hash"],

@@ -102,6 +102,25 @@ export function RunOptimizePanel({ tickers }: Props) {
 
       {job?.result ? (
         <>
+          {job.result.personalization_status !== "MATCHED_HANDOFF" ? (
+            <div className="callout warning run-out">
+              <div className="callout-title">
+                Danh mục KHÔNG được áp dụng ({job.result.personalization_status})
+              </div>
+              <div className="callout-copy">
+                {job.result.personalization_note ??
+                  "Kết quả tính trên danh mục handoff Risk có sẵn trên đĩa, không phải danh mục " +
+                    "bạn vừa gửi lên."}
+              </div>
+            </div>
+          ) : (
+            <div className="callout run-out">
+              <div className="callout-title">Danh mục khớp handoff Risk</div>
+              <div className="callout-copy">
+                Danh mục gửi lên khớp handoff dùng để tính kết quả này (MATCHED_HANDOFF).
+              </div>
+            </div>
+          )}
           <div className="grid grid-4 run-out">
             <div className="callout primary">
               <div className="card-label">Solver used</div>

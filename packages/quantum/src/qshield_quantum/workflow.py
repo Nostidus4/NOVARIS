@@ -3,6 +3,10 @@
 Disk access remains in ``cli.py``.  This module consumes the risk handoff as
 plain pandas/dict objects and intentionally avoids not-yet-created contract
 types while validating the boundary explicitly.
+
+QAOA seeds run through ``solvers.qaoa.solve_qaoa_one_seed_fast`` (subprocess + forced transpile +
+crash retry), not the plain ``solve_qaoa_one_seed`` — required at the runtime 20-bit width used
+here (see ``qaoa.py::_TRANSPILE_SAFE_MAX_QUBITS``; the plain path never finishes at n=20).
 """
 
 from __future__ import annotations
@@ -26,7 +30,11 @@ from qshield_quantum.formulation.surrogate import (
     structured_samples_to_arrays,
 )
 from qshield_quantum.solvers.exact import GenericExactResult, solve_quadratic_exact
-from qshield_quantum.solvers.qaoa import QaoaSeedResult, solve_qaoa_one_seed
+from qshield_quantum.solvers.qaoa import (
+    QaoaSeedResult,
+    TranspileFallbackUnavailableError,
+    solve_qaoa_one_seed_fast,
+)
 from qshield_quantum.verify.consistency import verify_quadratic_consistency
 
 FOUR_LEVEL_MODE = "top10_four_level_actions"
@@ -229,6 +237,29 @@ def run_four_level_workflow(
             model.Q, model.linear, model.constant, ticker_order=names
         )
         reps = int((quantum.get("qaoa", {}) or {}).get("p", 1))
+        # 20-bit runtime_bits >> `_TRANSPILE_SAFE_MAX_QUBITS` (8) — `solve_qaoa_one_seed` thường
+        # rơi vào đường `PauliEvolutionGate.to_matrix()` (expm trên ma trận 2^20 x 2^20, không bao
+        # giờ hoàn thành). `_fast` chạy transpile cưỡng bức qua subprocess + retry (đã có sẵn
+        # trong repo, nhanh hơn ~14-100x) — P1-1 fix, xem CLAUDE.md quy tắc 15-17 & qaoa.py.
+        # Closure `feasibility` (từ `make_four_level_feasibility(constraints)`) KHÔNG pickle được
+        # cho subprocess: khi `constraints` rỗng dùng `always_feasible=True` (pickle-safe, hàm cấp
+        # module); khi `constraints` phi rỗng, truyền chính dict `constraints` xuống worker để nó
+        # tự dựng lại predicate bên trong subprocess (`feasibility_constraints=`).
+        qaoa_seed_kwargs: dict[str, Any] = {
+            "reference_bitstring": exact.best_feasible_bitstring,
+            "reps": reps,
+            "warm_start": warm_start,
+            "candidate_pool_size": candidate_pool_size,
+            # Đừng để một seed 600s bị subprocess giết ở giây 120 (default cũ) — dùng đúng
+            # performance_budget.qaoa_seed_timeout_seconds khi có, nếu không thì giữ default cũ.
+            "subprocess_timeout_seconds": (
+                120.0 if seed_timeout_s is None else seed_timeout_s
+            ),
+        }
+        if constraints:
+            qaoa_seed_kwargs["feasibility_constraints"] = constraints
+        else:
+            qaoa_seed_kwargs["always_feasible"] = True
         t_qaoa = time.perf_counter()
         for seed in seeds:
             elapsed_total = time.perf_counter() - t_qaoa
@@ -240,17 +271,26 @@ def run_four_level_workflow(
                 actual_solver = "exact"
                 _log("[timeout] %s", fallback_reason)
                 break
-            seed_result = solve_qaoa_one_seed(
-                qp,
-                seed=seed,
-                shots=shots,
-                maxiter=maxiter,
-                feasibility=feasibility,
-                reference_bitstring=exact.best_feasible_bitstring,
-                reps=reps,
-                warm_start=warm_start,
-                candidate_pool_size=candidate_pool_size,
-            )
+            try:
+                seed_result = solve_qaoa_one_seed_fast(
+                    qp,
+                    seed=seed,
+                    shots=shots,
+                    maxiter=maxiter,
+                    **qaoa_seed_kwargs,
+                )
+            except TranspileFallbackUnavailableError as exc:
+                # Subprocess hết lượt retry và đường in-process sẽ treo ở số qubit này. Dừng
+                # nhánh QAOA và ghi lý do thật thay vì treo vô hạn hoặc để CLI chết không
+                # artifact — `_derive_gate_status` sẽ hạ gate xuống FALLBACK.
+                remaining = [item for item in seeds if item not in qaoa]
+                fallback_reason = (
+                    f"QAOA subprocess không hoàn tất trên seed={seed}: {exc} "
+                    f"(dừng {len(remaining)} seed còn lại)"
+                )
+                actual_solver = "exact"
+                _log("[fallback] %s", fallback_reason)
+                break
             qaoa[seed] = seed_result
             timings[f"qaoa_seed_{seed}"] = float(seed_result.runtime_seconds)
             _log(
@@ -306,12 +346,18 @@ def run_four_level_workflow(
         bench_minimum = 10
 
     t_classical = time.perf_counter()
+    # P1-3: cấp cho classical ĐÚNG ngân sách wall-time mà QAOA vừa tiêu. Trước đây classical chạy
+    # 64 restart cố định (~0,5s) rồi được đem so với QAOA chạy hàng chục giây — so hai ngân sách
+    # lệch nhau hàng trăm lần thì con số "classical thắng" không nói lên năng lực của bên nào.
+    qaoa_elapsed = float(timings.get("qaoa_total") or 0.0)
+    classical_budget = qaoa_elapsed if qaoa_elapsed > 0.0 else None
     benchmark = build_generic_benchmark(
         exact,
         qaoa,
         model=model,
         feasibility=feasibility,
         classical_seed=seeds[0] if seeds else 0,
+        classical_budget_seconds=classical_budget,
         minimum_seeds=bench_minimum,
         allow_non_final=non_final,
         NON_FINAL_CONFIG=non_final,

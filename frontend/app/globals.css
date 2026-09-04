@@ -1489,6 +1489,37 @@ a.pipeline-row:hover .pipeline-chevron {
   font-weight: 650;
 }
 
+.solver-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--line));
+  background: var(--warning-soft);
+  color: var(--text);
+}
+
+.solver-warning-banner svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--warning);
+}
+
+.solver-warning-banner-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--warning);
+}
+
+.solver-warning-banner-copy {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
 .menu-btn {
   display: none;
 }

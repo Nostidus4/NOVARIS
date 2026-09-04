@@ -279,7 +279,8 @@
         }
       ],
       "data_source": "yahoo",
-      "notes": ""
+      "data_quality_flag": "LIMITED_HISTORY",
+      "notes": "IPO 24/03/2021 — thiếu crash Covid 03/2020 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.2). Có đủ lịch sử để train (~1400 phiên) nhưng CVaR/tail có thể unreliable do thiếu một trong ba kiểu crash đã quan sát trên VN-Index — downweight khi tính risk contribution."
     },
     {
       "ticker": "SSI",
@@ -455,7 +456,7 @@
       "ticker": "VPL",
       "yahoo_symbol": "VPL.VN",
       "company_name": "VPL (placeholder — verify)",
-      "first_trading_date": "2025-01-01",
+      "first_trading_date": "2025-05-13",
       "exchange_current": "HOSE",
       "exchange_history": "-",
       "exchange_periods": [
@@ -464,7 +465,8 @@
         }
       ],
       "data_source": "yahoo",
-      "notes": "Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production trong CLEAN.ipynb)."
+      "data_quality_flag": "LIMITED_HISTORY",
+      "notes": "SỬA first_trading_date so với ước lượng gốc 2025-01-01 trong CLEAN.ipynb — IPO thật 13/05/2025 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.1). Chỉ ~310 phiên tới 08/2026 — không đủ train HMM/CVaR; cần Minh Anh/Ngọc xác nhận mã thay thế VN30 kỳ 01/2027 hoặc bỏ khỏi universe (còn 29 mã). Cold-start — verify trước khi dùng cho UAT/demo."
     },
     {
       "ticker": "VRE",
@@ -548,7 +550,7 @@
       "event_date": "2025-03-03",
       "type": "stock_dividend",
       "adjustment_factor": 1.495,
-      "evidence": "docs/perf/2026-08-05-kurtosis-fail-vcb.md — Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE."
+      "evidence": "Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39 và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên; vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE."
     }
   ],
   "n_states": 3,
@@ -634,12 +636,31 @@
   },
   "cvar_alpha": 0.95,
   "action_reduction_pct": 0.2,
+  "target_cash_increment": 0.1,
+  "maximum_reduction": 0.3,
+  "weight_sum_tolerance": 1e-08,
   "transaction_cost": {
     "fee": 0.0015,
     "spread": 0.001,
     "liquidity_penalty": 0.0005
   },
-  "weight_sum_tolerance": 1e-08,
+  "cost_sensitivity": {
+    "low": {
+      "fee": 0.001,
+      "spread": 0.0005,
+      "liquidity_penalty": 0.0003
+    },
+    "base": {
+      "fee": 0.0015,
+      "spread": 0.001,
+      "liquidity_penalty": 0.0005
+    },
+    "high": {
+      "fee": 0.002,
+      "spread": 0.0015,
+      "liquidity_penalty": 0.0008
+    }
+  },
   "robustness_confidence_levels": [
     0.975,
     0.99
@@ -671,23 +692,42 @@
     "optimizer": "COBYLA",
     "optimizer_maxiter": 200,
     "min_seeds": 10,
-    "seeds": null
+    "warm_start": true,
+    "seeds": [
+      101,
+      202,
+      303,
+      404,
+      505,
+      606,
+      707,
+      808,
+      909,
+      1001
+    ]
   },
   "penalty": {
-    "lambda_1": null,
-    "lambda_2": null,
+    "lambda_1": 1.0,
+    "lambda_2": 1.0,
     "P": null
   },
   "backend": "simulator",
   "seed": 20260804,
   "artifacts": {
     "mode": "dev",
+    "baseline_risk": "baseline_risk.json",
+    "candidate_topn": "candidate_topn.csv",
+    "candidate_order": "candidate_order.json",
+    "candidate_gate": "candidate_gate.json",
     "risk_summary": "risk_summary.json",
-    "objective_samples": "objective_samples.parquet",
+    "objective_samples": "true_objective_samples.parquet",
+    "objective_sample_manifest": "objective_sample_manifest.json",
     "qubo_model": "qubo_model.json",
     "exact_result": "exact_solution.json",
     "qaoa_result": "qaoa_results.json",
     "reranked_candidates": "reranked_candidates.csv",
+    "financial_baselines": "financial_baselines.csv",
+    "portfolio_shortlist_top3": "portfolio_shortlist_top3.json",
     "final_recommendation": "final_recommendation.json",
     "workflow_benchmark": "workflow_benchmark.json",
     "true_benchmark": "true_benchmark.json"
@@ -753,31 +793,30 @@
     "reports_root": "reports"
   },
   "profile": {
-    "id": "workflow_update_downstream",
+    "id": "workflow_update",
     "name": "Workflow update",
     "status": "NON_BASELINE_RUN",
     "owner": "Nguyen Thi Anh Ngoc",
-    "purpose": "Phat trien ban day du, co the dung cho UAT/baseline sau khi owner duyet",
-    "report_label": "Decision-package provisional — dynamic M=min(N_eligible,10)",
+    "purpose": "Baseline đích 30→top10→20-bit; status NON_BASELINE_RUN đến khi data/scenario/product gate ký",
+    "report_label": "Workflow Update — 30→top10→20-bit (NON_BASELINE_RUN until gates signed)",
     "allowed_for": [
-      "downstream_contract_development",
-      "integration_smoke_test"
+      "downstream_development",
+      "integration_smoke_test",
+      "uat_after_gates"
     ],
     "not_allowed_for": [
       "final_uat_baseline",
       "product_claim_full_workflow",
-      "quantum_advantage_claim"
-    ],
-    "parent_profile_id": "workflow_update"
+      "quantum_advantage_claim",
+      "cherry_pick_seed_only",
+      "bypass_scenario_gate_without_disclosure",
+      "quantum_direct_30_assets"
+    ]
   },
   "governance": {
     "source_of_truth": [
-      "NOVARIS_Q-SHIELD_Workflow_Updated.docx",
-      "docs/product/mvp_scope.md",
-      "docs/product/product_requirements.md",
-      "docs/product/user_stories_backlog.md",
-      "docs/product/acceptance_criteria.md",
-      "docs/product/rtm.md"
+      "docs/workflow-v2.md",
+      "docs/disclaimer.md"
     ],
     "module_owners": {
       "product_scope_uat": "Nguyen Thi Anh Ngoc",
@@ -1128,7 +1167,7 @@
     },
     "surrogate_validation": {
       "status": "PROVISIONAL_PENDING_OWNER",
-      "ask_doc": "docs/handoffs/surrogate_gate_thresholds_ask.md",
+      "ask_doc": "docs/workflow-v2.md",
       "thresholds": {
         "mae_max": 0.02,
         "rmse_max": 0.03,
@@ -1225,7 +1264,7 @@
       "final_recommendation.json",
       "dashboard_uat_evidence"
     ],
-    "comparison_metrics_against_demo_fast": {
+    "comparison_metrics": {
       "risk_quality": [
         "CVaR_reduction_pct",
         "CVaR_97_5_reduction_pct",
@@ -1260,14 +1299,14 @@
     "Risk phai chon dynamic top 10 truoc Quantum.",
     "Quantum chi chay tren top 10 voi 20 bit.",
     "Action grid bat buoc la 0/10/20/30%.",
-    "Neu dung 8 ma hoac action 20% duy nhat thi phai gan profile_id=demo_fast.",
     "Khong duoc noi workflow update khong kha thi dua tren benchmark Quantum 30 ma, vi benchmark do sai flow.",
-    "Moi run baseline phai co run_id, config snapshot, data manifest va gate verdict."
+    "Moi run baseline phai co run_id, config snapshot, data manifest va gate verdict.",
+    "Baseline SoT: docs/workflow-v2.md. Chi mot profile workflow_update."
   ],
   "provenance": {
-    "config_version": "workflow-update-decision-package-v3",
-    "decision_package": "docs/handoffs/Decision-package.md",
-    "decision_config_map": "docs/handoffs/decision_package_config_map.md",
+    "config_version": "workflow-update-v4",
+    "decision_package": "docs/workflow-v2.md",
+    "decision_config_map": "docs/workflow-v2.md",
     "required_fields": [
       "run_id",
       "profile_id",
@@ -1300,25 +1339,16 @@
       "structured_sample_count": 211
     }
   },
-  "maximum_reduction": 0.3,
-  "target_cash_increment": 0.1,
-  "cost_sensitivity": {
-    "low": {
-      "fee": 0.001,
-      "spread": 0.0005,
-      "liquidity_penalty": 0.0003
-    },
-    "base": {
-      "fee": 0.0015,
-      "spread": 0.001,
-      "liquidity_penalty": 0.0005
-    },
-    "high": {
-      "fee": 0.002,
-      "spread": 0.0015,
-      "liquidity_penalty": 0.0008
-    }
+  "tail_uncertainty": {
+    "method": "percentile_bootstrap_scenario_losses",
+    "confidence_level": 0.95,
+    "bootstrap_resamples": 1000,
+    "seed": 4101,
+    "low_tail_threshold": 50,
+    "uncertainty_scope": "scenario_monte_carlo_only"
   },
+  "eligibility_artifact": null,
+  "risk_policy_artifact": null,
   "financial_objective": {
     "priority": "cvar_first",
     "components": {
@@ -1348,8 +1378,29 @@
       }
     }
   },
+  "candidate_gate": {
+    "status": "PROVISIONAL",
+    "coverage_metric": "marginal_CVaR_reduction_20pct",
+    "coverage_at_n_min": 0.7,
+    "median_overlap_at_n_min": 0.7,
+    "worst_overlap_at_n_min": 0.5,
+    "stability_rankings_path": null,
+    "sensitivity_counts": [
+      12,
+      15
+    ]
+  },
   "objective_sampling": {
-    "policy_version": "decision-package-structured-v2"
+    "policy_version": "decision-package-structured-v2",
+    "train_random_count": 500,
+    "validation_count": 500,
+    "holdout_count": 1000,
+    "chunk_size": 64,
+    "seeds": {
+      "train": 1101,
+      "validation": 2202,
+      "holdout": 3303
+    }
   },
   "reranking": {
     "top_distinct_feasible": 20,
@@ -1398,7 +1449,7 @@
   },
   "surrogate_validation": {
     "status": "PROVISIONAL_PENDING_OWNER",
-    "ask_doc": "docs/handoffs/surrogate_gate_thresholds_ask.md",
+    "ask_doc": "docs/workflow-v2.md",
     "thresholds": {
       "mae_max": 0.02,
       "rmse_max": 0.03,
@@ -1427,9 +1478,9 @@
     "zero_action_lock": true
   },
   "disclosures": [
-    "NON_BASELINE_RUN until data_gate + scenario_gate + product_gate are signed (TL-019).",
-    "Surrogate thresholds are PROVISIONAL — see docs/handoffs/surrogate_gate_thresholds_ask.md.",
-    "Liquidity penalty is a separate objective component from fee+spread (TL-008).",
-    "Dynamic underfill M=min(N_eligible,10) is allowed without fake tickers (TL-020)."
+    "NON_BASELINE_RUN until data_gate + scenario_gate + product_gate are signed.",
+    "Surrogate thresholds are PROVISIONAL — see docs/workflow-v2.md §15.",
+    "Liquidity penalty is a separate objective component from fee+spread.",
+    "Dynamic underfill M=min(N_eligible,10) allowed without fake tickers."
   ]
 }
