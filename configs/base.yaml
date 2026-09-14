@@ -397,6 +397,20 @@ corporate_actions:
   evidence: Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39
     và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên;
     vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE.
+- ticker: TCB
+  event_date: '2024-06-11'
+  type: bonus_share_1_for_1
+  adjustment_factor: 2.0
+  evidence: >-
+    Close 48900→24675 và Adj Close 46657.28→23543.32 cùng bước nhảy 1,9818 tại
+    2024-06-11 (log return −0,684), giữ mức mới các phiên sau, volume 8,6M→33,2M; vượt biên
+    độ ±7% (DQ-007 PERSISTS_LIKELY_CORP_ACTION trong reports/price_limit_violations_traced.csv);
+    trùng khớp hai lần tải Yahoo (20260807, 20260814). Techcombank công bố thưởng cổ phiếu tỷ
+    lệ 1:1 (100%) tháng 6/2024 ⇒ hệ số lý thuyết 2,0 (không dùng 1,9818 quan sát để không xóa
+    return thật +0,92% của phiên). Hệ quả đo ngày 2026-09-13 — 10/12 instance Volatile của
+    hybrid v3 fail scenario gate chỉ vì ô này; áp hệ số ⇒ 12/12 PASS. Xem
+    docs/experiments/2026-09-13-volatile-scenario-gate-tcb.md.
+  verification_status: PENDING_DATA_OWNER_CONFIRM_EX_DATE_AGAINST_HOSE_NOTICE
 n_states: 3
 n_iter: 500
 covariance_type: diag
