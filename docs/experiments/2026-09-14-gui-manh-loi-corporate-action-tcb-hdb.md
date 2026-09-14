@@ -1,4 +1,4 @@
-# Gửi Mạnh — Lỗi corporate action TCB & HDB trong dữ liệu giá (cần Data xử lý)
+# Gửi Manh — Lỗi corporate action TCB & HDB trong dữ liệu giá (cần Data xử lý)
 
 Ngày: 2026-09-14 · Từ: Tân · Mức ưu tiên: **Cao** (đang chặn scenario gate Volatile và làm sai CVaR)
 Báo cáo đầy đủ: `docs/experiments/2026-09-13-volatile-scenario-gate-tcb.md`
@@ -19,7 +19,7 @@ Cả hai đều vượt biên độ HOSE ±7% ⇒ không thể là giao dịch t
 
 ---
 
-## 1. TCB 2024-06-11 — đã đề xuất cách sửa, cần Mạnh xác nhận
+## 1. TCB 2024-06-11 — đã đề xuất cách sửa, cần Manh xác nhận
 
 **Dữ liệu** (trùng khớp ở cả `data/raw/prices/20260807_yfinance_tcb.csv` và `20260814_yfinance_tcb.csv`):
 
@@ -49,7 +49,7 @@ Hệ số **2,0** lấy từ tỷ lệ công bố (không dùng 1,9818 quan sát
 Sau điều chỉnh, return TCB ngày 2024-06-11 = **+0,916%**. Mình đã thử bằng script (không đổi data trên
 đĩa): **12/12 instance Volatile PASS** scenario gate.
 
-**Mạnh cần làm:**
+**Manh cần làm:**
 - [ ] Đối chiếu **thông báo HOSE/VSD** để chốt ngày GDKHQ. Các bài báo tóm tắt ghi ngày chốt quyền không
       thống nhất, còn giá trong data giảm từ 2024-06-11. Nếu ngày GDKHQ khác ⇒ sửa `event_date`.
 - [ ] Xác nhận hệ số 2,0 (thưởng 1:1 thuần, không kèm quyền mua/cổ tức cổ phiếu khác cùng ngày).
@@ -57,7 +57,7 @@ Sau điều chỉnh, return TCB ngày 2024-06-11 = **+0,916%**. Mình đã thử
 
 ---
 
-## 2. HDB 2025-12-18 — CHƯA sửa, cần Mạnh quyết cách xử lý
+## 2. HDB 2025-12-18 — CHƯA sửa, cần Manh quyết cách xử lý
 
 **Dữ liệu** (trùng ở `20260807_yfinance_hdb.csv` và `20260814_yfinance_hdb.csv`):
 
@@ -76,7 +76,7 @@ Sau điều chỉnh, return TCB ngày 2024-06-11 = **+0,916%**. Mình đã thử
 **Vì sao không sửa bằng registry như TCB:** `apply_registered_adjustments` chia `adjusted_close` các phiên
 trước `event_date` cho hệ số — với HDB các phiên đó **đã** được Yahoo điều chỉnh rồi ⇒ sẽ điều chỉnh hai lần.
 
-**Mạnh cần làm:**
+**Manh cần làm:**
 - [ ] Đối chiếu DNSE (hoặc nguồn thứ hai) giá HDB 2025-12-15 → 2025-12-23.
 - [ ] Quyết định xử lý ô 2025-12-17/18: thay bằng nguồn đã đối chiếu có evidence, hoặc gắn cờ và loại
       return 2 phiên đó theo `missing_data_policy` (có log). **Không xóa im lặng, không forward-fill.**
@@ -96,7 +96,7 @@ Hiện DQ-007 chỉ **báo cáo** vi phạm biên độ, không **chặn**. VCB,
 
 ---
 
-## 4. Sau khi Mạnh xác nhận
+## 4. Sau khi Manh xác nhận
 
 1. Rebuild: `uv run qshield-data clean` → `features` → `eligibility`.
 2. Báo Tú chạy lại `regime` → `scenarios` (return đổi ⇒ regime/kịch bản có thể đổi).
