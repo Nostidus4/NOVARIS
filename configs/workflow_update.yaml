@@ -314,6 +314,11 @@ quantum:
     optimizer_maxiter: 200
     min_seeds: 10
     warm_start: true
+    # Chuẩn hóa thang energy QUBO trước QAOA (không đổi argmin). Không có nó QAOA p=1 gần uniform
+    # trên surrogate workflow — xem qshield_quantum/formulation/normalization.py.
+    energy_normalization:
+      method: coefficient_l1
+      target_range: 4.0
     seeds:
     - 101
     - 202

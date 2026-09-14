@@ -9,6 +9,7 @@ dependencies = [
     "qshield-risk",
     "qshield-quantum",
     "typer>=0.12",
+    "scipy>=1.14",
 ]
 
 [build-system]

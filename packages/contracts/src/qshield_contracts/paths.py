@@ -26,6 +26,7 @@ _STAGE_DIR: dict[Stage, str] = {
     Stage.RISK: "risk",
     Stage.QUBO: "optimization",
     Stage.SOLVE: "optimization",
+    Stage.HYBRID: "hybrid",
 }
 
 

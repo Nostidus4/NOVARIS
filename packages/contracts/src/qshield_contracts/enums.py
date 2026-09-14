@@ -37,6 +37,8 @@ class Stage(StrEnum):
     RISK = "risk"
     QUBO = "qubo"
     SOLVE = "solve"
+    # Track nghiên cứu QAOA-assisted candidate generation — không phải chặng của pipeline sản phẩm.
+    HYBRID = "hybrid"
 
 
 class SolverKind(StrEnum):

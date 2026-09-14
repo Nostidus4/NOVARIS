@@ -1,0 +1,49 @@
+# Protocol v3 của thí nghiệm QAOA-assisted — experiment_id MỚI để giữ nguyên artifact v1/v2.
+#
+# Thay đổi so với v2 (quyết định 2026-09-13, SAU exploratory v2, TRƯỚC mọi confirmation):
+#  1. QAOA chạy trên QUBO đã chuẩn hóa energy (coefficient_l1, target_range=4.0). target_range
+#     4.0 lấy từ probe 3-seed trên x01/x02 của tập exploratory — công khai: tập exploratory đã được
+#     nhìn khi chọn giá trị này, nên chỉ confirmation mới là bằng chứng.
+#  2. Thêm track qaoa_transfer: góc tối ưu gộp từ tập exploratory (median sau chuẩn tắc hóa đối
+#     xứng), COBYLA chỉ maxiter=10 từ góc đó. Exploratory dùng leave-one-out.
+#  3. Compute view riêng cho qaoa_transfer (*_compute_transfer) khớp wall time của chính nó.
+#  4. Thống kê theo 2 target: qaoa và qaoa_transfer.
+# Quy trình: hybrid-manifest (2 set) → hybrid-run exploratory --full-only → hybrid-transfer →
+#            hybrid-run exploratory --no-resume → hybrid-report → hybrid-run confirmation.
+extends: hybrid_v1.yaml
+
+hybrid_experiment:
+  experiment_id: hybrid_qaoa_assisted_v3
+  protocol_version: 3
+  tracks:
+    candidate_budget:
+    - classical_true
+    - classical_surrogate
+    - random_uniform
+    - random_stratified
+    - boltzmann
+    - qaoa
+    - qaoa_transfer
+    compute_budget:
+    - classical_true_compute
+    - random_uniform_compute
+    - classical_true_compute_transfer
+    - random_uniform_compute_transfer
+    ablation:
+    - heuristic_baselines
+  qaoa:
+    energy_normalization:
+      method: coefficient_l1
+      target_range: 4.0
+    transfer:
+      source_set: exploratory
+      maxiter: 10
+  generator_seeds:
+    classical_true_compute_transfer: 7008
+    random_uniform_compute_transfer: 7009
+  statistics:
+    targets:
+      qaoa:
+        compute_baselines: [classical_true_compute, random_uniform_compute]
+      qaoa_transfer:
+        compute_baselines: [classical_true_compute_transfer, random_uniform_compute_transfer]

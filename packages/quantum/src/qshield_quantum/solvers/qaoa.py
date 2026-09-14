@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -75,6 +75,7 @@ class QaoaSample:
     energy: float
     probability: float
     feasible: bool
+    measured_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -91,10 +92,56 @@ class QaoaSeedResult:
     samples: tuple[QaoaSample, ...] = ()
     warm_start_used: bool = False
     transpiled: bool = False
+    # Toàn bộ trạng thái đo được (lossless) — chỉ có khi `export_full_distribution=True`. `samples`
+    # vẫn là top-`candidate_pool_size` theo energy và KHÔNG đủ để tính coverage/entropy.
+    distribution: tuple[QaoaSample, ...] = ()
+    # Tham số ansatz tối ưu (thứ tự `optimal_point` của qiskit) và số lần đánh giá mạch — cho
+    # parameter transfer và view compute-budget của thí nghiệm hybrid.
+    optimal_parameters: tuple[float, ...] = ()
+    circuit_evaluations: int = 0
 
 
 def _bitstring_of(x) -> str:
     return "".join(str(round(b)) for b in x)
+
+
+def _measured_distribution(
+    result: Any, qp: QuadraticProgram
+) -> list[tuple[np.ndarray, float]]:
+    """Phân phối đo được THẬT (Σp = 1), đọc thẳng từ eigenstate của QAOA.
+
+    ⚠️ Bẫy đã verify (2026-09-13, 4 qubit, 64 shots): `qiskit_algorithms.QAOA` trả `eigenstate` là
+    `dict[str, float]` chứa XÁC SUẤT, nhưng `MinimumEigenOptimizer._eigenvector_to_solutions`
+    (qiskit-optimization) coi mọi `dict` là BIÊN ĐỘ và bình phương giá trị. Kết quả:
+    `result.samples[i].probability == p_i**2`, Σ ≈ 0,09 thay vì 1. Mọi `feasibility_rate` /
+    `success_prob` / thứ tự tie-break dựa trên `result.samples` đều sai theo cùng cách.
+
+    Key của eigenstate theo thứ tự qubit Qiskit (little-endian) ⇒ đảo chuỗi để về thứ tự biến.
+    Bài toán QUBO không ràng buộc nên converter QUBO không thêm biến; lệch số biến ⇒ raise.
+    """
+    eigen = getattr(result, "min_eigen_solver_result", None)
+    state = getattr(eigen, "eigenstate", None)
+    if not isinstance(state, dict) or not state:
+        raise RuntimeError(
+            "QAOA result has no dict eigenstate; cannot recover a lossless distribution "
+            f"(got {type(state).__name__})."
+        )
+    total = float(sum(state.values()))
+    if abs(total - 1.0) > 1e-9 or any(float(value) < 0.0 for value in state.values()):
+        raise RuntimeError(
+            f"QAOA eigenstate is not a probability distribution (sum={total})."
+        )
+    width = qp.get_num_vars()
+    measured: list[tuple[np.ndarray, float]] = []
+    for key, probability in state.items():
+        bitstring = key if isinstance(key, str) else format(int(key), f"0{width}b")
+        if len(bitstring) != width:
+            raise RuntimeError(
+                f"QAOA eigenstate key {key!r} has {len(bitstring)} bits; problem has {width} "
+                "variables (converter added variables?)."
+            )
+        measured.append((np.fromiter(bitstring[::-1], dtype=int), float(probability)))
+    return measured
 
 
 def solve_qaoa_one_seed(
@@ -109,7 +156,14 @@ def solve_qaoa_one_seed(
     reps: int = 1,
     warm_start: bool = False,
     candidate_pool_size: int = 20,
+    export_full_distribution: bool = False,
+    aggregation: float | None = None,
+    initial_point: Sequence[float] | None = None,
 ) -> QaoaSeedResult:
+    """``aggregation`` = α của CVaR-QAOA (Barkoutsos et al. 2020): tối ưu trung bình α-phần tốt nhất
+    của các shot thay vì kỳ vọng. ``None`` = QAOA kỳ vọng thường (hành vi mặc định cũ)."""
+    if aggregation is not None and not 0.0 < aggregation <= 1.0:
+        raise ValueError(f"aggregation must be in (0, 1], got {aggregation}.")
     if k_actions is None and feasibility is None:
         raise ValueError("Provide k_actions or a generic feasibility predicate.")
     if reps < 1:
@@ -145,6 +199,10 @@ def solve_qaoa_one_seed(
         optimizer=COBYLA(maxiter=maxiter),
         reps=reps,
         transpiler=transpiler,
+        aggregation=aggregation,
+        initial_point=None
+        if initial_point is None
+        else np.asarray(initial_point, dtype=float),
     )
     algorithm = make_warm_start_optimizer(qaoa) if warm_start else None
     warm_start_used = algorithm is not None
@@ -160,34 +218,31 @@ def solve_qaoa_one_seed(
         if result.fval is not None
         else float(qp.objective.evaluate(result_x))
     )
-    samples = tuple(
+    measured = _measured_distribution(result, qp)
+    eigen_result = getattr(result, "min_eigen_solver_result", None)
+    full = tuple(
         QaoaSample(
-            bitstring=_bitstring_of(sample.x),
-            energy=(
-                float(sample.fval)
-                if sample.fval is not None
-                else float(qp.objective.evaluate(sample.x))
-            ),
-            probability=float(sample.probability),
-            feasible=bool(is_feasible(np.asarray(sample.x))),
+            bitstring=_bitstring_of(x),
+            energy=float(qp.objective.evaluate(x)),
+            probability=probability,
+            feasible=bool(is_feasible(x)),
+            measured_count=round(probability * shots),
         )
-        for sample in sorted(
-            result.samples, key=lambda item: (item.fval, -item.probability)
-        )[:candidate_pool_size]
+        for x, probability in sorted(measured, key=lambda item: _bitstring_of(item[0]))
     )
-    feasibility_rate = float(
-        sum(s.probability for s in result.samples if is_feasible(np.asarray(s.x)))
+    samples = tuple(
+        sorted(full, key=lambda item: (item.energy, -item.probability))[
+            :candidate_pool_size
+        ]
     )
+    distribution = full if export_full_distribution else ()
+    feasibility_rate = float(sum(s.probability for s in full if s.feasible))
     if reference_bitstring is not None:
         success_prob = float(
-            sum(
-                s.probability
-                for s in result.samples
-                if _bitstring_of(s.x) == reference_bitstring
-            )
+            sum(s.probability for s in full if s.bitstring == reference_bitstring)
         )
     else:
-        success_prob = float(max((s.probability for s in result.samples), default=0.0))
+        success_prob = float(max((s.probability for s in full), default=0.0))
 
     return QaoaSeedResult(
         seed=seed,
@@ -200,6 +255,19 @@ def solve_qaoa_one_seed(
         samples=samples,
         warm_start_used=warm_start_used,
         transpiled=transpiler is not None,
+        distribution=distribution,
+        optimal_parameters=tuple(
+            float(v)
+            for v in np.ravel(
+                np.asarray(
+                    []
+                    if getattr(eigen_result, "optimal_point", None) is None
+                    else eigen_result.optimal_point,
+                    dtype=float,
+                )
+            )
+        ),
+        circuit_evaluations=int(getattr(eigen_result, "cost_function_evals", 0) or 0),
     )
 
 
@@ -227,6 +295,9 @@ def solve_qaoa_one_seed_fast(
     candidate_pool_size: int = 20,
     max_retries: int = 2,
     subprocess_timeout_seconds: float = 120.0,
+    export_full_distribution: bool = False,
+    aggregation: float | None = None,
+    initial_point: Sequence[float] | None = None,
 ) -> QaoaSeedResult:
     """`solve_qaoa_one_seed` nhưng thử đường transpile (nhanh) an toàn qua subprocess + retry.
 
@@ -281,6 +352,9 @@ def solve_qaoa_one_seed_fast(
             "reps": reps,
             "warm_start": warm_start,
             "candidate_pool_size": candidate_pool_size,
+            "export_full_distribution": export_full_distribution,
+            "aggregation": aggregation,
+            "initial_point": None if initial_point is None else list(initial_point),
         },
     }
 
@@ -308,6 +382,9 @@ def solve_qaoa_one_seed_fast(
             reps=reps,
             warm_start=warm_start,
             candidate_pool_size=candidate_pool_size,
+            export_full_distribution=export_full_distribution,
+            aggregation=aggregation,
+            initial_point=initial_point,
         )
 
     with tempfile.TemporaryDirectory(prefix="qaoa_fast_") as tmp:
@@ -362,6 +439,9 @@ def solve_qaoa_one_seed_fast(
         reps=reps,
         warm_start=warm_start,
         candidate_pool_size=candidate_pool_size,
+        export_full_distribution=export_full_distribution,
+        aggregation=aggregation,
+        initial_point=initial_point,
     )
 
 

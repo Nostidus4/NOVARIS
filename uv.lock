@@ -2332,6 +2332,7 @@ dependencies = [
     { name = "qshield-data" },
     { name = "qshield-quantum" },
     { name = "qshield-risk" },
+    { name = "scipy" },
     { name = "typer" },
 ]
 
@@ -2342,6 +2343,7 @@ requires-dist = [
     { name = "qshield-data", editable = "packages/data" },
     { name = "qshield-quantum", editable = "packages/quantum" },
     { name = "qshield-risk", editable = "packages/risk" },
+    { name = "scipy", specifier = ">=1.14" },
     { name = "typer", specifier = ">=0.12" },
 ]
 

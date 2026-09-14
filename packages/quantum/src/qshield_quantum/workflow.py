@@ -12,7 +12,7 @@ here (see ``qaoa.py::_TRANSPILE_SAFE_MAX_QUBITS``; the plain path never finishes
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any
 
 import numpy as np
@@ -23,6 +23,7 @@ from qshield_quantum.formulation.four_level import (
     decode_action_levels,
     four_level_variable_names,
 )
+from qshield_quantum.formulation.normalization import normalize_for_qaoa
 from qshield_quantum.formulation.qiskit_program import build_quadratic_program
 from qshield_quantum.formulation.surrogate import (
     QuadraticSurrogate,
@@ -31,6 +32,7 @@ from qshield_quantum.formulation.surrogate import (
 )
 from qshield_quantum.solvers.exact import GenericExactResult, solve_quadratic_exact
 from qshield_quantum.solvers.qaoa import (
+    QaoaSample,
     QaoaSeedResult,
     TranspileFallbackUnavailableError,
     solve_qaoa_one_seed_fast,
@@ -233,8 +235,19 @@ def run_four_level_workflow(
     fallback_reason: str | None = None
     t0 = time.perf_counter()
     if run_qaoa:
+        # Chuẩn hóa thang energy (không đổi argmin) — không có bước này surrogate workflow có
+        # |linear|~0,04, |Q|~2e-5 và QAOA p=1 cho phân phối gần uniform (hybrid exploratory
+        # 2026-09-13). Energy trong kết quả seed được tính lại trên model GỐC ngay sau solve.
+        target_range = (
+            (quantum.get("qaoa") or {}).get("energy_normalization") or {}
+        ).get("target_range")
+        qaoa_model = (
+            normalize_for_qaoa(model, float(target_range))[0]
+            if target_range is not None
+            else model
+        )
         qp = build_quadratic_program(
-            model.Q, model.linear, model.constant, ticker_order=names
+            qaoa_model.Q, qaoa_model.linear, qaoa_model.constant, ticker_order=names
         )
         reps = int((quantum.get("qaoa", {}) or {}).get("p", 1))
         # 20-bit runtime_bits >> `_TRANSPILE_SAFE_MAX_QUBITS` (8) — `solve_qaoa_one_seed` thường
@@ -291,6 +304,7 @@ def run_four_level_workflow(
                 actual_solver = "exact"
                 _log("[fallback] %s", fallback_reason)
                 break
+            seed_result = restore_original_energies(seed_result, model)
             qaoa[seed] = seed_result
             timings[f"qaoa_seed_{seed}"] = float(seed_result.runtime_seconds)
             _log(
@@ -396,6 +410,27 @@ def run_four_level_workflow(
         candidate_order=tuple(order),
         target_column=target_column,
         stage_timings=timings,
+    )
+
+
+def restore_original_energies(
+    result: QaoaSeedResult, model: QuadraticSurrogate
+) -> QaoaSeedResult:
+    """Tính lại energy trên model GỐC để exact/QAOA/classical so cùng thang (qubo_hash G1)."""
+
+    def energy(bitstring: str) -> float:
+        return float(model.evaluate(np.fromiter(bitstring, dtype=np.int8)))
+
+    def restore(samples: tuple[QaoaSample, ...]) -> tuple[QaoaSample, ...]:
+        return tuple(
+            replace(sample, energy=energy(sample.bitstring)) for sample in samples
+        )
+
+    return replace(
+        result,
+        energy=energy(result.bitstring),
+        samples=restore(result.samples),
+        distribution=restore(result.distribution),
     )
 
 

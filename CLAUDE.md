@@ -125,6 +125,13 @@ result = MinimumEigenOptimizer(qaoa).solve(qubo)
 `AerError: 'unknown instruction: QAOA'` — Aer V2 chỉ nhận mạch đã transpile về ISA. Với 8 qubit,
 dùng `StatevectorSampler`; để `backends/hardware.py` trống theo kế hoạch.
 
+### `result.samples` của MinimumEigenOptimizer là p², không phải p
+
+qiskit-algorithms 0.4.0 trả `eigenstate` là `dict` xác suất, nhưng qiskit-optimization 0.7.0 coi
+`dict` là biên độ và bình phương ⇒ Σ `sample.probability` ≈ 0,1 thay vì 1. Muốn phân phối đo được
+thật (coverage, feasibility rate, success prob) phải đọc
+`result.min_eigen_solver_result.eigenstate` — xem `solvers/qaoa.py::_measured_distribution`.
+
 ### StrEnum so sánh bằng `is` sẽ sai
 
 `ArtifactMode("dev") == ArtifactMode.DEV` đúng, nhưng `"dev" is ArtifactMode.DEV` sai. Luôn ép
