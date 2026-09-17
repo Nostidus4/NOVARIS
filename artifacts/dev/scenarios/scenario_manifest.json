@@ -1,13 +1,14 @@
 {
   "run_mode": "NON_BASELINE_RUN",
-  "run_id": "run_20260807_154959",
-  "gate_status": "PASS",
+  "run_id": "run_20260917_153358",
+  "gate_status": "FAIL",
+  "gate_incomplete_reason": null,
   "forced": false,
   "input_source": "real",
   "regime_input_source": "real",
   "regime_source": "hmm_champion",
   "structural_violations": [],
-  "evaluation_date": "2026-07-30",
+  "evaluation_date": "2026-07-31",
   "target_regime": "volatile",
   "return_type": "simple",
   "return_type_note": "scenarios = simple daily returns; scenarios_log = log daily returns; simple = expm1(log). R^(H) mỗi tài sản = prod(1+r) - 1 trên 20 ngày.",
@@ -48,7 +49,7 @@
   "block_length": 5,
   "seed": 20260804,
   "conditioning_method": "hard_filtered_label",
-  "data_version": "v1.0.0",
+  "data_version": "v2.0.0",
   "feature_version": "v0.2",
   "primary": {
     "target_regime": "volatile",
@@ -90,20 +91,20 @@
       "VPL",
       "VRE"
     ],
-    "eligible_block_count": 71,
+    "eligible_block_count": 19,
     "blocks_drawn": 20000,
-    "unique_blocks_used": 71,
-    "reuse_rate": 0.99645,
+    "unique_blocks_used": 19,
+    "reuse_rate": 0.99905,
     "rejected_blocks": {
       "anchor_off_calendar": 0,
       "beyond_evaluation_date": 5,
-      "incomplete_panel": 581
+      "incomplete_panel": 302
     },
     "anchor_split_counts": {
-      "test": 71
+      "test": 19
     },
-    "anchor_first": "2026-03-17",
-    "anchor_last": "2026-07-23",
+    "anchor_first": "2026-03-09",
+    "anchor_last": "2026-07-24",
     "return_type": "simple"
   },
   "by_regime": {
@@ -147,20 +148,20 @@
         "VPL",
         "VRE"
       ],
-      "eligible_block_count": 19,
+      "eligible_block_count": 281,
       "blocks_drawn": 20000,
-      "unique_blocks_used": 19,
-      "reuse_rate": 0.99905,
+      "unique_blocks_used": 281,
+      "reuse_rate": 0.98595,
       "rejected_blocks": {
         "anchor_off_calendar": 0,
         "beyond_evaluation_date": 0,
-        "incomplete_panel": 335
+        "incomplete_panel": 407
       },
       "anchor_split_counts": {
-        "test": 19
+        "test": 281
       },
-      "anchor_first": "2026-06-22",
-      "anchor_last": "2026-07-16",
+      "anchor_first": "2025-05-15",
+      "anchor_last": "2026-07-21",
       "return_type": "simple"
     },
     "volatile": {
@@ -203,26 +204,101 @@
         "VPL",
         "VRE"
       ],
-      "eligible_block_count": 71,
+      "eligible_block_count": 19,
       "blocks_drawn": 20000,
-      "unique_blocks_used": 71,
-      "reuse_rate": 0.99645,
+      "unique_blocks_used": 19,
+      "reuse_rate": 0.99905,
       "rejected_blocks": {
         "anchor_off_calendar": 0,
         "beyond_evaluation_date": 5,
-        "incomplete_panel": 581
+        "incomplete_panel": 302
       },
       "anchor_split_counts": {
-        "test": 71
+        "test": 19
       },
-      "anchor_first": "2026-03-17",
-      "anchor_last": "2026-07-23",
+      "anchor_first": "2026-03-09",
+      "anchor_last": "2026-07-24",
+      "return_type": "simple"
+    },
+    "stress": {
+      "target_regime": "stress",
+      "seed": 20260806,
+      "block_length": 5,
+      "blocks_per_path": 4,
+      "num_scenarios": 5000,
+      "horizon_days": 20,
+      "n_assets": 30,
+      "ticker_order": [
+        "ACB",
+        "BID",
+        "BSR",
+        "CTG",
+        "FPT",
+        "GAS",
+        "GVR",
+        "HDB",
+        "HPG",
+        "LPB",
+        "MBB",
+        "MSN",
+        "MWG",
+        "PLX",
+        "SAB",
+        "SHB",
+        "SSB",
+        "SSI",
+        "STB",
+        "TCB",
+        "TPB",
+        "VCB",
+        "VHM",
+        "VIB",
+        "VIC",
+        "VJC",
+        "VNM",
+        "VPB",
+        "VPL",
+        "VRE"
+      ],
+      "eligible_block_count": 2,
+      "blocks_drawn": 20000,
+      "unique_blocks_used": 2,
+      "reuse_rate": 0.9999,
+      "rejected_blocks": {
+        "anchor_off_calendar": 0,
+        "beyond_evaluation_date": 0,
+        "incomplete_panel": 250
+      },
+      "anchor_split_counts": {
+        "test": 2
+      },
+      "anchor_first": "2025-05-13",
+      "anchor_last": "2025-05-14",
       "return_type": "simple"
     }
   },
-  "skipped_regimes": {
-    "stress": "pool rỗng, lý do loại: {'anchor_off_calendar': 0, 'beyond_evaluation_date': 0, 'incomplete_panel': 254}"
+  "skipped_regimes": {},
+  "block_diversity": {
+    "normal": {
+      "unique_blocks_used": 281,
+      "blocks_drawn": 20000,
+      "reuse_rate": 0.98595,
+      "effective_independent_windows": 281
+    },
+    "volatile": {
+      "unique_blocks_used": 19,
+      "blocks_drawn": 20000,
+      "reuse_rate": 0.99905,
+      "effective_independent_windows": 19
+    },
+    "stress": {
+      "unique_blocks_used": 2,
+      "blocks_drawn": 20000,
+      "reuse_rate": 0.9999,
+      "effective_independent_windows": 2
+    }
   },
+  "block_diversity_gate": "NOT_CONFIGURED_PENDING_OWNER",
   "validation_reference": "regime_matched_forward_windows",
   "unresolved_decisions": [
     "IN-PO-01 (S=500 vs 2000/5000)",
@@ -231,6 +307,6 @@
     "IN-RISK-02 (ngày đánh giá t)",
     "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
     "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
-    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)"
+    "IN-PO-04 (duyệt configs/base.yaml + scenarios.yaml)"
   ]
 }

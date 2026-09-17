@@ -1,10 +1,7 @@
 # Nguyễn Đỗ Minh Anh - xuất reports/data_quality_report.html.
 """Xuất Data Quality Report và Data Dictionary — port từ `CLEAN.ipynb`.
 
-Format DQ report: `docs/Structure.md` §3 ghi `.html`, nhưng notebook gốc và plan.md §6 câu 6 chốt
-dùng CSV cho MVP (đơn giản hơn, đủ dùng cho `manifest.py`/`loader.py` đọc lại) — HTML có thể thêm
-sau nếu cần hiển thị đẹp hơn cho báo cáo cuối. Ghi rõ ở đây để không ai ngỡ ngàng khi thấy
-`.csv` thay vì `.html`.
+DQ report là CSV (đủ cho `manifest.py`/`loader.py` đọc lại).
 """
 
 from __future__ import annotations
@@ -17,7 +14,6 @@ from openpyxl import Workbook
 _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
     "universe_register": [
         ("ticker", "string", "-", "Mã cổ phiếu, upper-case", "HPG"),
-        ("yahoo_symbol", "string", "-", "Symbol trên Yahoo Finance", "HPG.VN"),
         ("company_name", "string", "-", "Tên doanh nghiệp", "Hoà Phát"),
         (
             "first_trading_date",
@@ -48,35 +44,44 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
                 "{'exchange': 'HOSE', 'from': '2020-12-01'}]"
             ),
         ),
-        ("data_source", "string", "enum", "Nguồn tải giá chính: yahoo | dnse", "dnse"),
+        ("data_source", "string", "enum", "Nguồn giá: fiinpro", "fiinpro"),
     ],
     "prices_adjusted": [
         ("date", "date", "YYYY-MM-DD", "Ngày giao dịch", "2024-06-28"),
         ("ticker", "string", "-", "Mã cổ phiếu", "HPG"),
-        ("open, high, low, close", "float", "VND", "Giá không điều chỉnh", ""),
+        (
+            "open, high, low, close",
+            "float",
+            "VND",
+            "Giá GỐC khớp trên sàn (không điều chỉnh)",
+            "",
+        ),
         (
             "adjusted_close",
             "float",
             "VND",
-            "Giá đã điều chỉnh cổ tức/chia tách",
+            (
+                "Giá đóng cửa điều chỉnh của FiinPro, neo theo ngày export — chỉ dùng tính "
+                "return, không dùng làm giá hiện tại"
+            ),
             "27500.0",
         ),
         ("volume", "int", "shares", "Khối lượng khớp lệnh", "5230000"),
-        ("turnover_value", "float", "VND", "close × volume", "1.4e11"),
+        ("turnover_value", "float", "VND", "Giá trị khớp lệnh (vendor)", "1.4e11"),
+        ("volume_negotiated", "float", "shares", "Khối lượng thoả thuận", ""),
+        ("turnover_negotiated", "float", "VND", "Giá trị thoả thuận", ""),
         (
             "quality_flag",
             "string",
             "-",
             (
                 "OK hoặc bitmask lỗi (pipe-separated: NONPOS_PRICE|NONPOS_CLOSE|NEG_VOLUME|"
-                "ZERO_VOLUME). Yahoo Finance đôi khi forward-fill giá cho ngày HOSE nghỉ (phantom "
-                "days, close = close ngày trước, volume = 0). Pipeline cross-check với lịch giao "
-                "dịch VN-Index (vnstock/VCI — feed thật từ broker VN) và loại các ngày phantom này "
-                "khỏi prices_adjusted trước khi lưu, nên không còn xuất hiện trong dữ liệu cuối."
+                "ZERO_VOLUME|INVALID_OHLC). Ngày không có trong lịch VN-Index bị loại trước khi "
+                "lưu."
             ),
             "OK",
         ),
-        ("source_id", "string", "-", "Nguồn dữ liệu", "YF_PRICES"),
+        ("source_id", "string", "-", "Nguồn dữ liệu", "FIINPRO_XLSX"),
         ("data_version", "string", "semver", "Phiên bản data run", "v1.0.0"),
     ],
     "returns": [
@@ -86,7 +91,7 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
         ("log_return", "float", "decimal", "ln(P_t/P_{t-1})", "0.0122"),
         ("adjusted_close", "float", "VND", "Giá đã điều chỉnh", ""),
         ("volume", "int", "shares", "Khối lượng", ""),
-        ("turnover_value", "float", "VND", "close × volume", ""),
+        ("turnover_value", "float", "VND", "Giá trị khớp lệnh (vendor)", ""),
         ("quality_flag", "string", "-", "Cờ chất lượng", ""),
         (
             "split",
@@ -140,7 +145,7 @@ _DATA_DICTIONARY: dict[str, list[tuple[str, str, str, str, str]]] = {
             "source",
             "string",
             "-",
-            "Nguồn (vnstock_VCI_VNINDEX / yahoo_^VNINDEX / custom_composite_ew)",
+            "Nguồn (vnstock_VCI_VNINDEX / custom_composite_ew)",
             "",
         ),
     ],

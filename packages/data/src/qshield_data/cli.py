@@ -1,15 +1,11 @@
 # Nguyễn Đỗ Minh Anh - CLI `uv run qshield-data build` → data/processed/*.parquet.
-"""CLI orchestration cho `qshield_data` — port từ `CLEAN.ipynb` (8 bước).
+"""CLI orchestration cho `qshield_data`.
 
 Đây là nơi DUY NHẤT trong package được phép `print()`/`typer.echo()` (CLAUDE.md: "print chỉ trong
 cli.py") và gọi `qshield_contracts.config.Config.load` (mọi hàm logic khác nhận tham số tường minh).
 
-Lệnh chính là `build` — khớp với những gì `docs/architecture/pipeline.md`, `docs/runbook/setup.md`
-và scaffold gốc của file này đã ghi (`uv run qshield-data build`), CHỨ KHÔNG theo tên lệnh
-`fetch/clean/features/.../all` mà `plan.md` §5 đề xuất ban đầu — plan.md được viết trước khi đối
-chiếu với các doc đã commit khác, nên ở đây ưu tiên cái đã có tài liệu tham chiếu. `build` chạy
-tuần tự đúng 7 bước plan.md mô tả; các bước đó cũng được expose thành subcommand riêng
-(`fetch/clean/features/eligibility/split/quality/manifest`) để chạy/debug từng bước lúc phát triển.
+Lệnh chính `build` chạy tuần tự fetch → clean → features → eligibility → split → quality →
+manifest; từng bước cũng là subcommand riêng để chạy/debug.
 """
 
 from __future__ import annotations
@@ -24,7 +20,6 @@ from typing import Any
 
 import pandas as pd
 import typer
-import yfinance as yf
 from qshield_contracts.config import Config
 
 from qshield_data import eligibility as eligibility_mod
@@ -32,7 +27,7 @@ from qshield_data import features as features_mod
 from qshield_data import returns as returns_mod
 from qshield_data import split as split_mod
 from qshield_data.clean import corporate_actions, normalize, validate_prices
-from qshield_data.manifest import build_manifest, write_manifest
+from qshield_data.manifest import _sha256_of_file, build_manifest, write_manifest
 from qshield_data.quality import checks as checks_mod
 from qshield_data.quality import evidence as evidence_mod
 from qshield_data.quality import report as report_mod
@@ -151,45 +146,59 @@ def fetch(
     profile: Path | None = _PROFILE_OPTION,
     override: Path | None = _OVERRIDE_OPTION,
 ) -> None:
-    """Bước 1-2: đọc universe, tải giá từ Yahoo/DNSE/vnstock vào data/raw/."""
+    """Bước 1-2: tách giá 30 mã từ FiinPro `Full_Prices.xlsx`, tải VN-Index qua vnstock."""
     cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
 
     universe = registry.load_universe(cfg)
+    data_cfg = cfg.get("data", {})
     date_range = cfg["date_range"]
-    start = date_range[
-        "market_train_start"
-    ]  # sớm nhất trong 2 đồng hồ — dùng chung cho fetch
+    start = date_range["market_train_start"]  # sớm nhất trong 2 đồng hồ
     end = date_range["test_end"]
+    xlsx_path = Path(data_cfg["fiinpro_xlsx"])
 
-    typer.echo(f"Downloading {len(universe)} tickers from {start} to {end}...")
-    raw_manifest = fetch_mod.fetch_all_prices(
-        universe, start=start, end=end, raw_dir=paths.raw_dir
+    typer.echo(f"Tách giá {len(universe)} mã từ {xlsx_path}...")
+    raw_manifest, full_df = fetch_mod.split_fiinpro_prices(
+        universe,
+        xlsx_path=xlsx_path,
+        raw_dir=paths.raw_dir,
+        raw_price_patches=data_cfg.get("raw_price_patches") or [],
     )
     typer.echo(raw_manifest["status"].value_counts().to_string())
     raw_manifest.to_csv(_raw_manifest_path(paths), index=False, encoding="utf-8-sig")
 
-    index_df, symbol_used, source_used = fetch_mod.fetch_vn_index(
-        start=start, end=end, raw_dir=paths.raw_dir
-    )
-    _vn_index_meta_path(paths).write_text(
-        json.dumps(
-            {"symbol_used": symbol_used, "source_used": source_used}, ensure_ascii=False
-        ),
-        encoding="utf-8",
-    )
+    typer.echo(f"Tải VN-Index từ vnstock (VCI): {start} → {end}")
+    index_df = fetch_mod.fetch_vn_index(start=start, end=end, raw_dir=paths.raw_dir)
     if index_df is None:
+        _vn_index_meta_path(paths).unlink(missing_ok=True)
         typer.echo(
             "⚠ VN-Index unavailable — features step sẽ tự tính custom composite."
         )
+    else:
+        missing = fetch_mod.missing_index_sessions(
+            full_df["date"], index_df, start, end
+        )
+        if len(missing):
+            typer.echo(
+                f"✗ VN-Index thiếu {len(missing)} phiên có trong FiinPro "
+                f"({missing.min().date()} → {missing.max().date()}). Chạy tiếp sẽ xoá nhầm giá "
+                "các ngày này ở bước clean — kiểm tra kết nối/API vnstock.",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        _vn_index_meta_path(paths).write_text(
+            json.dumps({"symbol_used": "VNINDEX", "source_used": "vnstock_VCI"}),
+            encoding="utf-8",
+        )
+        typer.echo(f"✓ VN-Index {len(index_df):,} phiên, phủ đủ lịch giao dịch FiinPro")
 
-    data_cfg = cfg.get("data", {})
     sources_df = registry.build_source_register(
         access_date=datetime.now().astimezone().strftime("%Y-%m-%d"),
-        yfinance_version=yf.__version__,
         vnstock_version=_vnstock_version(),
         test_end=end,
+        fiinpro_xlsx=str(xlsx_path),
+        fiinpro_sha256=_sha256_of_file(xlsx_path),
     )
     universe_path, sources_path = registry.save_universe_and_sources(
         universe,
@@ -210,7 +219,7 @@ def clean(
     profile: Path | None = _PROFILE_OPTION,
     override: Path | None = _OVERRIDE_OPTION,
 ) -> None:
-    """Bước 3: normalize + dedup + phantom-day + pre-listing → data/processed/prices_adjusted.parquet."""
+    """Bước 3: normalize + dedup + lịch giao dịch + pre-listing → data/processed/prices_adjusted.parquet."""
     cfg = _load_config(config, profile, override)
     paths = _Paths(cfg)
     paths.ensure()
@@ -232,22 +241,12 @@ def clean(
         f"Loaded raw: {len(prices):,} rows, {prices['ticker'].nunique()} tickers"
     )
 
-    registered_actions = cfg.get("corporate_actions") or []
-    if registered_actions:
-        prices = corporate_actions.apply_registered_adjustments(
-            prices, registered_actions
-        )
-        typer.echo(
-            f"Corporate action back-adjustment: {len(registered_actions)} entry đã đăng ký "
-            "(configs/base.yaml) — xem logs.txt để biết đúng bao nhiêu phiên bị đổi."
-        )
-
     prices, n_dup = validate_prices.dedup_prices(prices)
     typer.echo(f"Duplicates removed: {n_dup}")
 
     vn_index = _load_latest_vn_index(paths)
-    prices, n_phantom = validate_prices.remove_yahoo_phantom_days(prices, vn_index)
-    typer.echo(f"Phantom Yahoo days removed: {n_phantom}")
+    prices, n_off = validate_prices.remove_non_trading_days(prices, vn_index)
+    typer.echo(f"Rows ngoài lịch VN-Index removed: {n_off}")
 
     prices = validate_prices.flag_price_quality(prices)
     typer.echo(prices["quality_flag"].value_counts().to_string())
@@ -435,15 +434,13 @@ def quality(
     report_mod.write_quality_report(report_df, out_path)
     typer.echo(f"✓ DQ report: {out_path}")
 
-    evidence_frame = evidence_mod.build_adjusted_close_evidence_report(
-        universe, cfg.get("corporate_actions") or []
-    )
+    evidence_frame = evidence_mod.build_adjusted_close_evidence_report(universe)
     evidence_path = paths.reports_root / "adjusted_close_evidence_report.csv"
     evidence_mod.write_adjusted_close_evidence_report(evidence_frame, evidence_path)
-    verified = int(evidence_frame["evidence_flag"].eq("ADJ_REGISTERED").sum())
+    vendor = int(evidence_frame["evidence_flag"].eq("ADJ_VENDOR").sum())
     typer.echo(
         f"✓ Adjusted-close evidence: {evidence_path} — "
-        f"{verified}/{len(evidence_frame)} ADJ_REGISTERED; "
+        f"{vendor}/{len(evidence_frame)} ADJ_VENDOR; "
         "baseline_ok=False until Data Gate sign-off (TL-002)."
     )
 
@@ -480,8 +477,6 @@ def manifest(
     typer.echo(f"✓ Data Dictionary: {dict_out}")
 
     universe_files = sorted(paths.metadata_dir.glob("universe_30_asof_*.csv"))
-    if not universe_files:
-        universe_files = sorted(paths.metadata_dir.glob("universe_asof_*.csv"))
     universe_register_path = (
         universe_files[-1]
         if universe_files
@@ -515,6 +510,7 @@ def manifest(
         must_pass = dq_df[dq_df["type"] == "MUST_PASS"]
         quality_gate_pass = bool((must_pass["status"] == "PASS").all())
 
+    has_index = _load_vn_index_source_tag(paths) is not None
     manifest_dict = build_manifest(
         run_id=_run_id(),
         data_version=data_cfg.get("data_version", "v0.0.0"),
@@ -551,8 +547,8 @@ def manifest(
             **cfg.get("eligibility", {}),
         },
         quality_gate_pass=quality_gate_pass,
-        index_symbol_used=None,
-        index_source_used=None,
+        index_symbol_used="VNINDEX" if has_index else None,
+        index_source_used="vnstock_VCI" if has_index else None,
         data_root=paths.data_root,
     )
     manifest_out = paths.metadata_dir / "data_manifest.json"
@@ -561,7 +557,7 @@ def manifest(
 
 
 # ---------------------------------------------------------------------------
-# `build` — lệnh chính, khớp docs/architecture/pipeline.md + docs/runbook/setup.md
+# `build` — lệnh chính
 # ---------------------------------------------------------------------------
 @app.command()
 def build(

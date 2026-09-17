@@ -1,31 +1,25 @@
 # Nguyễn Đỗ Minh Anh - kiểm tra giá âm/bằng 0, volume bất thường.
-"""Dedup, loại phantom day của Yahoo, gắn cờ chất lượng giá.
+"""Dedup, loại ngày không có giao dịch thật, gắn cờ chất lượng giá.
 
-Port từ `CLEAN.ipynb` "Bước 3" (cell dedup/phantom/quality_flag), đã bao gồm 2 bug fix thực hiện
-trong quá trình debug notebook:
+Port từ `CLEAN.ipynb` "Bước 3" (bản 2026-09-17, nguồn FiinPro):
 
-1. Dedup ưu tiên row volume cao nhất khi trùng `(date, ticker)` (thay vì `keep="first"` mặc định —
-   DNSE thỉnh thoảng trả 2 row cho cùng ngày, ví dụ ACB 2022-12-27: volume 418.000 vs 2.040.100; row
-   volume cao hơn là bản đã tổng hợp đầy đủ cuối phiên).
-2. Loại "phantom day" của Yahoo: Yahoo forward-fill 1 row cho ngày HOSE nghỉ lễ (close = close ngày
-   trước, volume = 0) để chart không bị gap — không phải phiên giao dịch thật. Dùng VN-Index (feed
-   thật từ broker VN, không có phantom day) làm trading calendar chuẩn: ngày nào Yahoo có nhưng
-   VN-Index không có thì xóa. Khác `ZERO_VOLUME` thật (có phiên nhưng không ai khớp lệnh) — cái đó
-   vẫn giữ nguyên, chỉ gắn cờ.
+1. Dedup ưu tiên row volume cao nhất khi trùng `(date, ticker)`.
+2. Loại ngày không có trong lịch VN-Index — áp cho MỌI nguồn (lịch giao dịch là chuẩn chung). Với
+   FiinPro kỳ vọng xoá 0 dòng; khác 0 là dấu hiệu cần xem lại.
+3. Gắn cờ (không xoá): giá ≤ 0, volume âm/bằng 0, OHLC tự mâu thuẫn.
 """
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 
-_YAHOO_SOURCE_IDS = ("YF_PRICES", "YF_PRICES_FALLBACK")
+logger = logging.getLogger(__name__)
 
 
 def dedup_prices(prices: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     """Loại row trùng `(date, ticker)`, ưu tiên giữ row có volume cao nhất.
-
-    Sort theo `(date, ticker, volume)` tăng dần rồi `drop_duplicates(keep="last")` — đảm bảo row
-    volume lớn nhất trong nhóm trùng nằm cuối và được giữ lại.
 
     Trả về `(df_deduped, n_removed)`.
     """
@@ -37,37 +31,42 @@ def dedup_prices(prices: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     return deduped, before - len(deduped)
 
 
-def remove_yahoo_phantom_days(
+def remove_non_trading_days(
     prices: pd.DataFrame, vn_index: pd.DataFrame | None
 ) -> tuple[pd.DataFrame, int]:
-    """Loại ngày Yahoo forward-fill (phantom day) mà VN-Index không có phiên giao dịch.
+    """Loại row có ngày không nằm trong lịch giao dịch VN-Index.
 
-    `vn_index`: DataFrame index=date của VN-Index thật (từ `sources.fetch.fetch_vn_index`), hoặc
-    `None` nếu VN-Index không tải được — trong trường hợp đó bỏ qua bước này (không có trading
-    calendar chuẩn để đối chiếu) và trả về `prices` nguyên vẹn với `n_removed=0`.
-
-    Chỉ áp dụng cho `source_id` thuộc Yahoo (`YF_PRICES`, `YF_PRICES_FALLBACK`) — DNSE là feed thật
-    nên không có phantom day.
+    `vn_index`: DataFrame index=date của VN-Index thật, hoặc `None` — khi đó bỏ qua bước này và trả
+    về `prices` nguyên vẹn với `n_removed=0`.
     """
     if vn_index is None:
         return prices, 0
 
-    vn_trading_days = set(pd.to_datetime(vn_index.index).normalize())
-    is_yahoo_source = prices["source_id"].isin(_YAHOO_SOURCE_IDS)
-    is_phantom = is_yahoo_source & ~prices["date"].isin(vn_trading_days)
-
-    n_phantom = int(is_phantom.sum())
-    cleaned = prices[~is_phantom].reset_index(drop=True)
-    return cleaned, n_phantom
+    trading_days = set(pd.to_datetime(vn_index.index).normalize())
+    off_calendar = ~prices["date"].isin(trading_days)
+    n_removed = int(off_calendar.sum())
+    if n_removed:
+        logger.warning(
+            "Loại %d row không khớp lịch VN-Index: %s",
+            n_removed,
+            prices.loc[off_calendar, "ticker"].value_counts().to_dict(),
+        )
+    return prices[~off_calendar].reset_index(drop=True), n_removed
 
 
 def flag_price_quality(prices: pd.DataFrame) -> pd.DataFrame:
-    """Thêm cột `quality_flag` (bitmask pipe-separated) và `turnover_value`.
+    """Thêm cột `quality_flag` (pipe-separated) và điền `turnover_value` còn thiếu.
 
-    `quality_flag`: `"OK"` hoặc kết hợp của `NONPOS_PRICE|NONPOS_CLOSE|NEG_VOLUME|ZERO_VOLUME`.
-    Đây là gắn cờ, KHÔNG xóa row (CLAUDE.md quy tắc 5: không tự xóa outlier).
+    `quality_flag`: `"OK"` hoặc kết hợp của
+    `NONPOS_PRICE|NONPOS_CLOSE|NEG_VOLUME|ZERO_VOLUME|INVALID_OHLC`. Gắn cờ, KHÔNG xóa row
+    (CLAUDE.md quy tắc 5).
 
-    `turnover_value = close * volume` (VNĐ) — dùng cho eligibility (rolling turnover 20 ngày).
+    `INVALID_OHLC`: `high < low` hoặc `open` ngoài `[low, high]`. Không kiểm tra `close`: giá đóng
+    cửa có thể là bình quân gia quyền (UPCOM) nên nằm ngoài `[low, high]` không phải lỗi
+    (vd VIB 2019-07-04).
+
+    `turnover_value`: giữ giá trị khớp lệnh thật của vendor; chỉ row thiếu mới ước lượng
+    `close × volume` (log số row phải ước lượng).
     """
     out = prices.copy()
 
@@ -75,6 +74,12 @@ def flag_price_quality(prices: pd.DataFrame) -> pd.DataFrame:
     nonpos_close = out["close"].isna() | (out["close"] <= 0)
     neg_volume = out["volume"].notna() & (out["volume"] < 0)
     zero_volume = out["volume"].notna() & (out["volume"] == 0)
+    has_hl = out["low"].notna() & out["high"].notna()
+    invalid_ohlc = has_hl & (
+        (out["high"] < out["low"])
+        | (out["open"] < out["low"])
+        | (out["open"] > out["high"])
+    )
 
     flags = pd.Series([""] * len(out), index=out.index)
     for mask, name in [
@@ -82,10 +87,19 @@ def flag_price_quality(prices: pd.DataFrame) -> pd.DataFrame:
         (nonpos_close, "NONPOS_CLOSE"),
         (neg_volume, "NEG_VOLUME"),
         (zero_volume, "ZERO_VOLUME"),
+        (invalid_ohlc, "INVALID_OHLC"),
     ]:
         flags = flags.where(~mask, flags + "|" + name)
     flags = flags.str.lstrip("|")
     out["quality_flag"] = flags.where(flags != "", "OK")
 
-    out["turnover_value"] = out["close"] * out["volume"]
+    missing_tv = out["turnover_value"].isna()
+    if missing_tv.any():
+        logger.warning(
+            "turnover_value thiếu ở %d row — ước lượng close × volume",
+            int(missing_tv.sum()),
+        )
+    out.loc[missing_tv, "turnover_value"] = (
+        out.loc[missing_tv, "close"] * out.loc[missing_tv, "volume"]
+    )
     return out

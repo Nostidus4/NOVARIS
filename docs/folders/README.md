@@ -35,7 +35,7 @@ backend  ──HTTP──►  frontend
 | [`backend.md`](backend.md) | `backend/` |
 | [`frontend.md`](frontend.md) | `frontend/` |
 | [`configs.md`](configs.md) | `configs/` |
-| [`artifacts-data.md`](artifacts-data.md) | `data/`, `artifacts/`, `reports/`, `notebooks/` |
+| [`artifacts-data.md`](artifacts-data.md) | `data/`, `artifacts/`, `reports/` |
 
 ## Khi implement bất kỳ thay đổi nào
 

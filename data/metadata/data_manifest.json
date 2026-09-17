@@ -1,17 +1,15 @@
 {
-  "run_id": "data_run_20260807_151404",
-  "data_version": "v1.0.0",
+  "run_id": "data_run_20260917_151743",
+  "data_version": "v2.0.0",
   "universe_version": "v1.0",
   "universe_as_of": "2026-08-03",
-  "created_at": "2026-08-07T15:14:04.436523+07:00",
+  "created_at": "2026-09-17T15:17:43.892574+07:00",
   "sources": [
-    "YF_PRICES",
-    "DNSE_PRICES",
-    "VNSTOCK_PRICES",
+    "FIINPRO_XLSX",
     "VNSTOCK_INDEX"
   ],
-  "index_symbol_used": null,
-  "index_source_used": null,
+  "index_symbol_used": "VNINDEX",
+  "index_source_used": "vnstock_VCI",
   "splits_config": {
     "market": {
       "train": [
@@ -51,70 +49,70 @@
   "files": {
     "universe_register": {
       "path": "data/metadata/universe_30_asof_20260803.csv",
-      "sha256": "9f8e61292b022e137c7156aed4949eb34df41800428be4025d2561feb3a833eb",
-      "size_bytes": 3420,
-      "modified_at": "2026-08-07T13:50:57.864254+07:00"
+      "sha256": "eec499ca80afd2f40a466bb293c646c685bd7ebd142a3e2aa476647c128ab0a4",
+      "size_bytes": 3836,
+      "modified_at": "2026-09-17T15:16:45.322797+07:00"
     },
     "source_register": {
       "path": "data/metadata/source_register.csv",
-      "sha256": "a5ee379b15fac7aecac6d60dc83800fb3ceb5b164cfbcb95210bfaf9aed09f40",
-      "size_bytes": 2480,
-      "modified_at": "2026-08-07T11:20:05.163231+07:00"
+      "sha256": "e01f2b1204a105462ea6ff4ba02804a86c067de48528b4c39db337d61ad94656",
+      "size_bytes": 1288,
+      "modified_at": "2026-09-17T15:16:45.323045+07:00"
     },
     "prices_adjusted": {
       "path": "data/processed/prices_adjusted.parquet",
-      "sha256": "4497395c17a2ab32fb85452156f90c7cce305192fea7570e6e000bab05f085c3",
-      "size_bytes": 2406213,
-      "modified_at": "2026-08-07T11:20:05.185646+07:00"
+      "sha256": "8d6b7817359d707f278356edc2e99d8535672f495e8f774dae3cf32f6deb8280",
+      "size_bytes": 2515308,
+      "modified_at": "2026-09-17T15:16:45.658502+07:00"
     },
     "returns": {
       "path": "data/processed/returns.parquet",
-      "sha256": "0a13fd60ae9213cbc3c852848f37adf27b06db83e8832dd52a95e71fa16ca23d",
-      "size_bytes": 3810173,
-      "modified_at": "2026-08-07T15:13:58.195841+07:00"
+      "sha256": "5f9f7c3c74992f351ff6056aa417ed2f39d5b1101203d1cc260df9ed12e8a893",
+      "size_bytes": 4028687,
+      "modified_at": "2026-09-17T15:17:41.453651+07:00"
     },
     "market_features": {
       "path": "data/processed/market_features.parquet",
-      "sha256": "3f8c81fbd65bc7cad75e84d4f33c2bc7156c11d272c7852e396bf65ea4371b03",
-      "size_bytes": 248836,
-      "modified_at": "2026-08-07T15:14:00.433290+07:00"
+      "sha256": "669edf61f1d1729a153b428f9a41c0b8b1cde79ac7db4f2a214f5d48edc6041c",
+      "size_bytes": 238523,
+      "modified_at": "2026-09-17T15:17:43.552832+07:00"
     },
     "eligibility_daily": {
       "path": "data/processed/eligibility_daily.parquet",
-      "sha256": "f39989def6c2c7b3d74bdf8b01ad05e0e5cb7092f3973d421480bfb3aee32c39",
-      "size_bytes": 966231,
-      "modified_at": "2026-08-07T11:20:05.168326+07:00"
+      "sha256": "1327039330e28a6f0f3ae1cd4a3ca70bd0e2d3649333dd08a1a725c4e97f7fe8",
+      "size_bytes": 828627,
+      "modified_at": "2026-09-17T15:16:47.180370+07:00"
     },
     "data_dictionary": {
       "path": "data/metadata/data_dictionary.xlsx",
-      "sha256": "24fd70ac667eefa78dd980976bbead7066870a2df84d21c5999b705154d28f35",
-      "size_bytes": 10086,
-      "modified_at": "2026-08-07T15:14:04.358267+07:00"
+      "sha256": "16553e7c9071807f2b2e6ef7f8cac4fffaf2a42fbff1ba489b0a5da66448b4bb",
+      "size_bytes": 10039,
+      "modified_at": "2026-09-17T15:17:43.868103+07:00"
     },
     "data_quality_report": {
       "path": "reports/data_quality_report.csv",
-      "sha256": "50e97f35f9841bb4a7a8513cca3b815002ec6f9ed20afb4d1b1d9fd1eaa06ad4",
-      "size_bytes": 611,
-      "modified_at": "2026-08-07T15:14:02.625867+07:00"
+      "sha256": "17481fa95fc25713d364866833d45e1a59fcaa3d890f35dfc18e53b0c7d20647",
+      "size_bytes": 609,
+      "modified_at": "2026-09-17T15:17:43.836778+07:00"
     },
     "adjusted_close_evidence_report": {
       "path": "reports/adjusted_close_evidence_report.csv",
-      "sha256": "6dc305c27db5c0d3275714c552d2264133dc4a7175c8f2df833a6dda5dd6fd6a",
-      "size_bytes": 8095,
-      "modified_at": "2026-08-07T15:14:02.627287+07:00"
+      "sha256": "96e9b3759ea40ced33a9965c6c695d8d5d92e28ba8973183b7717b00ab99aaa4",
+      "size_bytes": 9639,
+      "modified_at": "2026-09-17T15:17:43.838052+07:00"
     },
     "price_limit_violations": {
       "path": "reports/price_limit_violations.csv",
-      "sha256": "cb0f82a1d0470040687cabeff1d2900179256566ac6e0446d08bec7bdc04914c",
-      "size_bytes": 7821,
-      "modified_at": "2026-08-07T15:14:02.628563+07:00"
+      "sha256": "4bc09ec04e654d24808daffd2ea267f0504d6d5a037874a1bac8b6603939f1ad",
+      "size_bytes": 132,
+      "modified_at": "2026-09-17T15:17:43.838887+07:00"
     }
   },
   "row_counts": {
-    "prices_adjusted": 69474,
-    "returns": 69474,
-    "market_features": 2762,
-    "eligibility_daily": 79230,
+    "prices_adjusted": 69821,
+    "returns": 69821,
+    "market_features": 2642,
+    "eligibility_daily": 79260,
     "universe": 30
   }
 }

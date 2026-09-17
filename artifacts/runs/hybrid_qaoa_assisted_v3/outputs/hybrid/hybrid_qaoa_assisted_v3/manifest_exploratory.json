@@ -1,0 +1,79 @@
+{
+  "experiment_id": "hybrid_qaoa_assisted_v3",
+  "protocol_version": 3,
+  "status": "EXPLORATORY_NON_BASELINE",
+  "set": "exploratory",
+  "selection_rule": {
+    "status": "EXPLORATORY_NON_BASELINE",
+    "splits": [
+      "validation"
+    ],
+    "regimes": [
+      "volatile",
+      "stress",
+      "normal"
+    ],
+    "dates_per_regime": 2,
+    "max_instances": 5,
+    "min_gap_sessions": 20,
+    "min_regime_probability": 0.9,
+    "max_portfolios_per_date": 1
+  },
+  "regime_label_source": "filtered posterior (regime column), HMM fit on train split",
+  "data_version": "v1.0.0",
+  "regime_daily_hash": "373fdd9ae23c175ada429777952134168fb4fc25f07de0ce82fd57c9381813f5",
+  "date_shortfall_by_regime": {
+    "volatile": 0,
+    "stress": 0,
+    "normal": 0
+  },
+  "unique_dates": 5,
+  "instances": [
+    {
+      "instance_id": "x01_volatile_20230404_diversified",
+      "set": "exploratory",
+      "as_of_date": "2023-04-04",
+      "target_regime": "volatile",
+      "portfolio_id": "diversified",
+      "shared_date": false,
+      "scenario_seed": 20260914
+    },
+    {
+      "instance_id": "x02_stress_20230103_banking_concentrated",
+      "set": "exploratory",
+      "as_of_date": "2023-01-03",
+      "target_regime": "stress",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20260915
+    },
+    {
+      "instance_id": "x03_normal_20230731_high_volatility",
+      "set": "exploratory",
+      "as_of_date": "2023-07-31",
+      "target_regime": "normal",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20260916
+    },
+    {
+      "instance_id": "x04_volatile_20231226_high_cash",
+      "set": "exploratory",
+      "as_of_date": "2023-12-26",
+      "target_regime": "volatile",
+      "portfolio_id": "high_cash",
+      "shared_date": false,
+      "scenario_seed": 20260917
+    },
+    {
+      "instance_id": "x05_stress_20231124_do_not_sell",
+      "set": "exploratory",
+      "as_of_date": "2023-11-24",
+      "target_regime": "stress",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20260918
+    }
+  ],
+  "instances_hash": "b4d195ad44b3f64ad1324c050b61e0ca410948dee7d79a070fc51ad6054aecb0"
+}

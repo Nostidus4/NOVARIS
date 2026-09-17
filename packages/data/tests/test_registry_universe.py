@@ -4,13 +4,12 @@ from qshield_data.sources.registry import load_universe
 
 _BASE_TICKER = {
     "ticker": "AAA",
-    "yahoo_symbol": "AAA.VN",
     "company_name": "Test Co",
     "first_trading_date": "2020-01-01",
     "exchange_current": "HOSE",
     "exchange_history": "-",
     "exchange_periods": [{"exchange": "HOSE"}],
-    "data_source": "yahoo",
+    "data_source": "fiinpro",
     "notes": "",
 }
 

@@ -1,0 +1,46 @@
+{
+  "experiment_id": "hybrid_qaoa_assisted_v4",
+  "set": "exploratory",
+  "artifacts_per_instance": [
+    "qaoa_distribution.csv.gz",
+    "candidate_pools.csv.gz",
+    "polishing_results.csv.gz",
+    "track_results.csv",
+    "instance_result.json"
+  ],
+  "exact_isolated_in_reference_track": true,
+  "both_budget_views": "PASS",
+  "failures_retained_in_attempts": 10,
+  "gates": {
+    "H1_attribution": "PASS",
+    "H6_quantum_claim": "SIMULATOR_ONLY_NO_ADVANTAGE_CLAIM",
+    "by_target": {
+      "qaoa": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.026165115735818
+          }
+        },
+        "H4_confirmation": "NOT_APPLICABLE_EXPLORATORY_SET",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      },
+      "qaoa_transfer": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.026165115735818
+          }
+        },
+        "H4_confirmation": "NOT_APPLICABLE_EXPLORATORY_SET",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      }
+    },
+    "H2_fairness": "PASS"
+  },
+  "allowed_wording": "Chưa đủ bằng chứng để claim QAOA tạo giá trị tăng thêm ở scope hiện tại"
+}

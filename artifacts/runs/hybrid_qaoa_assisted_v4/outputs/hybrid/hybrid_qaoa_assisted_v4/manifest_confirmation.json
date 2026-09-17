@@ -1,0 +1,304 @@
+{
+  "experiment_id": "hybrid_qaoa_assisted_v4",
+  "protocol_version": 4,
+  "status": "CONFIRMATION_NON_BASELINE",
+  "set": "confirmation",
+  "selection_rule": {
+    "status": "CONFIRMATION_NON_BASELINE",
+    "splits": [
+      "test"
+    ],
+    "regimes": [
+      "normal",
+      "volatile",
+      "stress"
+    ],
+    "dates_per_regime": 12,
+    "max_instances": 30,
+    "min_gap_sessions": 20,
+    "min_regime_probability": 0.9,
+    "max_portfolios_per_date": 3
+  },
+  "regime_label_source": "filtered posterior (regime column), HMM fit on train split",
+  "data_version": "v2.0.0",
+  "regime_daily_hash": "b2af93c03147d0efa93f8147f237314d66570e9df9b5f6268ba5e05e66c0fa69",
+  "date_shortfall_by_regime": {
+    "normal": 0,
+    "volatile": 0,
+    "stress": 10
+  },
+  "unique_dates": 26,
+  "instances": [
+    {
+      "instance_id": "c01_normal_20240110_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2024-01-10",
+      "target_regime": "normal",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20261914
+    },
+    {
+      "instance_id": "c02_volatile_20240102_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2024-01-02",
+      "target_regime": "volatile",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20261915
+    },
+    {
+      "instance_id": "c03_stress_20250408_high_cash",
+      "set": "confirmation",
+      "as_of_date": "2025-04-08",
+      "target_regime": "stress",
+      "portfolio_id": "high_cash",
+      "shared_date": false,
+      "scenario_seed": 20261916
+    },
+    {
+      "instance_id": "c04_normal_20240318_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2024-03-18",
+      "target_regime": "normal",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20261917
+    },
+    {
+      "instance_id": "c05_volatile_20240131_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2024-01-31",
+      "target_regime": "volatile",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": false,
+      "scenario_seed": 20261918
+    },
+    {
+      "instance_id": "c06_stress_20250509_diversified",
+      "set": "confirmation",
+      "as_of_date": "2025-05-09",
+      "target_regime": "stress",
+      "portfolio_id": "diversified",
+      "shared_date": false,
+      "scenario_seed": 20261919
+    },
+    {
+      "instance_id": "c07_normal_20240517_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2024-05-17",
+      "target_regime": "normal",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20261920
+    },
+    {
+      "instance_id": "c08_volatile_20240805_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2024-08-05",
+      "target_regime": "volatile",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20261921
+    },
+    {
+      "instance_id": "c09_stress_20250408_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2025-04-08",
+      "target_regime": "stress",
+      "portfolio_id": "do_not_sell",
+      "shared_date": true,
+      "scenario_seed": 20261922
+    },
+    {
+      "instance_id": "c10_normal_20240712_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2024-07-12",
+      "target_regime": "normal",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20261923
+    },
+    {
+      "instance_id": "c11_volatile_20240904_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2024-09-04",
+      "target_regime": "volatile",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": false,
+      "scenario_seed": 20261924
+    },
+    {
+      "instance_id": "c12_stress_20250509_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2025-05-09",
+      "target_regime": "stress",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": true,
+      "scenario_seed": 20261925
+    },
+    {
+      "instance_id": "c13_normal_20250401_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2025-04-01",
+      "target_regime": "normal",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20261926
+    },
+    {
+      "instance_id": "c14_volatile_20241002_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2024-10-02",
+      "target_regime": "volatile",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20261927
+    },
+    {
+      "instance_id": "c15_stress_20250408_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2025-04-08",
+      "target_regime": "stress",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": true,
+      "scenario_seed": 20261928
+    },
+    {
+      "instance_id": "c16_normal_20250612_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2025-06-12",
+      "target_regime": "normal",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20261929
+    },
+    {
+      "instance_id": "c17_volatile_20241030_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2024-10-30",
+      "target_regime": "volatile",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": false,
+      "scenario_seed": 20261930
+    },
+    {
+      "instance_id": "c18_stress_20250509_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2025-05-09",
+      "target_regime": "stress",
+      "portfolio_id": "high_volatility",
+      "shared_date": true,
+      "scenario_seed": 20261931
+    },
+    {
+      "instance_id": "c19_normal_20250908_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2025-09-08",
+      "target_regime": "normal",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20261932
+    },
+    {
+      "instance_id": "c20_volatile_20241225_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2024-12-25",
+      "target_regime": "volatile",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20261933
+    },
+    {
+      "instance_id": "c21_normal_20251103_high_cash",
+      "set": "confirmation",
+      "as_of_date": "2025-11-03",
+      "target_regime": "normal",
+      "portfolio_id": "high_cash",
+      "shared_date": false,
+      "scenario_seed": 20261934
+    },
+    {
+      "instance_id": "c22_volatile_20250123_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2025-01-23",
+      "target_regime": "volatile",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20261935
+    },
+    {
+      "instance_id": "c23_normal_20251229_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2025-12-29",
+      "target_regime": "normal",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": false,
+      "scenario_seed": 20261936
+    },
+    {
+      "instance_id": "c24_volatile_20250403_diversified",
+      "set": "confirmation",
+      "as_of_date": "2025-04-03",
+      "target_regime": "volatile",
+      "portfolio_id": "diversified",
+      "shared_date": false,
+      "scenario_seed": 20261937
+    },
+    {
+      "instance_id": "c25_normal_20260304_banking_concentrated",
+      "set": "confirmation",
+      "as_of_date": "2026-03-04",
+      "target_regime": "normal",
+      "portfolio_id": "banking_concentrated",
+      "shared_date": false,
+      "scenario_seed": 20261938
+    },
+    {
+      "instance_id": "c26_volatile_20260309_high_volatility",
+      "set": "confirmation",
+      "as_of_date": "2026-03-09",
+      "target_regime": "volatile",
+      "portfolio_id": "high_volatility",
+      "shared_date": false,
+      "scenario_seed": 20261939
+    },
+    {
+      "instance_id": "c27_normal_20260513_high_cash",
+      "set": "confirmation",
+      "as_of_date": "2026-05-13",
+      "target_regime": "normal",
+      "portfolio_id": "high_cash",
+      "shared_date": false,
+      "scenario_seed": 20261940
+    },
+    {
+      "instance_id": "c28_volatile_20260406_do_not_sell",
+      "set": "confirmation",
+      "as_of_date": "2026-04-06",
+      "target_regime": "volatile",
+      "portfolio_id": "do_not_sell",
+      "shared_date": false,
+      "scenario_seed": 20261941
+    },
+    {
+      "instance_id": "c29_normal_20260708_liquidity_constrained",
+      "set": "confirmation",
+      "as_of_date": "2026-07-08",
+      "target_regime": "normal",
+      "portfolio_id": "liquidity_constrained",
+      "shared_date": false,
+      "scenario_seed": 20261942
+    },
+    {
+      "instance_id": "c30_volatile_20260722_diversified",
+      "set": "confirmation",
+      "as_of_date": "2026-07-22",
+      "target_regime": "volatile",
+      "portfolio_id": "diversified",
+      "shared_date": false,
+      "scenario_seed": 20261943
+    }
+  ],
+  "instances_hash": "ef5d36b392cbd4b45845978a3dec47e1ebaf570dcde974fd0e6fe400e4ae1314"
+}

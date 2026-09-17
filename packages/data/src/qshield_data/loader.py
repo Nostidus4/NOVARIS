@@ -1,10 +1,5 @@
-# Nguyễn Đỗ Minh Anh - consumer API cho Tú/Phúc (file mới, xem plan.md §3.6/§6 câu 4).
-"""Consumer API — thay cho `sample_loader.py` đứng riêng cạnh `data/` như trong `CLEAN.ipynb` Cell
-56.
-
-Đặt trong package (`from qshield_data.loader import load_data`) thay vì một script standalone, vì
-đây là một phần giao diện chính thức của `qshield_data` cho Tú/Phúc dùng, không phải code demo.
-"""
+# Nguyễn Đỗ Minh Anh - consumer API cho Tú/Phúc.
+"""Consumer API chính thức của `qshield_data`: `from qshield_data.loader import load_data`."""
 
 from __future__ import annotations
 
@@ -33,8 +28,8 @@ def load_data(
 ) -> pd.DataFrame:
     """Đọc một bảng đã processed, lọc theo `split`/`date`/`tickers` nếu có.
 
-    `table == "universe"`: ưu tiên snapshot Data Gate `universe_30_asof_*.csv`, rồi mới fallback
-    alias legacy `universe_asof_*.csv`. Các bảng khác đọc từ `data/processed/<table>.parquet`.
+    `table == "universe"`: snapshot Data Gate `universe_30_asof_*.csv` mới nhất. Các bảng khác đọc
+    từ `data/processed/<table>.parquet`.
 
     Raise `FileNotFoundError` nếu bảng chưa được sinh ra (chưa chạy `qshield-data` đến bước đó).
     """
@@ -44,11 +39,8 @@ def load_data(
         metadata = data_root / "metadata"
         candidates = sorted(metadata.glob("universe_30_asof_*.csv"))
         if not candidates:
-            candidates = sorted(metadata.glob("universe_asof_*.csv"))
-        if not candidates:
             raise FileNotFoundError(
-                "Không tìm thấy universe_30_asof_*.csv hoặc universe_asof_*.csv trong "
-                f"{metadata} "
+                f"Không tìm thấy universe_30_asof_*.csv trong {metadata} "
                 "— đã chạy `qshield-data fetch` chưa?"
             )
         df = pd.read_csv(candidates[-1])

@@ -8,6 +8,7 @@ artifact ghi `actual_solver=exact` trung thực (CLAUDE.md quy tắc 18).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -24,7 +25,7 @@ from qshield_api.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_PROFILE_PATH,
 )
-from qshield_api.domain.optimize.entities import OptimizeResult
+from qshield_api.domain.optimize.entities import OptimizeJobRequest, OptimizeResult
 
 _RISK_WORKFLOW_FILES = (
     "candidate_top10.csv",
@@ -34,6 +35,79 @@ _RISK_WORKFLOW_FILES = (
 )
 _OPTIONAL_TRUE_BENCHMARK = "true_benchmark.json"
 _SUBPROCESS_TIMEOUT_SECONDS = 600
+_DEFAULT_WEIGHT_SUM_TOLERANCE = 1e-8
+
+_PERSONALIZATION_MISMATCH_NOTE = (
+    "Kết quả job này được tính trên danh mục handoff Risk có sẵn trên đĩa "
+    "(risk_summary.json/candidate_top10.csv), KHÔNG phải danh mục người dùng gửi lên trong "
+    "request. Backend hiện chưa re-price Risk theo danh mục request (docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md F1) — mọi con số "
+    "CVaR/hành động dưới đây mô tả danh mục handoff, không phải danh mục bạn gửi."
+)
+
+
+@dataclass(frozen=True)
+class _PersonalizationCheck:
+    status: str
+    note: str | None
+    requested_hash: str
+    evaluated_hash: str
+
+
+def _portfolio_hash(weights: dict[str, float], cash_weight: float) -> str:
+    """sha256 của `{weights (key đã sort), cash_weight}` — dùng để đối chiếu, không phải bí mật."""
+    canonical = {
+        "weights": {k: float(weights[k]) for k in sorted(weights)},
+        "cash_weight": float(cash_weight),
+    }
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _weights_match(
+    requested: dict[str, float],
+    evaluated: dict[str, float],
+    *,
+    tolerance: float,
+) -> bool:
+    for ticker in set(requested) | set(evaluated):
+        if (
+            abs(float(requested.get(ticker, 0.0)) - float(evaluated.get(ticker, 0.0)))
+            > tolerance
+        ):
+            return False
+    return True
+
+
+def _check_personalization(
+    request: OptimizeJobRequest,
+    *,
+    handoff_weights: dict[str, float],
+    handoff_cash_weight: float,
+    tolerance: float,
+) -> _PersonalizationCheck:
+    """So `request` (danh mục người dùng gửi) với handoff Risk sẽ thực sự được job dùng.
+
+    Hàm thuần — không phải công thức tài chính, chỉ so khớp con số đã có (CLAUDE.md quy tắc 9).
+    """
+    requested_hash = _portfolio_hash(request.weights, request.cash_weight)
+    evaluated_hash = _portfolio_hash(handoff_weights, handoff_cash_weight)
+    matched = (
+        _weights_match(request.weights, handoff_weights, tolerance=tolerance)
+        and abs(request.cash_weight - handoff_cash_weight) <= tolerance
+    )
+    if matched:
+        return _PersonalizationCheck(
+            status="MATCHED_HANDOFF",
+            note=None,
+            requested_hash=requested_hash,
+            evaluated_hash=evaluated_hash,
+        )
+    return _PersonalizationCheck(
+        status="NOT_APPLIED",
+        note=_PERSONALIZATION_MISMATCH_NOTE,
+        requested_hash=requested_hash,
+        evaluated_hash=evaluated_hash,
+    )
 
 
 class OptimizeRunFailedError(RuntimeError):
@@ -48,7 +122,7 @@ class OptimizeInputMissingError(RuntimeError):
 class SubprocessOptimizeRunner:
     cfg: Config
 
-    def run(self, job_id: str) -> OptimizeResult:
+    def run(self, job_id: str, request: OptimizeJobRequest) -> OptimizeResult:
         source_paths = ArtifactPaths(self.cfg, run_id=None)
         run_id = f"job_{job_id}"
 
@@ -58,6 +132,7 @@ class SubprocessOptimizeRunner:
         job_paths = ArtifactPaths(job_cfg, run_id=run_id)
 
         self._snapshot_inputs(source_paths, job_paths)
+        personalization = self._personalize(job_paths, request)
 
         job_paths.run_root.mkdir(parents=True, exist_ok=True)
         override_path = job_paths.run_root / "_optimize_job_override.yaml"
@@ -108,7 +183,31 @@ class SubprocessOptimizeRunner:
         payload = json.loads(bench_path.read_text(encoding="utf-8"))
         true_before, true_after = self._optional_true_cvar(source_paths)
         return _payload_to_result(
-            payload, true_before=true_before, true_after=true_after
+            payload,
+            true_before=true_before,
+            true_after=true_after,
+            personalization=personalization,
+        )
+
+    def _personalize(
+        self, job_paths: ArtifactPaths, request: OptimizeJobRequest
+    ) -> _PersonalizationCheck:
+        """Đọc `risk_summary.json` handoff (đã snapshot cho job này) rồi đối chiếu với `request`."""
+        risk_summary_path = job_paths.stage_dir(Stage.RISK) / "risk_summary.json"
+        handoff = json.loads(risk_summary_path.read_text(encoding="utf-8"))
+        handoff_weights = {
+            str(k): float(v)
+            for k, v in dict(handoff.get("portfolio_weights") or {}).items()
+        }
+        handoff_cash_weight = float(handoff.get("cash_weight") or 0.0)
+        tolerance = float(
+            self.cfg.get("weight_sum_tolerance", _DEFAULT_WEIGHT_SUM_TOLERANCE)
+        )
+        return _check_personalization(
+            request,
+            handoff_weights=handoff_weights,
+            handoff_cash_weight=handoff_cash_weight,
+            tolerance=tolerance,
         )
 
     @staticmethod
@@ -155,6 +254,7 @@ def _payload_to_result(
     *,
     true_before: float | None,
     true_after: float | None,
+    personalization: _PersonalizationCheck,
 ) -> OptimizeResult:
     exact_bits = str(
         payload.get("exact_best_bitstring") or payload.get("winning_bitstring") or ""
@@ -210,4 +310,8 @@ def _payload_to_result(
         true_cvar_before=true_before,
         true_cvar_after=true_after,
         source_artifact="workflow_benchmark.json",
+        personalization_status=personalization.status,
+        personalization_note=personalization.note,
+        requested_portfolio_hash=personalization.requested_hash,
+        evaluated_portfolio_hash=personalization.evaluated_hash,
     )

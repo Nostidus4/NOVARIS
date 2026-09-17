@@ -1,0 +1,144 @@
+# Preregistration cho thí nghiệm QAOA-assisted candidate generation + classical polishing.
+# Xem docs/hybrid/2026-09-13-plan-qaoa-assisted.md. Deep-merge SAU base.yaml + workflow_update.yaml qua --override.
+#
+# KHÓA TRƯỚC KHI CHẠY CONFIRMATION: mọi thay đổi khóa dưới đây sau khi đã nhìn kết quả confirmation
+# phải tạo experiment_id MỚI (manifest hash sẽ từ chối manifest bị sửa).
+#
+# Đây là track NGHIÊN CỨU (EXPLORATORY/CONFIRMATION_NON_BASELINE), không đổi pipeline sản phẩm
+# workflow_update. Backend là StatevectorSampler (simulator) — không có claim quantum advantage.
+artifacts:
+  mode: runs
+  root: artifacts
+
+hybrid_experiment:
+  experiment_id: hybrid_qaoa_assisted_v1
+  # v2 (2026-09-13, sau exploratory, TRƯỚC mọi instance confirmation):
+  #  - policy cash_min = tiền mặt hiện có (v1 cash+10% không khả thi → x05 có 0 trạng thái feasible);
+  #  - mã do_not_sell không được làm candidate;
+  #  - instance không có trạng thái true-feasible nào ⇒ skip NO_TRUE_FEASIBLE_STATE, không vào thống kê.
+  protocol_version: 2
+  # Research track A: 8 mã × 2 bit = 16 bit, có exact true-objective reference (65.536 trạng thái).
+  # Đo 2026-09-13 trên máy tham chiếu: QAOA 16-bit ~16 s/seed, 20-bit ~563 s/seed (không khả thi
+  # cho >=30 instance × 10 seed).
+  candidate_count: 8
+  num_scenarios: 2000
+  universe_lookback_start: "2021-06-21"
+  min_eligible_blocks: 20
+  inputs:
+    regime_artifact_mode: dev
+  budgets:
+    candidate_budget: 256
+    polish_top_k: 5
+    polish_max_evaluations: 150
+    polish_max_adjustment: 0.05
+    reference_polish_top_k: 16
+    compute_budget_max_evaluations: 20000
+    eval_timing_samples: 30
+  tracks:
+    candidate_budget:
+    - classical_true
+    - classical_surrogate
+    - random_uniform
+    - random_stratified
+    - boltzmann
+    - qaoa
+    compute_budget:
+    - classical_true_compute
+    - random_uniform_compute
+    ablation:
+    - heuristic_baselines
+  qaoa:
+    seeds: [101, 202, 303, 404, 505, 606, 707, 808, 909, 1001]
+    shots: 1024
+    reps: 1
+    maxiter: 200
+    warm_start: false
+    seed_timeout_seconds: 900
+    total_timeout_seconds: 3600
+  generator_seeds:
+    random_uniform: 7001
+    random_stratified: 7002
+    boltzmann: 7003
+    classical_true: 7004
+    classical_surrogate: 7005
+    classical_true_compute: 7006
+    random_uniform_compute: 7007
+  reference:
+    exact_true_grid_max_bits: 16
+    grid_workers: 8
+    grid_chunk_size: 2048
+  metrics:
+    near_optimal_eps: [0.005, 0.01, 0.02]
+    recall_top_k: [10, 50]
+    diversity_sample: 200
+  statistics:
+    tie_tolerance: 1.0e-9
+    bootstrap_resamples: 10000
+    bootstrap_seed: 9001
+    alpha: 0.05
+    # Uplift chuẩn hóa = uplift / (J_no_action - J_best_known). PROVISIONAL — Phúc/Ngọc duyệt.
+    materiality_normalized_min: 0.01
+    compute_view_severe_loss_normalized: -0.05
+    primary_baseline: classical_true
+    secondary_baselines: [classical_surrogate, random_uniform, random_stratified, boltzmann]
+    compute_baselines: [classical_true_compute, random_uniform_compute]
+    confirmation_min_instances: 30
+    latency_budget_seconds: 600
+  instance_selection:
+    scenario_seed_base: 20260913
+    exploratory:
+      status: EXPLORATORY_NON_BASELINE
+      splits: [validation]
+      regimes: [volatile, stress, normal]
+      dates_per_regime: 2
+      max_instances: 5
+      min_gap_sessions: 20
+      min_regime_probability: 0.9
+      max_portfolios_per_date: 1
+    confirmation:
+      status: CONFIRMATION_NON_BASELINE
+      splits: [test]
+      regimes: [normal, volatile, stress]
+      # 10 → 12 (2026-09-13, TRƯỚC khi chạy bất kỳ instance confirmation nào): split test chỉ có 2
+      # ngày Stress thỏa luật gap 20 phiên, nên với 10 ngày/regime chỉ được 26 < 30 instance.
+      # Stress KHÔNG được hạ ngưỡng — shortfall vẫn ghi trong manifest.
+      dates_per_regime: 12
+      max_instances: 30
+      min_gap_sessions: 20
+      min_regime_probability: 0.9
+      max_portfolios_per_date: 3
+  policy_template:
+    policy_version: hybrid-synthetic-policy-v1
+    status: EXPERIMENT_SYNTHETIC
+    risk_appetite: balanced
+    cash_max: 1.0
+    cvar_budget: 1.0
+    max_turnover: 1.0
+  portfolios:
+    diversified:
+      kind: equal_weight
+      cash_weight: 0.05
+    banking_concentrated:
+      kind: sector_tilt
+      cash_weight: 0.05
+      tilt_share: 0.70
+      tilt_tickers: [ACB, BID, CTG, HDB, LPB, MBB, SHB, SSB, STB, TCB, TPB, VCB, VIB, VPB]
+    high_volatility:
+      kind: volatility_weighted
+      cash_weight: 0.05
+      lookback_sessions: 60
+    high_cash:
+      kind: equal_weight
+      cash_weight: 0.30
+    do_not_sell:
+      kind: volatility_weighted
+      cash_weight: 0.05
+      lookback_sessions: 60
+      policy:
+        do_not_sell_top_weight_count: 2
+    liquidity_constrained:
+      kind: equal_weight
+      cash_weight: 0.05
+      policy:
+        lowest_turnover_cap_count: 3
+        lowest_turnover_cap_value: 0.10

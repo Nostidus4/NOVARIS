@@ -1,0 +1,115 @@
+2026-09-17 15:39:55,137 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x01_volatile_20230404_diversified
+2026-09-17 15:44:21,186 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x01_volatile_20230404_diversified qaoa seeds=10/10 wall=207.1s unique=1224 mass_opt={'qubo_optimum': 0.1548828125, 'true_grid_optimum': 0.1548828125}
+2026-09-17 15:44:25,529 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x02_stress_20230103_banking_concentrated
+2026-09-17 15:48:49,922 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x02_stress_20230103_banking_concentrated qaoa seeds=10/10 wall=204.4s unique=821 mass_opt={'qubo_optimum': 0.176953125, 'true_grid_optimum': 0.00126953125}
+2026-09-17 15:48:53,923 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x03_normal_20230621_high_volatility
+2026-09-17 15:52:57,844 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x03_normal_20230621_high_volatility qaoa seeds=10/10 wall=178.7s unique=1130 mass_opt={'qubo_optimum': 0.125390625, 'true_grid_optimum': 0.038671875}
+2026-09-17 15:53:01,901 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x04_volatile_20231016_high_cash
+2026-09-17 15:57:05,598 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x04_volatile_20231016_high_cash qaoa seeds=10/10 wall=182.9s unique=1437 mass_opt={'qubo_optimum': 0.11611328125, 'true_grid_optimum': 0.11611328125}
+2026-09-17 15:57:10,083 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x05_stress_20231222_do_not_sell
+2026-09-17 16:00:57,303 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x05_stress_20231222_do_not_sell qaoa seeds=10/10 wall=164.3s unique=2924 mass_opt={'qubo_optimum': 0.0275390625, 'true_grid_optimum': 0.0275390625}
+2026-09-17 16:01:04,204 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x01_volatile_20230404_diversified
+2026-09-17 16:05:33,950 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x01_volatile_20230404_diversified qaoa seeds=10/10 wall=210.0s unique=1224 mass_opt={'qubo_optimum': 0.1548828125, 'true_grid_optimum': 0.1548828125}
+2026-09-17 16:06:34,097 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x01_volatile_20230404_diversified qaoa_transfer seeds=10/10 wall=59.9s unique=251 mass_opt={'qubo_optimum': 0.2814453125, 'true_grid_optimum': 0.2814453125}
+2026-09-17 16:06:41,012 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x02_stress_20230103_banking_concentrated
+2026-09-17 16:11:09,709 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x02_stress_20230103_banking_concentrated qaoa seeds=10/10 wall=206.6s unique=821 mass_opt={'qubo_optimum': 0.176953125, 'true_grid_optimum': 0.00126953125}
+2026-09-17 16:12:09,045 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x02_stress_20230103_banking_concentrated qaoa_transfer seeds=10/10 wall=59.1s unique=317 mass_opt={'qubo_optimum': 0.26650390625, 'true_grid_optimum': 0.0001953125}
+2026-09-17 16:12:14,974 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x03_normal_20230621_high_volatility
+2026-09-17 16:16:11,180 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x03_normal_20230621_high_volatility qaoa seeds=10/10 wall=178.7s unique=1130 mass_opt={'qubo_optimum': 0.125390625, 'true_grid_optimum': 0.038671875}
+2026-09-17 16:17:10,955 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x03_normal_20230621_high_volatility qaoa_transfer seeds=10/10 wall=59.6s unique=459 mass_opt={'qubo_optimum': 0.22060546875, 'true_grid_optimum': 0.05087890625}
+2026-09-17 16:17:17,250 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x04_volatile_20231016_high_cash
+2026-09-17 16:21:26,223 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x04_volatile_20231016_high_cash qaoa seeds=10/10 wall=185.0s unique=1437 mass_opt={'qubo_optimum': 0.11611328125, 'true_grid_optimum': 0.11611328125}
+2026-09-17 16:22:25,556 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x04_volatile_20231016_high_cash qaoa_transfer seeds=10/10 wall=59.1s unique=289 mass_opt={'qubo_optimum': 0.303515625, 'true_grid_optimum': 0.303515625}
+2026-09-17 16:22:32,117 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building x05_stress_20231222_do_not_sell
+2026-09-17 16:26:12,488 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x05_stress_20231222_do_not_sell qaoa seeds=10/10 wall=162.4s unique=2924 mass_opt={'qubo_optimum': 0.0275390625, 'true_grid_optimum': 0.0275390625}
+2026-09-17 16:27:12,359 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] x05_stress_20231222_do_not_sell qaoa_transfer seeds=10/10 wall=59.6s unique=1658 mass_opt={'qubo_optimum': 0.05029296875, 'true_grid_optimum': 0.05029296875}
+2026-09-17 16:27:21,887 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c01_normal_20240110_banking_concentrated
+2026-09-17 16:31:28,296 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c01_normal_20240110_banking_concentrated qaoa seeds=10/10 wall=186.2s unique=1955 mass_opt={'qubo_optimum': 0.1291015625, 'true_grid_optimum': 0.00078125}
+2026-09-17 16:32:27,431 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c01_normal_20240110_banking_concentrated qaoa_transfer seeds=10/10 wall=59.0s unique=260 mass_opt={'qubo_optimum': 0.27626953125, 'true_grid_optimum': 0.0}
+2026-09-17 16:32:33,596 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c02_volatile_20240102_high_volatility
+2026-09-17 16:36:33,012 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c02_volatile_20240102_high_volatility qaoa seeds=10/10 wall=177.5s unique=1762 mass_opt={'qubo_optimum': 0.11484375, 'true_grid_optimum': 0.11484375}
+2026-09-17 16:37:32,423 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c02_volatile_20240102_high_volatility qaoa_transfer seeds=10/10 wall=59.1s unique=516 mass_opt={'qubo_optimum': 0.2404296875, 'true_grid_optimum': 0.2404296875}
+2026-09-17 16:37:39,028 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c03_stress_20250408_high_cash
+2026-09-17 16:41:57,264 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c03_stress_20250408_high_cash qaoa seeds=10/10 wall=198.8s unique=1408 mass_opt={'qubo_optimum': 0.1279296875, 'true_grid_optimum': 0.1279296875}
+2026-09-17 16:42:55,848 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c03_stress_20250408_high_cash qaoa_transfer seeds=10/10 wall=58.3s unique=289 mass_opt={'qubo_optimum': 0.28076171875, 'true_grid_optimum': 0.28076171875}
+2026-09-17 16:43:02,589 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c04_normal_20240318_do_not_sell
+2026-09-17 16:47:08,062 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c04_normal_20240318_do_not_sell qaoa seeds=10/10 wall=185.4s unique=1930 mass_opt={'qubo_optimum': 0.07001953125, 'true_grid_optimum': 0.07001953125}
+2026-09-17 16:48:06,920 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c04_normal_20240318_do_not_sell qaoa_transfer seeds=10/10 wall=58.6s unique=723 mass_opt={'qubo_optimum': 0.163671875, 'true_grid_optimum': 0.163671875}
+2026-09-17 16:48:13,486 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c05_volatile_20240131_liquidity_constrained
+2026-09-17 16:52:26,025 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c05_volatile_20240131_liquidity_constrained qaoa seeds=10/10 wall=190.3s unique=1527 mass_opt={'qubo_optimum': 0.1248046875, 'true_grid_optimum': 0.1248046875}
+2026-09-17 16:53:24,687 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c05_volatile_20240131_liquidity_constrained qaoa_transfer seeds=10/10 wall=58.4s unique=385 mass_opt={'qubo_optimum': 0.26494140625, 'true_grid_optimum': 0.26494140625}
+2026-09-17 16:53:31,472 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c06_stress_20250509_diversified
+2026-09-17 16:58:07,881 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c06_stress_20250509_diversified qaoa seeds=10/10 wall=204.8s unique=1918 mass_opt={'qubo_optimum': 0.130078125, 'true_grid_optimum': 0.130078125}
+2026-09-17 17:01:40,396 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c06_stress_20250509_diversified qaoa_transfer seeds=10/10 wall=58.6s unique=256 mass_opt={'qubo_optimum': 0.2849609375, 'true_grid_optimum': 0.2849609375}
+2026-09-17 17:01:46,942 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c07_normal_20240517_banking_concentrated
+2026-09-17 19:24:15,063 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c07_normal_20240517_banking_concentrated qaoa seeds=10/10 wall=246.0s unique=1144 mass_opt={'qubo_optimum': 0.13408203125, 'true_grid_optimum': 0.00166015625}
+2026-09-17 19:58:21,882 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c07_normal_20240517_banking_concentrated qaoa_transfer seeds=10/10 wall=63.8s unique=258 mass_opt={'qubo_optimum': 0.27861328125, 'true_grid_optimum': 9.765625e-05}
+2026-09-17 19:58:28,103 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c08_volatile_20240805_high_volatility
+2026-09-17 20:02:32,029 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c08_volatile_20240805_high_volatility qaoa seeds=10/10 wall=185.5s unique=1748 mass_opt={'qubo_optimum': 0.08212890625, 'true_grid_optimum': 0.08212890625}
+2026-09-17 20:03:30,966 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c08_volatile_20240805_high_volatility qaoa_transfer seeds=10/10 wall=58.7s unique=665 mass_opt={'qubo_optimum': 0.165234375, 'true_grid_optimum': 0.165234375}
+2026-09-17 20:03:37,765 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c09_stress_20250408_do_not_sell
+2026-09-17 20:07:40,037 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c09_stress_20250408_do_not_sell qaoa seeds=10/10 wall=184.0s unique=1982 mass_opt={'qubo_optimum': 0.0541015625, 'true_grid_optimum': 0.0541015625}
+2026-09-17 20:08:39,135 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c09_stress_20250408_do_not_sell qaoa_transfer seeds=10/10 wall=58.8s unique=869 mass_opt={'qubo_optimum': 0.1578125, 'true_grid_optimum': 0.1578125}
+2026-09-17 20:08:45,898 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c10_normal_20240712_do_not_sell
+2026-09-17 20:13:05,624 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c10_normal_20240712_do_not_sell qaoa seeds=10/10 wall=201.2s unique=1600 mass_opt={'qubo_optimum': 0.11875, 'true_grid_optimum': 0.11875}
+2026-09-17 20:14:04,711 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c10_normal_20240712_do_not_sell qaoa_transfer seeds=10/10 wall=58.8s unique=618 mass_opt={'qubo_optimum': 0.19306640625, 'true_grid_optimum': 0.19306640625}
+2026-09-17 20:14:11,376 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c11_volatile_20240904_liquidity_constrained
+2026-09-17 20:18:14,449 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c11_volatile_20240904_liquidity_constrained qaoa seeds=10/10 wall=184.4s unique=1372 mass_opt={'qubo_optimum': 0.155078125, 'true_grid_optimum': 0.155078125}
+2026-09-17 20:19:12,803 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c11_volatile_20240904_liquidity_constrained qaoa_transfer seeds=10/10 wall=58.1s unique=398 mass_opt={'qubo_optimum': 0.26142578125, 'true_grid_optimum': 0.26142578125}
+2026-09-17 20:19:19,335 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c12_stress_20250509_banking_concentrated
+2026-09-17 20:23:31,612 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c12_stress_20250509_banking_concentrated qaoa seeds=10/10 wall=195.3s unique=1272 mass_opt={'qubo_optimum': 0.1306640625, 'true_grid_optimum': 0.001171875}
+2026-09-17 20:24:29,552 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c12_stress_20250509_banking_concentrated qaoa_transfer seeds=10/10 wall=57.8s unique=264 mass_opt={'qubo_optimum': 0.28115234375, 'true_grid_optimum': 0.000390625}
+2026-09-17 20:24:35,463 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c13_normal_20250401_banking_concentrated
+2026-09-17 20:28:34,896 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c13_normal_20250401_banking_concentrated qaoa seeds=10/10 wall=182.8s unique=1484 mass_opt={'qubo_optimum': 0.13134765625, 'true_grid_optimum': 0.001171875}
+2026-09-17 20:29:32,837 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c13_normal_20250401_banking_concentrated qaoa_transfer seeds=10/10 wall=57.8s unique=232 mass_opt={'qubo_optimum': 0.2798828125, 'true_grid_optimum': 0.0}
+2026-09-17 20:29:38,752 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c14_volatile_20241002_high_volatility
+2026-09-17 20:33:27,088 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c14_volatile_20241002_high_volatility qaoa seeds=10/10 wall=171.0s unique=2402 mass_opt={'qubo_optimum': 0.08779296875, 'true_grid_optimum': 0.08779296875}
+2026-09-17 20:34:25,403 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c14_volatile_20241002_high_volatility qaoa_transfer seeds=10/10 wall=58.0s unique=451 mass_opt={'qubo_optimum': 0.192578125, 'true_grid_optimum': 0.192578125}
+2026-09-17 20:34:31,932 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c15_stress_20250408_liquidity_constrained
+2026-09-17 20:38:42,832 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c15_stress_20250408_liquidity_constrained qaoa seeds=10/10 wall=193.5s unique=1198 mass_opt={'qubo_optimum': 0.0904296875, 'true_grid_optimum': 0.001953125}
+2026-09-17 20:39:41,402 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c15_stress_20250408_liquidity_constrained qaoa_transfer seeds=10/10 wall=58.3s unique=623 mass_opt={'qubo_optimum': 0.192578125, 'true_grid_optimum': 0.00029296875}
+2026-09-17 20:39:47,894 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c16_normal_20250612_do_not_sell
+2026-09-17 20:43:47,258 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c16_normal_20250612_do_not_sell qaoa seeds=10/10 wall=179.8s unique=2355 mass_opt={'qubo_optimum': 0.099609375, 'true_grid_optimum': 0.099609375}
+2026-09-17 20:44:45,830 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c16_normal_20250612_do_not_sell qaoa_transfer seeds=10/10 wall=58.3s unique=384 mass_opt={'qubo_optimum': 0.23720703125, 'true_grid_optimum': 0.23720703125}
+2026-09-17 20:44:52,483 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c17_volatile_20241030_liquidity_constrained
+2026-09-17 20:48:50,601 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c17_volatile_20241030_liquidity_constrained qaoa seeds=10/10 wall=180.2s unique=2465 mass_opt={'qubo_optimum': 0.13154296875, 'true_grid_optimum': 0.13154296875}
+2026-09-17 20:49:48,941 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c17_volatile_20241030_liquidity_constrained qaoa_transfer seeds=10/10 wall=58.1s unique=384 mass_opt={'qubo_optimum': 0.255859375, 'true_grid_optimum': 0.255859375}
+2026-09-17 20:49:55,543 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c18_stress_20250509_high_volatility
+2026-09-17 20:54:11,926 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c18_stress_20250509_high_volatility qaoa seeds=10/10 wall=198.7s unique=1425 mass_opt={'qubo_optimum': 0.1013671875, 'true_grid_optimum': 0.1013671875}
+2026-09-17 20:55:10,059 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c18_stress_20250509_high_volatility qaoa_transfer seeds=10/10 wall=57.9s unique=361 mass_opt={'qubo_optimum': 0.25009765625, 'true_grid_optimum': 0.25009765625}
+2026-09-17 20:55:16,623 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c19_normal_20250908_banking_concentrated
+2026-09-17 20:59:49,469 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c19_normal_20250908_banking_concentrated qaoa seeds=10/10 wall=215.9s unique=1004 mass_opt={'qubo_optimum': 0.15966796875, 'true_grid_optimum': 0.001171875}
+2026-09-17 21:00:48,516 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c19_normal_20250908_banking_concentrated qaoa_transfer seeds=10/10 wall=58.8s unique=216 mass_opt={'qubo_optimum': 0.29130859375, 'true_grid_optimum': 0.0}
+2026-09-17 21:00:54,787 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c20_volatile_20241225_high_volatility
+2026-09-17 21:04:58,240 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c20_volatile_20241225_high_volatility qaoa seeds=10/10 wall=180.0s unique=1753 mass_opt={'qubo_optimum': 0.09892578125, 'true_grid_optimum': 0.09892578125}
+2026-09-17 21:05:56,931 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c20_volatile_20241225_high_volatility qaoa_transfer seeds=10/10 wall=58.4s unique=484 mass_opt={'qubo_optimum': 0.2279296875, 'true_grid_optimum': 0.2279296875}
+2026-09-17 21:06:03,593 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c21_normal_20251103_high_cash
+2026-09-17 21:09:58,386 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c21_normal_20251103_high_cash qaoa seeds=10/10 wall=176.5s unique=2187 mass_opt={'qubo_optimum': 0.08759765625, 'true_grid_optimum': 0.08759765625}
+2026-09-17 21:10:58,800 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c21_normal_20251103_high_cash qaoa_transfer seeds=10/10 wall=60.1s unique=225 mass_opt={'qubo_optimum': 0.28701171875, 'true_grid_optimum': 0.28701171875}
+2026-09-17 21:11:05,745 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c22_volatile_20250123_do_not_sell
+2026-09-17 21:15:16,406 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c22_volatile_20250123_do_not_sell qaoa seeds=10/10 wall=183.7s unique=1590 mass_opt={'qubo_optimum': 0.109765625, 'true_grid_optimum': 0.109765625}
+2026-09-17 21:16:17,203 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c22_volatile_20250123_do_not_sell qaoa_transfer seeds=10/10 wall=60.5s unique=538 mass_opt={'qubo_optimum': 0.2248046875, 'true_grid_optimum': 0.2248046875}
+2026-09-17 21:16:23,891 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c23_normal_20251229_liquidity_constrained
+2026-09-17 21:20:29,359 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c23_normal_20251229_liquidity_constrained qaoa seeds=10/10 wall=178.9s unique=2109 mass_opt={'qubo_optimum': 0.073046875, 'true_grid_optimum': 9.765625e-05}
+2026-09-17 21:21:29,469 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c23_normal_20251229_liquidity_constrained qaoa_transfer seeds=10/10 wall=59.8s unique=460 mass_opt={'qubo_optimum': 0.21044921875, 'true_grid_optimum': 0.0}
+2026-09-17 21:21:36,186 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c24_volatile_20250403_diversified
+2026-09-17 21:26:25,408 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c24_volatile_20250403_diversified qaoa seeds=10/10 wall=224.4s unique=960 mass_opt={'qubo_optimum': 0.20029296875, 'true_grid_optimum': 0.20029296875}
+2026-09-17 21:27:23,763 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c24_volatile_20250403_diversified qaoa_transfer seeds=10/10 wall=58.1s unique=223 mass_opt={'qubo_optimum': 0.284765625, 'true_grid_optimum': 0.284765625}
+2026-09-17 21:27:30,243 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c25_normal_20260304_banking_concentrated
+2026-09-17 21:31:42,249 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c25_normal_20260304_banking_concentrated qaoa seeds=10/10 wall=193.9s unique=985 mass_opt={'qubo_optimum': 0.15751953125, 'true_grid_optimum': 0.00068359375}
+2026-09-17 21:32:40,740 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c25_normal_20260304_banking_concentrated qaoa_transfer seeds=10/10 wall=58.3s unique=227 mass_opt={'qubo_optimum': 0.2931640625, 'true_grid_optimum': 0.0}
+2026-09-17 21:32:46,677 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c26_volatile_20260309_high_volatility
+2026-09-17 21:36:46,819 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c26_volatile_20260309_high_volatility qaoa seeds=10/10 wall=181.4s unique=1943 mass_opt={'qubo_optimum': 0.1078125, 'true_grid_optimum': 0.1078125}
+2026-09-17 21:37:45,437 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c26_volatile_20260309_high_volatility qaoa_transfer seeds=10/10 wall=58.4s unique=598 mass_opt={'qubo_optimum': 0.21025390625, 'true_grid_optimum': 0.21025390625}
+2026-09-17 21:37:52,032 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c27_normal_20260513_high_cash
+2026-09-17 21:41:55,869 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c27_normal_20260513_high_cash qaoa seeds=10/10 wall=185.4s unique=1214 mass_opt={'qubo_optimum': 0.138671875, 'true_grid_optimum': 0.138671875}
+2026-09-17 21:42:55,710 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c27_normal_20260513_high_cash qaoa_transfer seeds=10/10 wall=59.5s unique=233 mass_opt={'qubo_optimum': 0.28701171875, 'true_grid_optimum': 0.28701171875}
+2026-09-17 21:43:02,462 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c28_volatile_20260406_do_not_sell
+2026-09-17 21:46:57,387 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c28_volatile_20260406_do_not_sell qaoa seeds=10/10 wall=170.2s unique=2360 mass_opt={'qubo_optimum': 0.08505859375, 'true_grid_optimum': 0.08505859375}
+2026-09-17 21:47:56,267 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c28_volatile_20260406_do_not_sell qaoa_transfer seeds=10/10 wall=58.6s unique=476 mass_opt={'qubo_optimum': 0.22763671875, 'true_grid_optimum': 0.22763671875}
+2026-09-17 21:48:02,809 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c29_normal_20260708_liquidity_constrained
+2026-09-17 21:52:19,188 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c29_normal_20260708_liquidity_constrained qaoa seeds=10/10 wall=197.4s unique=1507 mass_opt={'qubo_optimum': 0.10927734375, 'true_grid_optimum': 0.01318359375}
+2026-09-17 21:53:18,018 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c29_normal_20260708_liquidity_constrained qaoa_transfer seeds=10/10 wall=58.6s unique=443 mass_opt={'qubo_optimum': 0.217578125, 'true_grid_optimum': 0.034765625}
+2026-09-17 21:53:24,698 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] building c30_volatile_20260722_diversified
+2026-09-17 21:57:31,144 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c30_volatile_20260722_diversified qaoa seeds=10/10 wall=187.9s unique=1909 mass_opt={'qubo_optimum': 0.1404296875, 'true_grid_optimum': 0.1404296875}
+2026-09-17 21:58:29,514 | qshield.hybrid_qaoa_assisted_v4.hybrid | INFO | [hybrid] c30_volatile_20260722_diversified qaoa_transfer seeds=10/10 wall=58.1s unique=220 mass_opt={'qubo_optimum': 0.28505859375, 'true_grid_optimum': 0.28505859375}

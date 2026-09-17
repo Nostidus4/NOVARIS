@@ -3,7 +3,7 @@
 
 Phạm vi đã khóa (CLAUDE.md, `docs/workflow-v2.md` §2): 8 mã, K=3, MỘT mức hành động duy nhất (giảm
 20% vị thế). `z_i ∈ {0,1}` là "có chọn hành động i hay không" — không phải mã hóa nhiều mức hành
-động như thiết kế PSS gốc (xem `plan.md` §0).
+động như thiết kế PSS gốc (xem `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` §0).
 
 `formulation/qubo.py` và `formulation/qiskit_program.py` phải cho energy khớp hàm này TUYỆT ĐỐI
 trên toàn bộ 2⁸=256 bitstring — `verify/consistency.py` kiểm tra việc đó trước khi tin bất kỳ kết

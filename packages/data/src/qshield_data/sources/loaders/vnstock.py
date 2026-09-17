@@ -1,9 +1,12 @@
-# Nguyễn Đỗ Minh Anh - loader dữ liệu giá/khối lượng từ vnstock.
-"""vnstock (source=VCI) loader — port từ `CLEAN.ipynb` (`download_vnindex_vnstock`,
-`download_ticker_vnstock`).
+# Nguyễn Đỗ Minh Anh - loader VN-Index từ vnstock.
+"""vnstock (source=VCI) loader cho VN-Index — port từ `CLEAN.ipynb` bản 2026-09-17.
 
-Nguồn CHÍNH cho VN-Index (Yahoo không có index VN). Cũng dùng làm alternative cho DNSE khi cần lấy
-full history từ HNX/UPCOM cho các mã multi-exchange.
+`Full_Prices.xlsx` (FiinPro) không có chỉ số nên VN-Index vẫn tải qua API. Hai điểm bắt buộc:
+
+- Dùng `vnstock.api.quote.Quote` — lớp `Vnstock()` đã ngừng hỗ trợ từ 31/08/2025.
+- Tải THEO TỪNG NĂM rồi ghép: API VCI chỉ trả tối đa ~2.000 phiên mỗi lần, đếm lùi từ `end`. Gọi
+  một lần cho 2016→2026 sẽ mất toàn bộ dữ liệu trước 08/2018 — và vì VN-Index là lịch giao dịch
+  chuẩn, thiếu lịch sẽ âm thầm xoá giá cổ phiếu thật ở bước clean.
 """
 
 from __future__ import annotations
@@ -12,7 +15,7 @@ import logging
 import time
 
 import pandas as pd
-from vnstock import Vnstock
+from vnstock.api.quote import Quote
 
 logger = logging.getLogger(__name__)
 
@@ -27,66 +30,40 @@ _RENAME = {
 
 
 def download_vnindex(start: str, end: str, max_retries: int = 3) -> pd.DataFrame | None:
-    """Tải VN-Index THẬT từ vnstock (nguồn VCI — Vietcap), có retry.
+    """Tải VN-Index THẬT từ vnstock (nguồn VCI — Vietcap) theo từng năm, có retry.
 
-    Trả về DataFrame index=date với cột Open/High/Low/Close/Volume, hoặc `None` nếu fail. Index
-    không có Adj Close (index không bị điều chỉnh cổ tức/chia tách như cổ phiếu).
+    Trả về DataFrame index=date với cột Open/High/Low/Close/Volume, hoặc `None` nếu một năm nào đó
+    fail sau `max_retries` lần (không trả dữ liệu thiếu năm).
     """
-    for attempt in range(max_retries):
-        try:
-            quote = Vnstock().stock(symbol="VNINDEX", source="VCI").quote
-            df = quote.history(start=start, end=end, interval="1D")
-            if df is None or df.empty:
-                return None
-            df = df.rename(columns=_RENAME)
-            df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
-            return df.set_index("date")[["Open", "High", "Low", "Close", "Volume"]]
-        except Exception as e:  # noqa: BLE001 -- vnstock SDK không có exception hierarchy công khai
-            if attempt == max_retries - 1:
-                logger.warning(
-                    "vnstock VNINDEX failed after %d attempts: %s", max_retries, e
-                )
-                return None
-    return None
+    quote = Quote(symbol="VNINDEX", source="VCI")
+    start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
+    parts = []
+    for year in range(start_ts.year, end_ts.year + 1):
+        y_start = max(start_ts, pd.Timestamp(f"{year}-01-01")).strftime("%Y-%m-%d")
+        y_end = min(end_ts, pd.Timestamp(f"{year}-12-31")).strftime("%Y-%m-%d")
+        for attempt in range(max_retries):
+            try:
+                part = quote.history(start=y_start, end=y_end, interval="1D")
+                if part is not None and not part.empty:
+                    parts.append(part)
+                break
+            except Exception as e:  # noqa: BLE001 -- vnstock SDK không có exception hierarchy công khai
+                if attempt == max_retries - 1:
+                    logger.warning(
+                        "VNINDEX %d failed after %d attempts: %s", year, max_retries, e
+                    )
+                    return None
+                time.sleep(2.0 * (attempt + 1))
 
-
-def download_ticker(
-    ticker: str, start: str, end: str, max_retries: int = 3
-) -> pd.DataFrame | None:
-    """Tải giá 1 mã VN từ vnstock (source=VCI), có retry — alternative cho DNSE.
-
-    Dùng cho các mã multi-exchange mà Yahoo `.VN` chỉ có data từ ngày lên HOSE. vnstock VCI cho
-    phép lấy full history từ ngày niêm yết đầu tiên (kể cả HNX/UPCOM).
-
-    Trả về DataFrame index=date với schema giống hệt yfinance output. VCI không trả field adjusted
-    riêng trong response này; bản demo dùng ``Close`` làm proxy nhưng gắn ``ADJ_UNVERIFIED`` và
-    không được dùng làm bằng chứng baseline (TL-002).
-    """
-    for attempt in range(max_retries):
-        try:
-            quote = Vnstock().stock(symbol=ticker, source="VCI").quote
-            df = quote.history(start=start, end=end, interval="1D")
-            if df is None or df.empty:
-                return None
-            df = df.rename(columns=_RENAME)
-            df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None)
-            df = df.set_index("date")
-            logger.warning(
-                "vnstock/VCI %s không có field adjusted riêng: dùng Close làm proxy Adj Close "
-                "với flag ADJ_UNVERIFIED; không hợp lệ cho baseline TL-002.",
-                ticker,
-            )
-            df["Adj Close"] = df["Close"]
-            df.attrs["adjusted_close_method"] = "CLOSE_PROXY_UNVERIFIED"
-            df.attrs["adjusted_close_evidence"] = "ADJ_UNVERIFIED"
-            df = df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
-            df.index.name = "date"
-            return df
-        except Exception as e:  # noqa: BLE001 -- vnstock SDK không có exception hierarchy công khai
-            if attempt == max_retries - 1:
-                logger.warning(
-                    "vnstock %s failed after %d attempts: %s", ticker, max_retries, e
-                )
-                return None
-            time.sleep(1.0 * (attempt + 1))  # backoff nhẹ tránh throttle VCI
-    return None
+    if not parts:
+        return None
+    df = pd.concat(parts, ignore_index=True).rename(columns=_RENAME)
+    df["date"] = pd.to_datetime(df["date"]).dt.tz_localize(None).dt.normalize()
+    df = (
+        df.drop_duplicates("date", keep="last")
+        .set_index("date")
+        .sort_index()
+        .loc[start_ts:end_ts, ["Open", "High", "Low", "Close", "Volume"]]
+    )
+    df.index.name = "date"
+    return df

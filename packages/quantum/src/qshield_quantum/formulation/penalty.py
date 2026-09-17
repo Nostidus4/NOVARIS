@@ -42,7 +42,7 @@ def suggest_penalty(
     `sum(|g|) + λ1*sum(|C|) + λ2*sum(|c|)` (trường hợp xấu nhất z toàn 1). Lệch K đi 1 đơn vị làm
     penalty tăng ít nhất `P` — chọn `P = margin * chặn_trên` để chắc chắn không bitstring
     infeasible nào thắng được bitstring feasible tốt nhất. Kết quả PROVISIONAL, đánh dấu
-    `NON_BASELINE_RUN` khi dùng (xem `plan.md` câu hỏi 3) — chờ Phúc/Ngọc duyệt số chính thức.
+    `NON_BASELINE_RUN` khi dùng (xem `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` câu hỏi 3) — chờ Phúc/Ngọc duyệt số chính thức.
     """
     bound = np.abs(g).sum() + lambda_1 * np.abs(C).sum() + lambda_2 * np.abs(c).sum()
     return float(margin * max(bound, 1e-9))

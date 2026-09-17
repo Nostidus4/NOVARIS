@@ -93,7 +93,7 @@ def test_run_all_stops_at_first_failing_stage(tmp_path: Path, monkeypatch) -> No
 def test_run_all_reaches_risk_stage_and_stops_there(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """Khớp acceptance test của plan.md: chạy tới đúng chặng risk (`qshield-risk effects` chưa
+    """Khớp acceptance test của docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md: chạy tới đúng chặng risk (`qshield-risk effects` chưa
     implement, trả exit code khác 0) rồi dừng rõ ràng — không chạy tiếp `optimize`."""
     calls: list[str] = []
 

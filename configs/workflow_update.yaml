@@ -59,7 +59,6 @@ data:
   ticker_list_status: TBD_001
   ticker_registry_required_columns:
   - ticker
-  - yahoo_symbol
   - company_name
   - first_trading_date
   - exchange_current
@@ -76,9 +75,10 @@ data:
     - cross_checked_free_source_with_ADJ_VERIFIED_flag
     disallowed_methods:
     - Gan adjusted_close = close ma khong co evidence
-    dnse_requirement:
-      current_repo_assumption: DNSE Close = Adj Close
-      workflow_update_requirement: Phai co evidence/cross-check truoc khi gan ADJ_VERIFIED
+    vendor_source:
+      current_repo_source: FiinPro Full_Prices.xlsx (adjusted_close vendor, co gia goc doi chieu)
+      no_extra_corporate_action_registry: true
+      workflow_update_requirement: Data Owner sign-off truoc khi gan ADJ_VERIFIED
   date_range:
     market_train_start: '2016-01-01'
     asset_train_start: '2016-01-01'

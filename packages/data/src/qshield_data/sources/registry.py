@@ -2,7 +2,7 @@
 """Universe Registry 30 mã (workflow_update) và Data Source Register.
 
 Port từ `CLEAN.ipynb` Cell 8-9 (`UNIVERSE_ROWS`, `SOURCE_ROWS`). Khác với notebook: danh sách mã và
-`data_source` (yahoo/dnse) không còn hard-code trong Python — đọc từ `configs/base.yaml` (đúng
+`data_source` không còn hard-code trong Python — đọc từ `configs/base.yaml` (đúng
 ràng buộc CLAUDE.md quy tắc 8 "Không hard-code ticker").
 """
 
@@ -15,7 +15,6 @@ import pandas as pd
 
 _UNIVERSE_COLUMNS = [
     "ticker",
-    "yahoo_symbol",
     "company_name",
     "first_trading_date",
     "exchange_current",
@@ -24,16 +23,17 @@ _UNIVERSE_COLUMNS = [
     "data_source",
     "notes",
 ]
+_ALLOWED_SOURCES = ["fiinpro"]
 
 
 def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
     """Chuyển section `tickers` của `configs/base.yaml` (đã parse) thành DataFrame.
 
-    `universe_config` là dict đã đọc từ yaml (vd qua `_config_stub.load_config`), PHẢI có key
+    `universe_config` là dict đã đọc từ yaml (vd qua `Config.load`), PHẢI có key
     `tickers`: list[dict] với đúng các cột trong `_UNIVERSE_COLUMNS`.
 
     Trả về DataFrame index mặc định, cột đúng thứ tự `_UNIVERSE_COLUMNS`. Raise `ValueError` nếu
-    universe rỗng, có ticker trùng, hoặc `data_source` không thuộc {"yahoo", "dnse"}.
+    universe rỗng, có ticker trùng, hoặc `data_source` khác `"fiinpro"`.
     """
     rows = universe_config.get("tickers")
     if not rows:
@@ -51,11 +51,11 @@ def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
         dups = df.loc[df["ticker"].duplicated(), "ticker"].tolist()
         raise ValueError(f"Universe có ticker trùng: {dups}")
 
-    bad_source = ~df["data_source"].isin(["yahoo", "dnse"])
+    bad_source = ~df["data_source"].isin(_ALLOWED_SOURCES)
     if bad_source.any():
         bad = df.loc[bad_source, ["ticker", "data_source"]].to_dict("records")
         raise ValueError(
-            f"data_source phải là 'yahoo' hoặc 'dnse', gặp giá trị lạ: {bad}"
+            f"data_source phải thuộc {_ALLOWED_SOURCES}, gặp giá trị lạ: {bad}"
         )
 
     df["first_trading_date"] = pd.to_datetime(df["first_trading_date"]).dt.strftime(
@@ -66,82 +66,47 @@ def load_universe(universe_config: dict[str, Any]) -> pd.DataFrame:
 
 def build_source_register(
     access_date: str,
-    yfinance_version: str,
     vnstock_version: str,
     test_end: str,
+    fiinpro_xlsx: str,
+    fiinpro_sha256: str,
 ) -> pd.DataFrame:
-    """Sinh Data Source Register — 4 nguồn dùng trong pipeline tải giá.
-
-    Port từ `CLEAN.ipynb` Cell 9 (`SOURCE_ROWS`), bổ sung dòng `DNSE_PRICES` (notebook có code tải
-    DNSE nhưng thiếu dòng tương ứng trong Source Register — bổ sung cho đủ, tránh nguồn dữ liệu
-    không được ghi lại theo PR-DAT-009).
-    """
+    """Sinh Data Source Register — 2 nguồn: FiinPro (giá 30 mã) + vnstock/VCI (VN-Index)."""
     rows = [
         {
-            "source_id": "YF_PRICES",
-            "source_name": "Yahoo Finance (via yfinance)",
-            "url_or_path": "https://finance.yahoo.com",
-            "coverage_from": "2016-01-01",
+            "source_id": "FIINPRO_XLSX",
+            "source_name": "FiinPro export — DE Dữ liệu giao dịch (Full_Prices.xlsx)",
+            "url_or_path": fiinpro_xlsx,
+            "coverage_from": "2016-01-04",
             "coverage_to": test_end,
-            "fields": "Open, High, Low, Close, Adj Close, Volume",
-            "license": "Free tier — for research/prototype only",
-            "fallback_source": "DNSE/Entrade cho 6 mã multi-exchange; vnstock (VCI) nếu cả hai fail",
-            "access_date": access_date,
-            "yfinance_version": yfinance_version,
-            "notes": (
-                "Yahoo Adj Close đã điều chỉnh cổ tức và chia tách. LƯU Ý: Yahoo .VN chỉ có data "
-                "từ ngày mã lên HOSE — mất history HNX/UPCOM của các mã đã chuyển sàn. Các mã đó "
-                "được lấy từ DNSE/Entrade thay thế (xem DNSE_PRICES)."
+            "fields": (
+                "Open, High, Low, Close (giá gốc), Adj Close, AdjRatio, Volume/Value khớp lệnh, "
+                "VolumeTT/ValueTT thoả thuận"
             ),
-        },
-        {
-            "source_id": "DNSE_PRICES",
-            "source_name": "DNSE/Entrade OHLC API",
-            "url_or_path": "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock",
-            "coverage_from": "ngày niêm yết đầu tiên của từng mã (kể cả HNX/UPCOM)",
-            "coverage_to": test_end,
-            "fields": "Open, High, Low, Close, Adj Close (=Close), Volume",
-            "license": "Public API, không auth — nguồn công ty chứng khoán DNSE (nền tảng Entrade)",
-            "fallback_source": "Yahoo Finance nếu DNSE fail (nhưng sẽ mất pre-HOSE history)",
+            "license": "FiinPro — dữ liệu thương mại, chỉ dùng nội bộ, không đưa lên repo công khai",
+            "fallback_source": "-",
             "access_date": access_date,
-            "yfinance_version": "-",
+            "version": f"sha256={fiinpro_sha256}",
             "notes": (
-                "Nguồn CHÍNH cho các mã multi-exchange (từng niêm yết HNX/UPCOM trước khi chuyển "
-                "HOSE). Giá trả về theo nghìn VNĐ, nhân 1000 để nhất quán với Yahoo. Giá đã điều "
-                "chỉnh cổ tức/chia tách, dùng làm cả Close và Adj Close."
-            ),
-        },
-        {
-            "source_id": "VNSTOCK_PRICES",
-            "source_name": "vnstock (nguồn VCI) — Giá cổ phiếu",
-            "url_or_path": "vnstock.stock(source='VCI').quote.history()",
-            "coverage_from": "ngày niêm yết đầu tiên của từng mã (any exchange)",
-            "coverage_to": test_end,
-            "fields": "Open, High, Low, Close, Volume (Close đã điều chỉnh split/cổ tức)",
-            "license": "vnstock — free, dữ liệu thật qua Vietcap (VCI)",
-            "fallback_source": "Yahoo Finance nếu vnstock fail (nhưng sẽ mất pre-HOSE history)",
-            "access_date": access_date,
-            "vnstock_version": vnstock_version,
-            "notes": (
-                "Alternative cho DNSE khi cần lấy đầy đủ history từ HNX/UPCOM. vnstock VCI trả "
-                "`close` đã điều chỉnh → gán Close = Adj Close cho consistent với schema Yahoo."
+                "adjusted_close đã điều chỉnh mọi corporate action và neo theo ngày export "
+                "(không phải ngày cuối dữ liệu) — không áp thêm registry, không dùng làm giá hiện "
+                "tại. Export lại ⇒ toàn bộ adjusted_close lịch sử đổi ⇒ phải bump data_version."
             ),
         },
         {
             "source_id": "VNSTOCK_INDEX",
             "source_name": "vnstock (nguồn VCI) — VN-Index",
-            "url_or_path": "VNINDEX (source=VCI)",
+            "url_or_path": "vnstock.api.quote.Quote(symbol='VNINDEX', source='VCI')",
             "coverage_from": "2016-01-01",
             "coverage_to": test_end,
             "fields": "Open, High, Low, Close, Volume",
             "license": "vnstock — free, dữ liệu thật từ HOSE qua Vietcap (VCI)",
-            "fallback_source": "Yahoo Finance (^VNINDEX/^VNI) → nếu cũng fail, custom market composite từ universe",
+            "fallback_source": "custom market composite từ universe",
             "access_date": access_date,
-            "vnstock_version": vnstock_version,
+            "version": f"vnstock={vnstock_version}",
             "notes": (
-                "VN-Index lấy trực tiếp từ vnstock (VCI) — dữ liệu thật, thay cho Yahoo Finance "
-                "vốn không có index VN. Cũng dùng làm trading calendar chuẩn để loại phantom days "
-                "của Yahoo (xem clean/validate_prices.remove_yahoo_phantom_days)."
+                "Tải theo từng năm (API trả tối đa ~2.000 phiên/lần). Dùng làm lịch giao dịch "
+                "chuẩn; fetch dừng nếu thiếu phiên so với FiinPro."
             ),
         },
     ]
@@ -154,21 +119,15 @@ def save_universe_and_sources(
     metadata_dir: Path,
     universe_as_of: str,
 ) -> tuple[Path, Path]:
-    """Ghi snapshot universe + source register.
-
-    Ghi cả hai tên:
-    - `universe_asof_{YYYYMMDD}.csv` — tương thích loader/CLI cũ;
-    - `universe_30_asof_{YYYYMMDD}.csv` — tên bắt buộc theo `workflow_update` Data Gate (TL-001).
-    """
+    """Ghi `universe_30_asof_{YYYYMMDD}.csv` (tên bắt buộc theo `workflow_update` Data Gate, TL-001)
+    và `source_register.csv`."""
     metadata_dir = Path(metadata_dir)
     metadata_dir.mkdir(parents=True, exist_ok=True)
 
     as_of_tag = pd.to_datetime(universe_as_of).strftime("%Y%m%d")
-    universe_path = metadata_dir / f"universe_asof_{as_of_tag}.csv"
     universe_30_path = metadata_dir / f"universe_30_asof_{as_of_tag}.csv"
     sources_path = metadata_dir / "source_register.csv"
 
-    universe.to_csv(universe_path, index=False, encoding="utf-8-sig")
     universe.to_csv(universe_30_path, index=False, encoding="utf-8-sig")
     sources.to_csv(sources_path, index=False, encoding="utf-8-sig")
     return universe_30_path, sources_path

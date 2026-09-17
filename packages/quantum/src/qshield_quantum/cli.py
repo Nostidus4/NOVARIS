@@ -42,6 +42,7 @@ from qshield_quantum.benchmark import build_benchmark
 from qshield_quantum.formulation.penalty import suggest_penalty
 from qshield_quantum.formulation.qiskit_program import build_quadratic_program
 from qshield_quantum.formulation.qubo import build_qubo
+from qshield_quantum.formulation.surrogate import structured_samples_to_arrays
 from qshield_quantum.io import action_effects_to_arrays, pairwise_to_matrix
 from qshield_quantum.solvers.exact import solve_exact
 from qshield_quantum.solvers.qaoa import solve_qaoa
@@ -215,6 +216,124 @@ def _validate_workflow_benchmark_report(payload: dict) -> None:
     validate_benchmark_report(report)
 
 
+def _run_surrogate_validation(
+    model,
+    labelled_samples,
+    candidate_order: list[str],
+    cfg: Config,
+):
+    """Chấm surrogate trên validation/holdout (P0-2). Trả `(report_dict, status)`.
+
+    `None` cho `labelled_samples` (thiếu `true_objective_samples.parquet`) KHÔNG được coi là pass
+    — trả `NOT_EVALUATED` để `_derive_gate_status` hạ gate xuống, đúng nguyên tắc artifact phải
+    tự tố cáo thứ nó chưa chứng minh được.
+    """
+    from qshield_quantum.formulation.validation import validate_surrogate
+
+    if labelled_samples is None or "split" not in labelled_samples.columns:
+        return (
+            {
+                "status": "NOT_EVALUATED",
+                "reason": (
+                    "true_objective_samples.parquet vắng mặt hoặc thiếu cột `split` — không có "
+                    "validation/holdout để chấm surrogate."
+                ),
+                "metrics": {},
+                "failures": [],
+            },
+            "NOT_EVALUATED",
+        )
+
+    splits: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    for split_name in ("train", "validation", "holdout"):
+        frame = labelled_samples[labelled_samples["split"] == split_name]
+        if frame.empty:
+            continue
+        Z, targets, _ = structured_samples_to_arrays(frame, candidate_order)
+        splits[split_name] = (Z, targets)
+
+    report = validate_surrogate(model, splits, config=cfg)
+    return report.to_dict(), report.status
+
+
+def _peak_memory_mb() -> float:
+    """Peak RSS của tiến trình này VÀ mọi tiến trình con, tính bằng MB.
+
+    `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` E3 yêu cầu benchmark có "hard wall-time/memory/worker budget", nhưng
+    `peak_memory_mb` trước đây LUÔN là `None` trong mọi artifact: schema có field, validate có
+    kiểm, CLI có đọc — không nơi nào ghi. Không có số này thì không ai biết một run cần bao nhiêu
+    RAM cho tới lúc máy hết bộ nhớ (đo thật: QAOA 20 qubit đạt ~9,1 GiB).
+
+    ⚠️ BẪY ĐƠN VỊ đã dính một lần: `ru_maxrss` trả BYTE trên macOS/BSD nhưng KILOBYTE trên Linux.
+    Dùng sai hệ số cho ra "207 GiB" trên một tiến trình thật sự chỉ dùng 208 MB. Không có API
+    chuẩn nào cho việc này — phải rẽ nhánh theo `sys.platform`.
+
+    `RUSAGE_CHILDREN` gộp cả worker QAOA chạy qua subprocess, nên con số phản ánh đỉnh THẬT của
+    cả job chứ không riêng tiến trình cha.
+    """
+    import resource
+
+    divisor = 1024.0**2 if sys.platform == "darwin" else 1024.0
+    peak = max(
+        resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+        resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,
+    )
+    return float(peak) / divisor
+
+
+def _reference_hardware(config: Config) -> dict[str, object]:
+    """Điền cpu/ram/os thật khi config để `null`, giữ nguyên giá trị owner đã ghi đè.
+
+    Không có ba trường này thì `runtime_seconds` giữa hai máy không so được với nhau — mà so
+    runtime là toàn bộ mục đích của benchmark (`docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` E3).
+    """
+    import platform
+
+    raw = dict((config.get("performance_budget") or {}).get("reference_hardware") or {})
+    detected: dict[str, object] = {
+        "cpu": platform.processor() or platform.machine(),
+        "cpu_count": os.cpu_count(),
+        "os": f"{platform.system()} {platform.release()}",
+    }
+    try:  # ram_gb: không có API chuẩn thư viện; thiếu thì để None thay vì đoán.
+        detected["ram_gb"] = round(
+            os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1024**3, 1
+        )
+    except AttributeError, ValueError, OSError:
+        detected["ram_gb"] = None
+    return {**detected, **{k: v for k, v in raw.items() if v is not None}}
+
+
+def _guard_exhaustive_budget(runtime_bits: int, config: Config) -> None:
+    """Từ chối handoff mà exact/verify không thể duyệt hết trong ngân sách đã duyệt.
+
+    Dynamic-N (CR-WF2-005) có thể nâng N từ 10 lên 15 để candidate gate PASS — nhưng 15 candidate
+    = 30 bit = 2^30 ≈ 1,07 tỷ trạng thái. Đo trên máy tham chiếu: 2^20 mất ~4,6s, nên 2^30 mất
+    ~78 phút chỉ riêng exact, cộng chừng đó nữa cho verify. `bitstring_chunks` chấp nhận tới n=62
+    nên KHÔNG có gì báo lỗi — nó chỉ chạy rất lâu rồi ăn hết RAM. Im lặng ngốn hai tiếng là dạng
+    hỏng tệ nhất cho một pipeline có ngân sách (docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md E3).
+
+    Ngưỡng suy từ ngân sách ĐÃ CÓ trong config (`performance_budget.exact_timeout_seconds`) nhân
+    thông lượng đo được, KHÔNG phải một con số tự đặt. Thiếu khoá thông lượng ⇒ bỏ qua kiểm tra
+    và ghi log, không tự đoán.
+    """
+    budget = dict(config.get("performance_budget") or {})
+    timeout = budget.get("exact_timeout_seconds")
+    throughput = budget.get("exact_states_per_second")
+    if timeout is None or throughput is None:
+        return
+    max_states = float(timeout) * float(throughput)
+    states = 2.0**runtime_bits
+    if states > max_states:
+        raise typer.BadParameter(
+            f"Handoff có {runtime_bits} decision bits = {states:,.0f} trạng thái, vượt ngân sách "
+            f"exact ({float(timeout):,.0f}s x {float(throughput):,.0f} trạng thái/s = "
+            f"{max_states:,.0f}). Exact/verify sẽ không duyệt hết trong ngân sách đã duyệt. "
+            "Giảm N ở Risk, hoặc nâng performance_budget sau khi owner duyệt "
+            "(docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md E3: giá trị cần dry-run, không cam kết SLA)."
+        )
+
+
 def _tickers(config: Config) -> list[str]:
     return [entry["ticker"] for entry in config["tickers"]]
 
@@ -259,7 +378,7 @@ def _load_scenario_cube(paths: ArtifactPaths, tickers: list[str]) -> np.ndarray:
 
 def _resolved_penalty(cfg: Config, g, C, c) -> tuple[float, float, float, bool]:
     """Đọc `lambda_1`/`lambda_2`/`P` từ config; nếu `null` (TBD-006, chưa Phúc/Ngọc duyệt) thì tự
-    suy ra PROVISIONAL bằng `suggest_penalty` — không phải số đoán mò, xem `plan.md` câu hỏi 3.
+    suy ra PROVISIONAL bằng `suggest_penalty` — không phải số đoán mò, xem `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` câu hỏi 3.
     Trả thêm cờ `is_provisional` để ghi rõ vào log/metrics — không âm thầm dùng số tạm."""
     penalty_cfg = cfg.get("penalty", {}) or {}
     lambda_1 = penalty_cfg.get("lambda_1")
@@ -274,6 +393,47 @@ def _resolved_penalty(cfg: Config, g, C, c) -> tuple[float, float, float, bool]:
         else float(p)
     )
     return lambda_1, lambda_2, p, is_provisional
+
+
+def _derive_gate_status(
+    *,
+    requested_solver: str,
+    actual_solver: str,
+    verify_full: bool,
+    seed_count: int,
+    minimum_seeds: int,
+    non_final_config: bool,
+    errored: bool = False,
+    surrogate_status: str = "NOT_EVALUATED",
+) -> str:
+    """Suy `gate_status` từ thực tế của run — KHÔNG BAO GIỜ hard-code hằng số `"PASS"` (bug đã
+    xác minh: `qshield-quantum workflow --exact-only` từng vẫn ghi PASS dù QAOA bị skip hoàn
+    toàn). Quy tắc:
+
+    - `"FAIL"` khi có lỗi thực sự (caller đã bắt được lỗi mềm trước khi ghi metrics).
+    - `"FALLBACK"` khi `actual_solver != requested_solver` (kèm `fallback_reason` riêng trong
+      payload — hàm này chỉ trả trạng thái, không diễn giải lý do).
+    - `"NON_FINAL"` khi chạy NON_FINAL_CONFIG, hoặc verify chỉ sampled (không full 2^n), hoặc số
+      seed thực chạy ít hơn `minimum_seeds` yêu cầu.
+    - `"PASS"` chỉ khi ĐỒNG THỜI: solver khớp, verify full, và đủ seed tối thiểu.
+    """
+    if errored:
+        return "FAIL"
+    # P0-2: surrogate FAIL nghĩa là mô hình mà exact/QAOA vừa tối ưu không khái quát hoá được —
+    # nghiêm trọng hơn cả fallback solver, vì mọi nghiệm phía sau đều là tối ưu của một mô hình
+    # sai. Không cho bất kỳ trạng thái nào khác che nó.
+    if surrogate_status == "FAIL":
+        return "FAIL"
+    if actual_solver != requested_solver:
+        return "FALLBACK"
+    if (
+        non_final_config
+        or not verify_full
+        or seed_count < minimum_seeds
+        or surrogate_status != "PASS"
+    ):
+        return "NON_FINAL"
+    return "PASS"
 
 
 @app.command("workflow")
@@ -296,6 +456,14 @@ def solve_workflow(
         False,
         "--exact-only",
         help="NON_FINAL fallback: run surrogate/verify/exact/classical and skip QAOA",
+    ),
+    verify_sample_size: int | None = typer.Option(
+        None,
+        "--verify-sample-size",
+        help=(
+            "NON_FINAL escape hatch: check only N random states instead of the full 2^d "
+            "consistency gate. Downgrades gate_status — full enumeration is the default."
+        ),
     ),
 ) -> None:
     """Consume the workflow risk handoff and emit model/exact/QAOA candidate artifacts."""
@@ -322,6 +490,11 @@ def solve_workflow(
         )
     candidates = pd.read_csv(candidate_path)
     samples = pd.read_parquet(samples_path)
+    # P0-2: `qubo_objective_samples.parquet` CHỈ chứa split train (Risk ghi vậy có chủ đích).
+    # Validation/holdout nằm trong `true_objective_samples.parquet` — split duy nhất chứng minh
+    # được surrogate khái quát hoá. Thiếu file ⇒ không im lặng bỏ qua, mà báo NOT_EVALUATED.
+    holdout_path = paths.for_stage(Stage.RISK, "true_objective_samples.parquet")
+    labelled_samples = pd.read_parquet(holdout_path) if holdout_path.exists() else None
     risk_summary = json.loads(summary_path.read_text(encoding="utf-8"))
     profile_id = str((cfg.get("profile", {}) or {}).get("id", ""))
     handoff_profiles = set(candidates["profile_id"].astype(str))
@@ -376,6 +549,7 @@ def solve_workflow(
     quantum["bit_encoding"] = bit_encoding
     cfg["quantum"] = quantum
     runtime_bits = 2 * selected_count
+    _guard_exhaustive_budget(runtime_bits, cfg)
     validate_candidate_top10(candidates, expected_candidates=selected_count)
     validate_objective_samples(samples, expected_bit_count=runtime_bits)
     logger.info(
@@ -389,6 +563,13 @@ def solve_workflow(
         non_final,
     )
     performance_budget = dict(cfg.get("performance_budget") or {})
+    # P1-4: cổng chặn verify chạy FULL không điều kiện. Trước khi `verify/consistency.py` được
+    # vectorise, đường Python-loop (`objective.evaluate(z)` từng bitstring) buộc phải hạ xuống
+    # `sample_size=4096` ở runtime_bits >= 16 — tức chỉ 4098/1048576 = 0,39% không gian, KHÔNG đủ
+    # làm bằng chứng cho CLAUDE.md quy tắc 15. Sau khi vectorise, full 2^20 đo được ~2,8s nên
+    # không còn lý do lấy mẫu. Giữ tham số `--verify-sample-size` cho ai cần thoát hiểm thủ công,
+    # nhưng mặc định LUÔN là full — và `_derive_gate_status` hạ gate xuống NON_FINAL nếu sampled.
+    verify_sample_size_used = verify_sample_size
     result = run_four_level_workflow(
         candidates,
         samples,
@@ -400,7 +581,7 @@ def solve_workflow(
         candidate_pool_size=20,
         warm_start=not no_warm_start,
         logger=logger,
-        verify_sample_size=4096 if non_final and runtime_bits >= 16 else None,
+        verify_sample_size=verify_sample_size_used,
         run_qaoa=not exact_only,
         allow_non_final=non_final,
         performance_budget=performance_budget,
@@ -484,7 +665,8 @@ def solve_workflow(
             "warm_start": not no_warm_start,
         },
         "solver_manifest": solver_manifest,
-        "reference_hardware": dict(performance_budget.get("reference_hardware") or {}),
+        "reference_hardware": _reference_hardware(cfg),
+        "peak_memory_mb": _peak_memory_mb(),
         "stage_timings_seconds": result.stage_timings,
         **result.benchmark,
     }
@@ -495,32 +677,65 @@ def solve_workflow(
     benchmark_payload["actual_solver"] = actual_solver
     benchmark_payload["fallback_reason"] = fallback_reason
     _validate_workflow_benchmark_report(benchmark_payload)
+
+    # P0-2: cổng chặn surrogate. `gates.surrogate_validation_required_before_solver: true` trong
+    # profile từng là một khoá config KHÔNG có code nào đọc — solver chạy trên một mô hình chưa ai
+    # kiểm định. Chạy SAU khi đã ghi benchmark để artifact chẩn đoán vẫn tồn tại kể cả khi gate
+    # chặn, nhưng TRƯỚC khi kết luận gate_status.
+    surrogate_report, surrogate_status = _run_surrogate_validation(
+        result.model, labelled_samples, list(result.candidate_order), cfg
+    )
+    surrogate_validation_payload = {**provenance, **surrogate_report}
+    logger.info(
+        "[gate] surrogate_validation=%s failures=%s",
+        surrogate_status,
+        surrogate_report.get("failures") or "none",
+    )
     outputs = {
         "qubo_model.json": model_payload,
         "exact_solution.json": exact_payload,
         "qaoa_results.json": qaoa_payload,
         "workflow_benchmark.json": benchmark_payload,
+        "surrogate_validation.json": surrogate_validation_payload,
     }
     for filename, payload in outputs.items():
         paths.for_stage(Stage.QUBO, filename).write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, default=str),
             encoding="utf-8",
         )
+    verify_full = verify_sample_size_used is None
+    workflow_seed_count = len(result.qaoa_by_seed)
+    workflow_requested_solver = benchmark_payload["requested_solver"]
+    gate_status = _derive_gate_status(
+        requested_solver=workflow_requested_solver,
+        actual_solver=actual_solver,
+        verify_full=verify_full,
+        seed_count=workflow_seed_count,
+        minimum_seeds=minimum_seeds,
+        non_final_config=non_final,
+        surrogate_status=surrogate_status,
+    )
     context.write_config_snapshot()
     context.write_metrics(
         {
             "stage": "quantum",
             "profile_id": model_payload["profile_id"],
-            "gate_status": "PASS",
+            "gate_status": gate_status,
+            "surrogate_validation_status": surrogate_status,
+            "verify_full": verify_full,
+            "requested_solver": workflow_requested_solver,
+            "actual_solver": actual_solver,
+            "fallback_reason": fallback_reason,
             "mode": quantum["mode"],
             "evaluated_states": result.exact.evaluated_states,
-            "qaoa_seed_count": len(result.qaoa_by_seed),
+            "qaoa_seed_count": workflow_seed_count,
             "candidate_pool_size": len(result.candidate_pool),
         }
     )
     typer.echo(
         f"[quantum/workflow] OK — {result.exact.evaluated_states} states, "
-        f"{len(result.candidate_pool)} candidates → {paths.stage_dir(Stage.QUBO)}"
+        f"{len(result.candidate_pool)} candidates → {paths.stage_dir(Stage.QUBO)} "
+        f"(gate_status={gate_status})"
     )
     _fast_exit_if_standalone()
 
@@ -585,7 +800,7 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
     if penalty_is_provisional:
         logger.warning(
             "lambda_1=%.6f lambda_2=%.6f P=%.6f là PROVISIONAL (suggest_penalty, chưa Phúc/Ngọc "
-            "duyệt — plan.md câu hỏi 3). Run này là NON_BASELINE_RUN.",
+            "duyệt — docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md câu hỏi 3). Run này là NON_BASELINE_RUN.",
             lambda_1,
             lambda_2,
             penalty,
@@ -634,12 +849,14 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
     qp = build_quadratic_program(Q, linear, constant, ticker_order=tickers)
 
     qaoa_cfg = cfg["qaoa"]
+    minimum_seeds_required = int(qaoa_cfg.get("min_seeds", 10))
     seeds = qaoa_cfg.get("seeds")
+    seeds_is_provisional = not seeds
     if not seeds:
         seeds = list(range(int(qaoa_cfg["min_seeds"])))
         logger.warning(
             "configs/base.yaml: qaoa.seeds chưa đăng ký — dùng tạm %s (PROVISIONAL, "
-            "plan.md câu hỏi 4). Run này là NON_BASELINE_RUN.",
+            "docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md câu hỏi 4). Run này là NON_BASELINE_RUN.",
             seeds,
         )
     qaoa_by_seed = solve_qaoa(
@@ -674,9 +891,14 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
 
     winning_bitstring = bench["winning_bitstring"]
     actual_solver = SolverKind.QAOA
+    fallback_reason: str | None = None
     if not bench["winning_is_feasible"]:
         winning_bitstring = exact_result.best_feasible_bitstring
         actual_solver = SolverKind.EXACT
+        fallback_reason = (
+            "No feasible QAOA seed — fallback to exact solution "
+            "(docs/runbook/troubleshooting.md §5)."
+        )
         logger.warning(
             "Không seed QAOA nào trả bitstring feasible — fallback dùng nghiệm exact. "
             "actual_solver=exact (docs/runbook/troubleshooting.md §5)."
@@ -770,18 +992,37 @@ def solve(config: str = _CONFIG_OPTION, mock: bool = _MOCK_OPTION) -> None:
         encoding="utf-8",
     )
 
+    # verify_consistency() ở trên luôn duyệt ĐỦ 2^n bitstring (không có tham số sample_size trên
+    # đường legacy này), nên verify_full luôn True; solve_qaoa() cũng luôn chạy hết seeds được yêu
+    # cầu (raise sớm nếu thiếu) nên seed_count == len(seeds) mọi lúc tới được đây.
+    legacy_non_final = penalty_is_provisional or seeds_is_provisional
+    gate_status = _derive_gate_status(
+        requested_solver=str(SolverKind.QAOA),
+        actual_solver=str(actual_solver),
+        verify_full=True,
+        seed_count=len(qaoa_by_seed),
+        minimum_seeds=minimum_seeds_required,
+        non_final_config=legacy_non_final,
+    )
     context.write_config_snapshot()
     context.write_metrics(
         {
             "stage": "quantum",
-            "gate_status": "PASS",
-            "winning_bitstring": winning_bitstring,
+            "gate_status": gate_status,
+            "verify_full": True,
+            "requested_solver": str(SolverKind.QAOA),
             "actual_solver": str(actual_solver),
+            "fallback_reason": fallback_reason,
+            "winning_bitstring": winning_bitstring,
             "optimality_gap": bench["optimality_gap"],
             "penalty_is_provisional": penalty_is_provisional,
+            "seeds_is_provisional": seeds_is_provisional,
         }
     )
-    typer.echo(f"[quantum] OK — bitstring={winning_bitstring} → {out_path}")
+    typer.echo(
+        f"[quantum] OK — bitstring={winning_bitstring} → {out_path} "
+        f"(gate_status={gate_status})"
+    )
     _fast_exit_if_standalone()
 
 

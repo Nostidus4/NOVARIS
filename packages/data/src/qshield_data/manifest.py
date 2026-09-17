@@ -16,8 +16,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 
 def _sha256_of_file(path: Path) -> str:
     """Tính SHA-256 checksum của file theo chunk 1MB — dùng để version raw/processed data."""
@@ -26,11 +24,6 @@ def _sha256_of_file(path: Path) -> str:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
-
-
-def _to_utc_date(x: Any) -> str:
-    """Chuẩn hoá về `YYYY-MM-DD`."""
-    return pd.to_datetime(x).strftime("%Y-%m-%d")
 
 
 def _file_info(path: Path, data_root: Path) -> dict[str, Any] | None:
@@ -80,7 +73,7 @@ def build_manifest(
         "universe_version": universe_version,
         "universe_as_of": universe_as_of,
         "created_at": datetime.now().astimezone().isoformat(),
-        "sources": ["YF_PRICES", "DNSE_PRICES", "VNSTOCK_PRICES", "VNSTOCK_INDEX"],
+        "sources": ["FIINPRO_XLSX", "VNSTOCK_INDEX"],
         "index_symbol_used": index_symbol_used,
         "index_source_used": index_source_used,
         "splits_config": splits_config,

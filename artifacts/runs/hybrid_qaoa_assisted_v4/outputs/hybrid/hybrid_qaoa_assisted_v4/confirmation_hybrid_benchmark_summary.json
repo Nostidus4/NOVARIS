@@ -1,0 +1,979 @@
+{
+  "experiment_id": "hybrid_qaoa_assisted_v4",
+  "set": "confirmation",
+  "status_label": "CONFIRMATION_NON_BASELINE",
+  "manifest_hash": "ef5d36b392cbd4b45845978a3dec47e1ebaf570dcde974fd0e6fe400e4ae1314",
+  "instances_in_manifest": 30,
+  "instances_completed": 30,
+  "instances_valid_for_statistics": 27,
+  "attempt_status_counts": {
+    "completed": 30
+  },
+  "failure_rule": "failed/infeasible track final := J_no_action (counts as loss)",
+  "comparisons": {
+    "qaoa_vs_classical_true": {
+      "n": 27,
+      "wins": 6,
+      "ties": 20,
+      "losses": 1,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.002662052127524387,
+      "std_uplift": 0.014377663482408124,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.296875,
+      "sign_test_two_sided_p": 0.125
+    },
+    "qaoa_vs_classical_surrogate": {
+      "n": 27,
+      "wins": 8,
+      "ties": 18,
+      "losses": 1,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.0009451233677482992,
+      "std_uplift": 0.011560693145026339,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.12890625,
+      "sign_test_two_sided_p": 0.0390625,
+      "wilcoxon_holm_p": 0.38671875
+    },
+    "qaoa_vs_random_uniform": {
+      "n": 27,
+      "wins": 26,
+      "ties": 0,
+      "losses": 1,
+      "median_uplift": 0.006503421897190886,
+      "mean_uplift": 0.006286840345431366,
+      "std_uplift": 0.015863644305620626,
+      "median_uplift_ci95": [
+        0.00406682953106563,
+        0.011345563501424794
+      ],
+      "median_uplift_normalized": 0.04284647583320989,
+      "median_uplift_normalized_ci95": [
+        0.04176555005620698,
+        0.044749232002059915
+      ],
+      "wilcoxon_two_sided_p": 1.8790364265441895e-05,
+      "sign_test_two_sided_p": 4.172325134277344e-07,
+      "wilcoxon_holm_p": 0.00011274218559265137
+    },
+    "qaoa_vs_random_stratified": {
+      "n": 27,
+      "wins": 26,
+      "ties": 0,
+      "losses": 1,
+      "median_uplift": 0.004264171429930519,
+      "mean_uplift": 0.0047127130892932806,
+      "std_uplift": 0.01494760978997666,
+      "median_uplift_ci95": [
+        0.0026790667353520092,
+        0.010640714307419086
+      ],
+      "median_uplift_normalized": 0.03503107181995634,
+      "median_uplift_normalized_ci95": [
+        0.031531173852834826,
+        0.037528309479571906
+      ],
+      "wilcoxon_two_sided_p": 1.8790364265441895e-05,
+      "sign_test_two_sided_p": 4.172325134277344e-07,
+      "wilcoxon_holm_p": 0.00011274218559265137
+    },
+    "qaoa_vs_boltzmann": {
+      "n": 27,
+      "wins": 0,
+      "ties": 26,
+      "losses": 1,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.002564878283501468,
+      "std_uplift": 0.013327498506763779,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0,
+      "wilcoxon_holm_p": 1.0
+    },
+    "qaoa_vs_classical_true_compute": {
+      "n": 27,
+      "wins": 0,
+      "ties": 26,
+      "losses": 1,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.0027627480271916007,
+      "std_uplift": 0.014355659854819604,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0,
+      "wilcoxon_holm_p": 1.0
+    },
+    "qaoa_vs_random_uniform_compute": {
+      "n": 27,
+      "wins": 24,
+      "ties": 2,
+      "losses": 1,
+      "median_uplift": 0.0018158246222441665,
+      "mean_uplift": 0.0004772161089708205,
+      "std_uplift": 0.015303337313705197,
+      "median_uplift_ci95": [
+        0.0011561079841571065,
+        0.005239473872618472
+      ],
+      "median_uplift_normalized": 0.01588789331943916,
+      "median_uplift_normalized_ci95": [
+        0.011974074465587918,
+        0.017502907092011407
+      ],
+      "wilcoxon_two_sided_p": 5.3882598876953125e-05,
+      "sign_test_two_sided_p": 1.5497207641601562e-06,
+      "wilcoxon_holm_p": 0.0002155303955078125
+    },
+    "qaoa_transfer_vs_classical_true": {
+      "n": 27,
+      "wins": 5,
+      "ties": 20,
+      "losses": 2,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.002686680534553162,
+      "std_uplift": 0.014372309181251439,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.46875,
+      "sign_test_two_sided_p": 0.453125
+    },
+    "qaoa_transfer_vs_classical_surrogate": {
+      "n": 27,
+      "wins": 7,
+      "ties": 19,
+      "losses": 1,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.0009697517747770739,
+      "std_uplift": 0.011557786367722391,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.1953125,
+      "sign_test_two_sided_p": 0.0703125,
+      "wilcoxon_holm_p": 0.1953125
+    },
+    "qaoa_transfer_vs_random_uniform": {
+      "n": 27,
+      "wins": 26,
+      "ties": 0,
+      "losses": 1,
+      "median_uplift": 0.006503421897190886,
+      "mean_uplift": 0.006262211938402591,
+      "std_uplift": 0.0158715546125112,
+      "median_uplift_ci95": [
+        0.00406682953106563,
+        0.011345563501424794
+      ],
+      "median_uplift_normalized": 0.04284647583320989,
+      "median_uplift_normalized_ci95": [
+        0.04176555005620698,
+        0.044749232002059915
+      ],
+      "wilcoxon_two_sided_p": 1.8790364265441895e-05,
+      "sign_test_two_sided_p": 4.172325134277344e-07,
+      "wilcoxon_holm_p": 0.00011274218559265137
+    },
+    "qaoa_transfer_vs_random_stratified": {
+      "n": 27,
+      "wins": 26,
+      "ties": 0,
+      "losses": 1,
+      "median_uplift": 0.004264171429930519,
+      "mean_uplift": 0.004688084682264506,
+      "std_uplift": 0.014954154045879249,
+      "median_uplift_ci95": [
+        0.0026790667353520092,
+        0.010640714307419086
+      ],
+      "median_uplift_normalized": 0.03503107181995634,
+      "median_uplift_normalized_ci95": [
+        0.031531173852834826,
+        0.037528309479571906
+      ],
+      "wilcoxon_two_sided_p": 1.8790364265441895e-05,
+      "sign_test_two_sided_p": 4.172325134277344e-07,
+      "wilcoxon_holm_p": 0.00011274218559265137
+    },
+    "qaoa_transfer_vs_boltzmann": {
+      "n": 27,
+      "wins": 0,
+      "ties": 22,
+      "losses": 5,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.002589506690530243,
+      "std_uplift": 0.013322761817185213,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.0625,
+      "sign_test_two_sided_p": 0.0625,
+      "wilcoxon_holm_p": 0.1875
+    },
+    "qaoa_transfer_vs_classical_true_compute_transfer": {
+      "n": 27,
+      "wins": 0,
+      "ties": 22,
+      "losses": 5,
+      "median_uplift": 0.0,
+      "mean_uplift": -0.0027873764342203756,
+      "std_uplift": 0.01435090988616923,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": 0.0625,
+      "sign_test_two_sided_p": 0.0625,
+      "wilcoxon_holm_p": 0.1875
+    },
+    "qaoa_transfer_vs_random_uniform_compute_transfer": {
+      "n": 27,
+      "wins": 22,
+      "ties": 2,
+      "losses": 3,
+      "median_uplift": 0.00289904234957139,
+      "mean_uplift": 0.0007381969217172782,
+      "std_uplift": 0.015045006165938077,
+      "median_uplift_ci95": [
+        0.0011561079841571065,
+        0.005239473872618472
+      ],
+      "median_uplift_normalized": 0.017936176246084994,
+      "median_uplift_normalized_ci95": [
+        0.011974074465587918,
+        0.019415426876680908
+      ],
+      "wilcoxon_two_sided_p": 0.00012022256851196289,
+      "sign_test_two_sided_p": 0.00015652179718017578,
+      "wilcoxon_holm_p": 0.00048089027404785156
+    }
+  },
+  "by_regime_primary": {
+    "qaoa:normal": {
+      "n": 12,
+      "median_uplift": 0.0,
+      "wins": 5,
+      "losses": 1
+    },
+    "qaoa:stress": {
+      "n": 6,
+      "median_uplift": 0.0,
+      "wins": 1,
+      "losses": 0
+    },
+    "qaoa:volatile": {
+      "n": 9,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    },
+    "qaoa_transfer:normal": {
+      "n": 12,
+      "median_uplift": 0.0,
+      "wins": 4,
+      "losses": 2
+    },
+    "qaoa_transfer:stress": {
+      "n": 6,
+      "median_uplift": 0.0,
+      "wins": 1,
+      "losses": 0
+    },
+    "qaoa_transfer:volatile": {
+      "n": 9,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    }
+  },
+  "gates": {
+    "H1_attribution": "PASS",
+    "H6_quantum_claim": "SIMULATOR_ONLY_NO_ADVANTAGE_CLAIM",
+    "by_target": {
+      "qaoa": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.0157544525380566
+          }
+        },
+        "H4_confirmation": "INCONCLUSIVE_N_27_LT_30",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      },
+      "qaoa_transfer": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.0157544525380566
+          }
+        },
+        "H4_confirmation": "INCONCLUSIVE_N_27_LT_30",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      }
+    },
+    "H2_fairness": "PASS"
+  },
+  "phase0_answers": [
+    {
+      "instance_id": "c01_normal_20240110_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1955/65536",
+      "coverage_feasible": "1955/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1955,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1291015625,
+        "true_grid_optimum": 0.00078125
+      },
+      "spearman_energy_vs_true": 0.9999989924774436,
+      "qubo_optimum_true_rank": 444
+    },
+    {
+      "instance_id": "c02_volatile_20240102_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1762/65536",
+      "coverage_feasible": "1762/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1762,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.11484375,
+        "true_grid_optimum": 0.11484375
+      },
+      "spearman_energy_vs_true": 0.9999999373205384,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c03_stress_20250408_high_cash",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1408/65536",
+      "coverage_feasible": "1408/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1408,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1279296875,
+        "true_grid_optimum": 0.1279296875
+      },
+      "spearman_energy_vs_true": 0.9999997021381258,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c04_normal_20240318_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1930/65536",
+      "coverage_feasible": "1930/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1930,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.07001953125,
+        "true_grid_optimum": 0.07001953125
+      },
+      "spearman_energy_vs_true": 0.999961788674815,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c05_volatile_20240131_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1527/65536",
+      "coverage_feasible": "1527/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1527,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1248046875,
+        "true_grid_optimum": 0.1248046875
+      },
+      "spearman_energy_vs_true": 0.9999993414955807,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c06_stress_20250509_diversified",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1918/65536",
+      "coverage_feasible": "1918/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1918,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.130078125,
+        "true_grid_optimum": 0.130078125
+      },
+      "spearman_energy_vs_true": 0.999999399741469,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c07_normal_20240517_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1144/65536",
+      "coverage_feasible": "1144/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1144,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.13408203125,
+        "true_grid_optimum": 0.00166015625
+      },
+      "spearman_energy_vs_true": 0.9999962860659214,
+      "qubo_optimum_true_rank": 484
+    },
+    {
+      "instance_id": "c08_volatile_20240805_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1748/65536",
+      "coverage_feasible": "1748/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1748,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.08212890625,
+        "true_grid_optimum": 0.08212890625
+      },
+      "spearman_energy_vs_true": 0.9999999382115161,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c09_stress_20250408_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1982/65536",
+      "coverage_feasible": "1982/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1982,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.0541015625,
+        "true_grid_optimum": 0.0541015625
+      },
+      "spearman_energy_vs_true": 0.9999913000338956,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c10_normal_20240712_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1600/65536",
+      "coverage_feasible": "1600/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1600,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.11875,
+        "true_grid_optimum": 0.11875
+      },
+      "spearman_energy_vs_true": 0.9999258665852263,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c11_volatile_20240904_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1372/65536",
+      "coverage_feasible": "1372/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1372,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.155078125,
+        "true_grid_optimum": 0.155078125
+      },
+      "spearman_energy_vs_true": 0.9999992629286677,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c12_stress_20250509_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1272/65536",
+      "coverage_feasible": "1272/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1272,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1306640625,
+        "true_grid_optimum": 0.001171875
+      },
+      "spearman_energy_vs_true": 0.9999993651640292,
+      "qubo_optimum_true_rank": 513
+    },
+    {
+      "instance_id": "c13_normal_20250401_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1484/65536",
+      "coverage_feasible": "1484/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1484,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.13134765625,
+        "true_grid_optimum": 0.001171875
+      },
+      "spearman_energy_vs_true": 0.9999967194698048,
+      "qubo_optimum_true_rank": 487
+    },
+    {
+      "instance_id": "c14_volatile_20241002_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2402/65536",
+      "coverage_feasible": "2402/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2402,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.08779296875,
+        "true_grid_optimum": 0.08779296875
+      },
+      "spearman_energy_vs_true": 0.9999998178645624,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c15_stress_20250408_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1198/65536",
+      "coverage_feasible": "1198/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1198,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.0904296875,
+        "true_grid_optimum": 0.001953125
+      },
+      "spearman_energy_vs_true": 0.999993298999919,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c16_normal_20250612_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2355/65536",
+      "coverage_feasible": "2355/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2355,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.099609375,
+        "true_grid_optimum": 0.099609375
+      },
+      "spearman_energy_vs_true": 0.9999793458066741,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c17_volatile_20241030_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2465/65536",
+      "coverage_feasible": "2465/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2465,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.13154296875,
+        "true_grid_optimum": 0.13154296875
+      },
+      "spearman_energy_vs_true": 0.9999989870902223,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c18_stress_20250509_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1425/65536",
+      "coverage_feasible": "1425/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1425,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1013671875,
+        "true_grid_optimum": 0.1013671875
+      },
+      "spearman_energy_vs_true": 0.9999995685494977,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c19_normal_20250908_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1004/65536",
+      "coverage_feasible": "1004/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1004,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.15966796875,
+        "true_grid_optimum": 0.001171875
+      },
+      "spearman_energy_vs_true": 0.9999988016438545,
+      "qubo_optimum_true_rank": 487
+    },
+    {
+      "instance_id": "c20_volatile_20241225_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1753/65536",
+      "coverage_feasible": "1753/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1753,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.09892578125,
+        "true_grid_optimum": 0.09892578125
+      },
+      "spearman_energy_vs_true": 0.9999998800578849,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c21_normal_20251103_high_cash",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2187/65536",
+      "coverage_feasible": "2187/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2187,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.08759765625,
+        "true_grid_optimum": 0.08759765625
+      },
+      "spearman_energy_vs_true": 0.9999959250366137,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c22_volatile_20250123_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1590/65536",
+      "coverage_feasible": "1590/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1590,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.109765625,
+        "true_grid_optimum": 0.109765625
+      },
+      "spearman_energy_vs_true": 0.9999989802358439,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c23_normal_20251229_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2109/65536",
+      "coverage_feasible": "2109/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": -0.019243526101429875,
+      "qaoa_polished_gap": -0.019243526101429875,
+      "unique_measured": 2109,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.073046875,
+        "true_grid_optimum": 9.765625e-05
+      },
+      "spearman_energy_vs_true": 0.9999475943111841,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c24_volatile_20250403_diversified",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "960/65536",
+      "coverage_feasible": "960/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 960,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.20029296875,
+        "true_grid_optimum": 0.20029296875
+      },
+      "spearman_energy_vs_true": 0.9999988842555321,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c25_normal_20260304_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "985/65536",
+      "coverage_feasible": "985/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 985,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.15751953125,
+        "true_grid_optimum": 0.00068359375
+      },
+      "spearman_energy_vs_true": 0.9999989942695034,
+      "qubo_optimum_true_rank": 487
+    },
+    {
+      "instance_id": "c26_volatile_20260309_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1943/65536",
+      "coverage_feasible": "1943/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1943,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1078125,
+        "true_grid_optimum": 0.1078125
+      },
+      "spearman_energy_vs_true": 0.9999998456120521,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c27_normal_20260513_high_cash",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1214/65536",
+      "coverage_feasible": "1214/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1214,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.138671875,
+        "true_grid_optimum": 0.138671875
+      },
+      "spearman_energy_vs_true": 0.9999985172129863,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c28_volatile_20260406_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2360/65536",
+      "coverage_feasible": "2360/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2360,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.08505859375,
+        "true_grid_optimum": 0.08505859375
+      },
+      "spearman_energy_vs_true": 0.9999983546573641,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c29_normal_20260708_liquidity_constrained",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1507/65536",
+      "coverage_feasible": "1507/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1507,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.10927734375,
+        "true_grid_optimum": 0.01318359375
+      },
+      "spearman_energy_vs_true": 0.9999932845181485,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "c30_volatile_20260722_diversified",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1909/65536",
+      "coverage_feasible": "1909/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1909,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1404296875,
+        "true_grid_optimum": 0.1404296875
+      },
+      "spearman_energy_vs_true": 0.9999968357471395,
+      "qubo_optimum_true_rank": 1
+    }
+  ],
+  "claim_scope": "QAOA-assisted hybrid on StatevectorSampler simulator; no quantum advantage or speedup claim"
+}

@@ -1,0 +1,479 @@
+{
+  "experiment_id": "hybrid_qaoa_assisted_v4",
+  "set": "exploratory",
+  "status_label": "EXPLORATORY_NON_BASELINE",
+  "manifest_hash": "2590c5eb32f4f71273ce3800929aa63038959a6776f781132d5ccedf565eef79",
+  "instances_in_manifest": 5,
+  "instances_completed": 5,
+  "instances_valid_for_statistics": 4,
+  "attempt_status_counts": {
+    "completed": 5
+  },
+  "failure_rule": "failed/infeasible track final := J_no_action (counts as loss)",
+  "comparisons": {
+    "qaoa_vs_classical_true": {
+      "n": 4,
+      "wins": 1,
+      "ties": 3,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.00015808070615258574,
+      "std_uplift": 0.0003161614123051715,
+      "median_uplift_ci95": [
+        0.0,
+        0.000632322824610343
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0013466875309219694
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0
+    },
+    "qaoa_vs_classical_surrogate": {
+      "n": 4,
+      "wins": 1,
+      "ties": 3,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.000293222061616194,
+      "std_uplift": 0.000586444123232388,
+      "median_uplift_ci95": [
+        0.0,
+        0.001172888246464776
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0024979550242431835
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0,
+      "wilcoxon_holm_p": 1.0
+    },
+    "qaoa_vs_random_uniform": {
+      "n": 4,
+      "wins": 4,
+      "ties": 0,
+      "losses": 0,
+      "median_uplift": 0.004083259171791753,
+      "mean_uplift": 0.006410276957165728,
+      "std_uplift": 0.005239420038727083,
+      "median_uplift_ci95": [
+        0.0032692202349133836,
+        0.014205369250166022
+      ],
+      "median_uplift_normalized": 0.02515999250162482,
+      "median_uplift_normalized_ci95": [
+        0.006724314898911291,
+        0.04559583075330317
+      ],
+      "wilcoxon_two_sided_p": 0.125,
+      "sign_test_two_sided_p": 0.125,
+      "wilcoxon_holm_p": 0.5
+    },
+    "qaoa_vs_random_stratified": {
+      "n": 4,
+      "wins": 4,
+      "ties": 0,
+      "losses": 0,
+      "median_uplift": 0.0023408858836251323,
+      "mean_uplift": 0.004418269555847232,
+      "std_uplift": 0.005643329314132865,
+      "median_uplift_ci95": [
+        0.00029401396662298573,
+        0.012697292489515677
+      ],
+      "median_uplift_normalized": 0.016799367100578645,
+      "median_uplift_normalized_ci95": [
+        0.0005790368768704136,
+        0.03875444869749016
+      ],
+      "wilcoxon_two_sided_p": 0.125,
+      "sign_test_two_sided_p": 0.125,
+      "wilcoxon_holm_p": 0.5
+    },
+    "qaoa_vs_boltzmann": {
+      "n": 4,
+      "wins": 0,
+      "ties": 4,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.0,
+      "std_uplift": 0.0,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": null,
+      "sign_test_two_sided_p": null,
+      "wilcoxon_holm_p": null
+    },
+    "qaoa_vs_classical_true_compute": {
+      "n": 4,
+      "wins": 0,
+      "ties": 4,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.0,
+      "std_uplift": 0.0,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": null,
+      "sign_test_two_sided_p": null,
+      "wilcoxon_holm_p": null
+    },
+    "qaoa_vs_random_uniform_compute": {
+      "n": 4,
+      "wins": 2,
+      "ties": 2,
+      "losses": 0,
+      "median_uplift": 0.0007162175824454442,
+      "mean_uplift": 0.0019360749480515915,
+      "std_uplift": 0.0029943257870668457,
+      "median_uplift_ci95": [
+        0.0,
+        0.006311864627315478
+      ],
+      "median_uplift_normalized": 0.006871942972283431,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.01926496015483463
+      ],
+      "wilcoxon_two_sided_p": 0.5,
+      "sign_test_two_sided_p": 0.5,
+      "wilcoxon_holm_p": 1.0
+    },
+    "qaoa_transfer_vs_classical_true": {
+      "n": 4,
+      "wins": 1,
+      "ties": 3,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.00015808070615258574,
+      "std_uplift": 0.0003161614123051715,
+      "median_uplift_ci95": [
+        0.0,
+        0.000632322824610343
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0013466875309219694
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0
+    },
+    "qaoa_transfer_vs_classical_surrogate": {
+      "n": 4,
+      "wins": 1,
+      "ties": 3,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.000293222061616194,
+      "std_uplift": 0.000586444123232388,
+      "median_uplift_ci95": [
+        0.0,
+        0.001172888246464776
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0024979550242431835
+      ],
+      "wilcoxon_two_sided_p": 1.0,
+      "sign_test_two_sided_p": 1.0,
+      "wilcoxon_holm_p": 1.0
+    },
+    "qaoa_transfer_vs_random_uniform": {
+      "n": 4,
+      "wins": 4,
+      "ties": 0,
+      "losses": 0,
+      "median_uplift": 0.004083259171791753,
+      "mean_uplift": 0.006410276957165728,
+      "std_uplift": 0.005239420038727083,
+      "median_uplift_ci95": [
+        0.0032692202349133836,
+        0.014205369250166022
+      ],
+      "median_uplift_normalized": 0.02515999250162482,
+      "median_uplift_normalized_ci95": [
+        0.006724314898911291,
+        0.04559583075330317
+      ],
+      "wilcoxon_two_sided_p": 0.125,
+      "sign_test_two_sided_p": 0.125,
+      "wilcoxon_holm_p": 0.5
+    },
+    "qaoa_transfer_vs_random_stratified": {
+      "n": 4,
+      "wins": 4,
+      "ties": 0,
+      "losses": 0,
+      "median_uplift": 0.0023408858836251323,
+      "mean_uplift": 0.004418269555847232,
+      "std_uplift": 0.005643329314132865,
+      "median_uplift_ci95": [
+        0.00029401396662298573,
+        0.012697292489515677
+      ],
+      "median_uplift_normalized": 0.016799367100578645,
+      "median_uplift_normalized_ci95": [
+        0.0005790368768704136,
+        0.03875444869749016
+      ],
+      "wilcoxon_two_sided_p": 0.125,
+      "sign_test_two_sided_p": 0.125,
+      "wilcoxon_holm_p": 0.5
+    },
+    "qaoa_transfer_vs_boltzmann": {
+      "n": 4,
+      "wins": 0,
+      "ties": 4,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.0,
+      "std_uplift": 0.0,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": null,
+      "sign_test_two_sided_p": null,
+      "wilcoxon_holm_p": null
+    },
+    "qaoa_transfer_vs_classical_true_compute_transfer": {
+      "n": 4,
+      "wins": 0,
+      "ties": 4,
+      "losses": 0,
+      "median_uplift": 0.0,
+      "mean_uplift": 0.0,
+      "std_uplift": 0.0,
+      "median_uplift_ci95": [
+        0.0,
+        0.0
+      ],
+      "median_uplift_normalized": 0.0,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.0
+      ],
+      "wilcoxon_two_sided_p": null,
+      "sign_test_two_sided_p": null,
+      "wilcoxon_holm_p": null
+    },
+    "qaoa_transfer_vs_random_uniform_compute_transfer": {
+      "n": 4,
+      "wins": 3,
+      "ties": 1,
+      "losses": 0,
+      "median_uplift": 0.0015653447467445236,
+      "mean_uplift": 0.0024127028742662038,
+      "std_uplift": 0.0028380385579810604,
+      "median_uplift_ci95": [
+        0.0,
+        0.006520122003575768
+      ],
+      "median_uplift_normalized": 0.008680368858275079,
+      "median_uplift_normalized_ci95": [
+        0.0,
+        0.01990059958826641
+      ],
+      "wilcoxon_two_sided_p": 0.25,
+      "sign_test_two_sided_p": 0.25,
+      "wilcoxon_holm_p": 0.5
+    }
+  },
+  "by_regime_primary": {
+    "qaoa:normal": {
+      "n": 1,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    },
+    "qaoa:stress": {
+      "n": 2,
+      "median_uplift": 0.0003161614123051715,
+      "wins": 1,
+      "losses": 0
+    },
+    "qaoa:volatile": {
+      "n": 1,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    },
+    "qaoa_transfer:normal": {
+      "n": 1,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    },
+    "qaoa_transfer:stress": {
+      "n": 2,
+      "median_uplift": 0.0003161614123051715,
+      "wins": 1,
+      "losses": 0
+    },
+    "qaoa_transfer:volatile": {
+      "n": 1,
+      "median_uplift": 0.0,
+      "wins": 0,
+      "losses": 0
+    }
+  },
+  "gates": {
+    "H1_attribution": "PASS",
+    "H6_quantum_claim": "SIMULATOR_ONLY_NO_ADVANTAGE_CLAIM",
+    "by_target": {
+      "qaoa": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.026165115735818
+          }
+        },
+        "H4_confirmation": "NOT_APPLICABLE_EXPLORATORY_SET",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      },
+      "qaoa_transfer": {
+        "H3_distribution_signal": {
+          "verdict": "NO_SIGNAL",
+          "median_raw_gap": 0.0,
+          "control_median_raw_gap": {
+            "boltzmann": 0.0,
+            "random_uniform": 0.026165115735818
+          }
+        },
+        "H4_confirmation": "NOT_APPLICABLE_EXPLORATORY_SET",
+        "H5_product_value": "NOT_EVALUATED_H4_NOT_PASS"
+      }
+    },
+    "H2_fairness": "PASS"
+  },
+  "phase0_answers": [
+    {
+      "instance_id": "x01_volatile_20230404_diversified",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1224/65536",
+      "coverage_feasible": "1224/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1224,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.1548828125,
+        "true_grid_optimum": 0.1548828125
+      },
+      "spearman_energy_vs_true": 0.9999998496752764,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "x02_stress_20230103_banking_concentrated",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "821/65536",
+      "coverage_feasible": "821/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 821,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.176953125,
+        "true_grid_optimum": 0.00126953125
+      },
+      "spearman_energy_vs_true": 0.9999997188840267,
+      "qubo_optimum_true_rank": 480
+    },
+    {
+      "instance_id": "x03_normal_20230621_high_volatility",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1130/65536",
+      "coverage_feasible": "1130/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": false,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1130,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.125390625,
+        "true_grid_optimum": 0.038671875
+      },
+      "spearman_energy_vs_true": 0.9999997302963377,
+      "qubo_optimum_true_rank": 8
+    },
+    {
+      "instance_id": "x04_volatile_20231016_high_cash",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "1437/65536",
+      "coverage_feasible": "1437/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 1437,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.11611328125,
+        "true_grid_optimum": 0.11611328125
+      },
+      "spearman_energy_vs_true": 0.9999998150856012,
+      "qubo_optimum_true_rank": 1
+    },
+    {
+      "instance_id": "x05_stress_20231222_do_not_sell",
+      "coverage_definition": "unique measured bitstrings across all seeds and shots, duplicates counted once; reported against all states and predicate-feasible states",
+      "coverage_all": "2924/65536",
+      "coverage_feasible": "2924/65536",
+      "optimum_used_for_raw_gap": "J*_grid (true financial objective on 4-level grid)",
+      "optimum_used_for_polished_gap": "J_best_known (min of J*_polished reference and all track finals)",
+      "qubo_vs_true_optimum_same_state": true,
+      "qaoa_polishing_dependency": 0.0,
+      "qaoa_raw_gap": 0.0,
+      "qaoa_polished_gap": 0.0,
+      "unique_measured": 2924,
+      "total_shots": 10240,
+      "mass_on_reference": {
+        "qubo_optimum": 0.0275390625,
+        "true_grid_optimum": 0.0275390625
+      },
+      "spearman_energy_vs_true": 0.9999948982522385,
+      "qubo_optimum_true_rank": 1
+    }
+  ],
+  "claim_scope": "QAOA-assisted hybrid on StatevectorSampler simulator; no quantum advantage or speedup claim"
+}

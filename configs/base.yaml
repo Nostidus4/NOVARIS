@@ -7,7 +7,6 @@
 expected_ticker_count: 30
 tickers:
 - ticker: ACB
-  yahoo_symbol: ACB.VN
   company_name: Ngân hàng Á Châu
   first_trading_date: '2006-11-21'
   exchange_current: HOSE
@@ -17,20 +16,18 @@ tickers:
     until: '2020-11-30'
   - exchange: HOSE
     from: '2020-12-01'
-  data_source: dnse
+  data_source: fiinpro
   notes: ''
 - ticker: BID
-  yahoo_symbol: BID.VN
   company_name: BIDV
   first_trading_date: '2014-01-24'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: BSR
-  yahoo_symbol: BSR.VN
   company_name: Lọc hoá dầu Bình Sơn
   first_trading_date: '2018-03-01'
   exchange_current: HOSE
@@ -40,40 +37,36 @@ tickers:
     until: '2025-01-16'
   - exchange: HOSE
     from: '2025-01-17'
-  data_source: dnse
+  data_source: fiinpro
   notes: Chuyển sàn verify qua HOSE/BSR công bố chính thức 17/1/2025.
 - ticker: CTG
-  yahoo_symbol: CTG.VN
   company_name: VietinBank
   first_trading_date: '2009-07-16'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: FPT
-  yahoo_symbol: FPT.VN
   company_name: FPT Corporation
   first_trading_date: '2006-12-13'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: GAS
-  yahoo_symbol: GAS.VN
   company_name: PV GAS
   first_trading_date: '2012-05-21'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: GVR
-  yahoo_symbol: GVR.VN
   company_name: Tập đoàn Cao su VN
   first_trading_date: '2018-03-21'
   exchange_current: HOSE
@@ -83,30 +76,27 @@ tickers:
     until: '2020-03-16'
   - exchange: HOSE
     from: '2020-03-17'
-  data_source: dnse
+  data_source: fiinpro
   notes: 'Chuyển sàn verify: lễ niêm yết HOSE 17/3/2020.'
 - ticker: HDB
-  yahoo_symbol: HDB.VN
   company_name: HDBank
   first_trading_date: '2018-01-05'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: HPG
-  yahoo_symbol: HPG.VN
   company_name: Hoà Phát
   first_trading_date: '2007-11-15'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: LPB
-  yahoo_symbol: LPB.VN
   company_name: LPBank
   first_trading_date: '2017-10-05'
   exchange_current: HOSE
@@ -116,61 +106,55 @@ tickers:
     until: '2020-11-08'
   - exchange: HOSE
     from: '2020-11-09'
-  data_source: dnse
+  data_source: fiinpro
   notes: 'Chuyển sàn verify: phiên đầu tiên trên HOSE 09/11/2020 (chấp thuận niêm
     yết 14/10/2020).'
 - ticker: MBB
-  yahoo_symbol: MBB.VN
   company_name: MBBank
   first_trading_date: '2011-11-01'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: MSN
-  yahoo_symbol: MSN.VN
   company_name: Masan Group
   first_trading_date: '2009-11-05'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: MWG
-  yahoo_symbol: MWG.VN
   company_name: Thế Giới Di Động
   first_trading_date: '2014-07-14'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: PLX
-  yahoo_symbol: PLX.VN
   company_name: Petrolimex
   first_trading_date: '2017-04-21'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: SAB
-  yahoo_symbol: SAB.VN
   company_name: Sabeco
   first_trading_date: '2016-12-06'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: SHB
-  yahoo_symbol: SHB.VN
   company_name: SHBank
   first_trading_date: '2009-04-20'
   exchange_current: HOSE
@@ -180,81 +164,76 @@ tickers:
     until: '2021-10-10'
   - exchange: HOSE
     from: '2021-10-11'
-  data_source: dnse
+  data_source: fiinpro
   notes: SỬA so với ước lượng gốc trong CLEAN.ipynb (ghi nhầm 2020-10) — ngày thật
     11/10/2021, verify qua công bố thông tin chính thức SHB/HOSE.
 - ticker: SSB
-  yahoo_symbol: SSB.VN
   company_name: SeABank
   first_trading_date: '2021-03-24'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
-  notes: ''
+  data_source: fiinpro
+  data_quality_flag: LIMITED_HISTORY
+  notes: 'IPO 24/03/2021 — thiếu crash Covid 03/2020 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md
+    §4.2). Có đủ lịch sử để train (~1400 phiên) nhưng CVaR/tail có thể unreliable do thiếu
+    một trong ba kiểu crash đã quan sát trên VN-Index — downweight khi tính risk contribution.'
 - ticker: SSI
-  yahoo_symbol: SSI.VN
   company_name: SSI Securities
   first_trading_date: '2007-10-29'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: STB
-  yahoo_symbol: STB.VN
   company_name: Sacombank
   first_trading_date: '2006-07-12'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: TCB
-  yahoo_symbol: TCB.VN
   company_name: Techcombank
   first_trading_date: '2018-06-04'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: TPB
-  yahoo_symbol: TPB.VN
   company_name: TPBank
   first_trading_date: '2018-04-19'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VCB
-  yahoo_symbol: VCB.VN
   company_name: Vietcombank
   first_trading_date: '2009-06-30'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VHM
-  yahoo_symbol: VHM.VN
   company_name: Vinhomes
   first_trading_date: '2018-05-17'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VIB
-  yahoo_symbol: VIB.VN
   company_name: VIB
   first_trading_date: '2017-01-09'
   exchange_current: HOSE
@@ -264,69 +243,66 @@ tickers:
     until: '2020-11-01'
   - exchange: HOSE
     from: '2020-11-02'
-  data_source: dnse
+  data_source: fiinpro
   notes: 'Chuyển sàn verify: chấp thuận niêm yết 16/10/2020, giao dịch đầu tháng 11/2020
     (ngày chính xác trong tháng — best-effort).'
 - ticker: VIC
-  yahoo_symbol: VIC.VN
   company_name: Vingroup
   first_trading_date: '2007-09-19'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VJC
-  yahoo_symbol: VJC.VN
   company_name: Vietjet Air
   first_trading_date: '2017-02-28'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VNM
-  yahoo_symbol: VNM.VN
   company_name: Vinamilk
   first_trading_date: '2006-01-19'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VPB
-  yahoo_symbol: VPB.VN
   company_name: VPBank
   first_trading_date: '2017-08-17'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 - ticker: VPL
-  yahoo_symbol: VPL.VN
   company_name: VPL (placeholder — verify)
-  first_trading_date: '2025-01-01'
+  first_trading_date: '2025-05-13'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
-  notes: Mã mới; cold-start — verify trước khi dùng cho UAT/demo (xem ghi chú production
-    trong CLEAN.ipynb).
+  data_source: fiinpro
+  data_quality_flag: LIMITED_HISTORY
+  notes: 'SỬA first_trading_date so với ước lượng gốc 2025-01-01 trong CLEAN.ipynb — IPO thật
+    13/05/2025 (Q-SHIELD_EDA_Notes_for_HMM_and_CVaR.md §4.1). Chỉ ~310 phiên tới 08/2026 —
+    không đủ train HMM/CVaR; cần Minh Anh/Ngọc xác nhận mã thay thế VN30 kỳ 01/2027 hoặc bỏ
+    khỏi universe (còn 29 mã). Cold-start — verify trước khi dùng cho UAT/demo.'
 - ticker: VRE
-  yahoo_symbol: VRE.VN
   company_name: Vincom Retail
   first_trading_date: '2017-11-06'
   exchange_current: HOSE
   exchange_history: '-'
   exchange_periods:
   - exchange: HOSE
-  data_source: yahoo
+  data_source: fiinpro
   notes: ''
 sample_portfolio_weights:
   ACB: 0.0333333333
@@ -362,7 +338,7 @@ sample_portfolio_weights:
 sample_portfolio_cash_weight: 0.0
 snapshot_date: '2026-08-03'
 frequency: daily
-source: yahoo_dnse_vnstock
+source: fiinpro_xlsx_vnstock_index
 date_range:
   market_train_start: '2016-01-01'
   market_train_end: '2022-12-31'
@@ -383,14 +359,6 @@ price_limits:
     HOSE: 0.07
     HNX: 0.1
     UPCOM: 0.15
-corporate_actions:
-- ticker: VCB
-  event_date: '2025-03-03'
-  type: stock_dividend
-  adjustment_factor: 1.495
-  evidence: Close và Adj Close cùng bước nhảy 1,4950 tại 2025-03-03 (91862.35→61446.39
-    và 93300.00→62408.03); không tài sản nào khác trong universe biến động cùng phiên;
-    vượt biên độ sàn ±7% (-33,11%), bất khả thi vật lý trên HOSE.
 n_states: 3
 n_iter: 500
 covariance_type: diag
@@ -516,9 +484,25 @@ logging:
   level: INFO
   path: null
 data:
-  data_version: v1.0.0
+  # v2.0.0: đổi nguồn giá sang FiinPro (2026-09-17). Export FiinPro mới ⇒ adjusted_close lịch sử
+  # đổi toàn bộ ⇒ phải bump version, không trộn kết quả giữa các lần export.
+  data_version: v2.0.0
   universe_version: v1.0
   universe_as_of: '2026-08-03'
+  # Nguồn giá DUY NHẤT cho 30 mã — export FiinPro, dữ liệu thương mại, gitignored.
+  # adjusted_close đã điều chỉnh sẵn mọi corporate action ⇒ KHÔNG có registry back-adjust.
+  # Xem docs/data/2026-09-17-chuyen-nguon-gia-fiinpro.md.
+  fiinpro_xlsx: data/raw/Full_Prices.xlsx
+  # Vá lỗi nằm ngay trong file Excel, áp lúc tách CSV raw (PR-DAT-021). Chỉ ghi cột cần sửa.
+  raw_price_patches:
+  - ticker: VIB
+    date: '2018-07-23'
+    Close: 28200.0
+    reason: FiinPro export close = 0; O/H/L/Adj/KL/GT trong Excel đều đúng
+    verified_against: >-
+      Bảng giá lịch sử VIB 23/07/2018: đóng cửa 28.20, điều chỉnh 3.16, mở 28.00 / cao 28.90 /
+      thấp 28.00, KL 218,470, GT 6.21 tỷ
+    verified_on: '2026-09-16'
 paths:
   data_root: data
   reports_root: reports

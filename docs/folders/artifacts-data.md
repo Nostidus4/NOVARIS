@@ -1,4 +1,4 @@
-# data/ · artifacts/ · reports/ · notebooks/
+# data/ · artifacts/ · reports/
 
 Thư mục I/O và exploration — **không** chứa core logic sản phẩm.
 
@@ -15,23 +15,11 @@ Thư mục I/O và exploration — **không** chứa core logic sản phẩm.
 - Mỗi số trên slide/demo phải truy về một `run_id` + config hash.
 - Chỉ báo cáo run gắn `profile_id=workflow_update`; không trộn số liệu run khác scope.
 
-## `artifacts_bench/`
-
-- Bakeoff QAOA / benchmark tách khỏi `artifacts/dev` — tránh đè run thường ngày.
 
 ## `reports/`
 
 - Báo cáo người đọc (PDF/MD/HTML) sinh từ artifact — không phải nguồn tính toán.
 
-## `notebooks/`
-
-- Exploration `00…` — được phép thử ý tưởng.
-- **Không** copy notebook thành core logic; logic ổn định chuyển vào `packages/*`.
-- Không forward-fill return; không fit scaler trên test.
-
-## `tools/`
-
-- Script tiện ích repo (không phải library runtime).
 
 ## Context cho Claude
 

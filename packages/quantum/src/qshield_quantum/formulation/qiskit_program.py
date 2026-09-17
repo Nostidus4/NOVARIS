@@ -5,7 +5,7 @@
 ⚠️ Quy ước hệ số quadratic của `qiskit_optimization` KHÁC quy ước ma trận đối xứng `z'Qz`:
 `qp.minimize(quadratic={(i,j): v})` cho `v * z_i * z_j` ĐÚNG MỘT LẦN (không nhân đôi), còn
 `z'Qz` với `Q` đối xứng đầy đủ cộng cả `Q[i,j]` lẫn `Q[j,i]`. Nên hệ số truyền vào `quadratic`
-phải là `Q[i,j] + Q[j,i] = 2*Q[i,j]` (đã verify bằng `qp.objective.evaluate`, xem `plan.md`).
+phải là `Q[i,j] + Q[j,i] = 2*Q[i,j]` (đã verify bằng `qp.objective.evaluate`, xem `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md`).
 Sai chỗ này là lỗi âm thầm — `verify/consistency.py` sẽ bắt được nếu quên.
 
 `QuadraticProgramToQubo` không được dùng để TỰ THÊM constraint `sum(z)=K` — penalty đã ép sẵn

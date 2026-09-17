@@ -1,0 +1,43 @@
+{
+  "source_set": "exploratory",
+  "reps": 1,
+  "parameter_order": "qiskit optimal_point order: [beta_0..beta_{p-1}, gamma_0..gamma_{p-1}]",
+  "rule": "canonicalize (gamma_0>=0, beta in (-pi/2, pi/2]) then per-parameter median; source instances get leave-one-out medians",
+  "source_seed_counts": {
+    "x01_volatile_20230404_diversified": 10,
+    "x02_stress_20230103_banking_concentrated": 10,
+    "x03_normal_20230731_high_volatility": 10,
+    "x04_volatile_20231226_high_cash": 10,
+    "x05_stress_20231124_do_not_sell": 10
+  },
+  "pooled": [
+    -0.7847393272555794,
+    3.6964411802797343
+  ],
+  "pooled_std": [
+    0.031690339759274884,
+    0.7822284040922456
+  ],
+  "leave_one_out": {
+    "x01_volatile_20230404_diversified": [
+      -0.7836631128552483,
+      3.6828609181772904
+    ],
+    "x02_stress_20230103_banking_concentrated": [
+      -0.7847564381836127,
+      3.7021029884774315
+    ],
+    "x03_normal_20230731_high_volatility": [
+      -0.7849686661904343,
+      3.6213862696510954
+    ],
+    "x04_volatile_20231226_high_cash": [
+      -0.7837954746864058,
+      3.7275140072028536
+    ],
+    "x05_stress_20231124_do_not_sell": [
+      -0.7847393272555794,
+      3.731433849405008
+    ]
+  }
+}

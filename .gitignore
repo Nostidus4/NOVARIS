@@ -10,11 +10,8 @@ wheels/
 .venv
 .DS_Store
 
-# Artifact root tạm của benchmark solver: scenario cube copy sang đây chỉ để chạy scope 10-bit.
-# Bằng chứng cần giữ nằm ở artifacts_bench/{warm_start_run,no_warm_start_run,stress_run,narrative_run}/*.
-artifacts_bench/dev/
 
-# Local notebook / matplotlib caches (created when executing exploration notebooks)
+# Local notebook / matplotlib caches
 .mplconfig/
 .ipython/
 
@@ -24,3 +21,14 @@ artifacts_bench/dev/
 *.env
 !.env.example
 !**/.env.example
+
+# FiinPro là dữ liệu thương mại — chỉ dùng nội bộ, không commit
+# (docs/data/2026-09-17-chuyen-nguon-gia-fiinpro.md §2 mục 14)
+data/raw/Full_Prices.xlsx
+data/raw/prices/*_fiinpro_*.csv
+# Sinh từ FiinPro (thương mại) — repo public, không commit
+data/processed/*.parquet
+
+# Chi tiết từng instance thí nghiệm hybrid (~5MB/instance, ~160-190MB/thí nghiệm) — giữ local.
+# Commit phần tổng hợp: manifest, report, paired_uplift, claim_checklist, transfer_parameters.
+artifacts/runs/*/outputs/hybrid/*/instances/

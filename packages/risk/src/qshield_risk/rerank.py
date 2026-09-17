@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -10,7 +11,11 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd  # type: ignore[import-untyped]
 
-from qshield_risk.objective import FinancialObjective, financial_objective
+from qshield_risk.objective import (
+    FinancialObjective,
+    financial_objective,
+    financial_objective_from_growth,
+)
 from qshield_risk.policy import RiskPolicy
 from qshield_risk.portfolio import validate_ticker_order
 from qshield_risk.sampling import decode_four_level_bits
@@ -176,11 +181,18 @@ class PolishingResult:
     objective_improvement: float
     polishing_dependency: float
     actions: pd.DataFrame
+    # Accounting cho so sánh công bằng giữa các nguồn ứng viên (docs/hybrid/2026-09-13-plan-qaoa-assisted.md R1).
+    # `evaluations` đếm mọi lần gọi true objective trong vòng polish (kể cả điểm xuất phát), KHÔNG
+    # đếm lần tính no-action chỉ dùng cho `polishing_dependency`.
+    evaluations: int = 0
+    iterations: int = 0
+    stop_reason: str = "converged"
+    wall_seconds: float = 0.0
 
 
 def polish_reductions(
     quantum_reductions: npt.ArrayLike,
-    scenarios: npt.ArrayLike,
+    scenarios: npt.ArrayLike | None,
     ticker_order: Sequence[str],
     weights: Mapping[str, float],
     cash_weight: float,
@@ -188,9 +200,36 @@ def polish_reductions(
     *,
     max_adjustment: float,
     maximum_reduction: float,
+    growth_paths: npt.ArrayLike | None = None,
+    max_evaluations: int | None = None,
 ) -> PolishingResult:
-    """Coordinate-polish active actions while locking every Quantum zero at zero."""
+    """Coordinate-polish active actions while locking every Quantum zero at zero.
+
+    ``growth_paths`` (tùy chọn) tái dùng growth đã tính — cùng kết quả với ``scenarios``.
+    ``max_evaluations`` giới hạn số lần gọi true objective; hết budget ⇒ dừng với
+    ``stop_reason="eval_budget"`` và giữ nghiệm tốt nhất đã thấy.
+    """
+    started = time.perf_counter()
+    if max_evaluations is not None and max_evaluations < 1:
+        raise ValueError("[risk.polish] max_evaluations must be >= 1 when provided.")
+    if scenarios is None and growth_paths is None:
+        raise ValueError("[risk.polish] provide scenarios or growth_paths.")
     tickers = validate_ticker_order(ticker_order)
+    growth = None if growth_paths is None else np.asarray(growth_paths, dtype=float)
+    evaluations = 0
+
+    def objective(values: np.ndarray, *, charged: bool = True) -> FinancialObjective:
+        nonlocal evaluations
+        if charged:
+            evaluations += 1
+        if growth is not None:
+            return financial_objective_from_growth(
+                values, growth, tickers, weights, cash_weight, config
+            )
+        return financial_objective(
+            values, scenarios, tickers, weights, cash_weight, config
+        )
+
     quantum = np.asarray(quantum_reductions, dtype=float)
     # Codec computes 0.10 + 0.20 for level 30%, which can be
     # 0.30000000000000004. Normalize only machine-epsilon boundary noise.
@@ -217,9 +256,7 @@ def polish_reductions(
             "[risk.polish] max adjustment is 0.05 and final reduction bound is [0, 0.30]."
         )
 
-    quantum_result = financial_objective(
-        quantum, scenarios, tickers, weights, cash_weight, config
-    )
+    quantum_result = objective(quantum)
     current = quantum.copy()
     current_result = quantum_result
     active = np.flatnonzero(quantum > 0.0)
@@ -246,20 +283,28 @@ def polish_reductions(
             return candidate_feasible
         return candidate.value < incumbent.value - 1e-15
 
-    while True:
+    iterations = 0
+    stop_reason = "converged"
+    while stop_reason == "converged":
         improved = False
+        iterations += 1
         for index in active:
-            choices = sorted(
-                {float(lower[index]), float(current[index]), float(upper[index])}
-            )
+            # Giá trị hiện tại không bao giờ thay chính nó (is_better là strict) nên không đánh
+            # giá lại — cùng kết quả, không tốn budget.
+            choices = [
+                choice
+                for choice in sorted({float(lower[index]), float(upper[index])})
+                if choice != float(current[index])
+            ]
             best_values = current
             best_result = current_result
             for choice in choices:
+                if max_evaluations is not None and evaluations >= max_evaluations:
+                    stop_reason = "eval_budget"
+                    break
                 trial = current.copy()
                 trial[index] = choice
-                result = financial_objective(
-                    trial, scenarios, tickers, weights, cash_weight, config
-                )
+                result = objective(trial)
                 if is_better(result, best_result):
                     best_values = trial
                     best_result = result
@@ -267,6 +312,8 @@ def polish_reductions(
                 current = best_values
                 current_result = best_result
                 improved = True
+            if stop_reason != "converged":
+                break
         if not improved:
             break
     if np.any(current[quantum == 0.0] != 0.0):
@@ -274,9 +321,7 @@ def polish_reductions(
     if np.any(np.abs(current - quantum) > max_adjustment + 1e-12):
         raise RuntimeError("[risk.polish] adjustment bound was violated.")
 
-    zero_result = financial_objective(
-        np.zeros(len(tickers)), scenarios, tickers, weights, cash_weight, config
-    )
+    zero_result = objective(np.zeros(len(tickers)), charged=False)
     polish_improvement = quantum_result.value - current_result.value
     total_improvement = zero_result.value - current_result.value
     dependency = (
@@ -301,7 +346,70 @@ def polish_reductions(
         objective_improvement=polish_improvement,
         polishing_dependency=float(dependency),
         actions=actions,
+        evaluations=evaluations,
+        iterations=iterations,
+        stop_reason=stop_reason,
+        wall_seconds=time.perf_counter() - started,
     )
+
+
+_ACTION_LEVELS = (0.0, 0.10, 0.20, 0.30)
+
+
+def _coordinate_descent_minimize(
+    scenarios: npt.ArrayLike,
+    ticker_order: Sequence[str],
+    weights: Mapping[str, float],
+    cash_weight: float,
+    config: Mapping[str, Any],
+    *,
+    maximum: float,
+    caps: Mapping[str, float],
+    score: Any,
+) -> tuple[np.ndarray, FinancialObjective]:
+    """Coordinate-descend the four discrete action levels to minimize a single component.
+
+    Deterministic diagnostic search (P0-1 tooling): each step evaluates every allowed level
+    {0, 0.10, 0.20, 0.30} for one ticker while holding all others fixed, keeps the level that
+    strictly lowers ``score(result)``, and repeats until no single-coordinate move improves it.
+    Because a move is only accepted when it strictly decreases the joint score and the state
+    space is finite (4 levels per ticker), the loop is guaranteed to terminate. This is a local
+    heuristic, not the global 2^(2M) exact search that the Quantum exact solver performs.
+    """
+    tickers = validate_ticker_order(ticker_order)
+    current = np.zeros(len(tickers), dtype=float)
+    current_result = financial_objective(
+        current, scenarios, tickers, weights, cash_weight, config
+    )
+    while True:
+        improved = False
+        for index, ticker in enumerate(tickers):
+            cap = min(maximum, caps.get(ticker, maximum))
+            best_level = current[index]
+            best_result = current_result
+            best_score = score(current_result)
+            for level in _ACTION_LEVELS:
+                if level > cap + 1e-12:
+                    continue
+                if np.isclose(level, current[index]):
+                    continue
+                trial = current.copy()
+                trial[index] = level
+                trial_result = financial_objective(
+                    trial, scenarios, tickers, weights, cash_weight, config
+                )
+                trial_score = score(trial_result)
+                if trial_score < best_score - 1e-15:
+                    best_score = trial_score
+                    best_level = level
+                    best_result = trial_result
+            if not np.isclose(best_level, current[index]):
+                current[index] = best_level
+                current_result = best_result
+                improved = True
+        if not improved:
+            break
+    return current, current_result
 
 
 def build_financial_baselines(
@@ -328,7 +436,10 @@ def build_financial_baselines(
         pro_rata[:] = fraction
         caps = policy.per_asset_reduction_caps or {}
         pro_rata = np.asarray(
-            [min(value, caps.get(ticker, maximum)) for value, ticker in zip(pro_rata, tickers, strict=True)],
+            [
+                min(value, caps.get(ticker, maximum))
+                for value, ticker in zip(pro_rata, tickers, strict=True)
+            ],
             dtype=float,
         )
     pro_rata_result = financial_objective(
@@ -356,7 +467,10 @@ def build_financial_baselines(
             evaluated = financial_objective(
                 trial, scenarios, tickers, weights, cash_weight, config
             )
-            if evaluated.value > greedy_result.value + 1e-15 and not greedy_result.constraint_violations:
+            if (
+                evaluated.value > greedy_result.value + 1e-15
+                and not greedy_result.constraint_violations
+            ):
                 break
             greedy = trial
             greedy_result = evaluated
@@ -365,11 +479,47 @@ def build_financial_baselines(
         if not greedy_result.constraint_violations:
             break
 
+    # cash_target_only: minimize ONLY cash_budget_deviation (P0-1 tooling — decisive test for
+    # whether the cash term alone dictates the optimum; see build_financial_baselines docstring).
+    cash_target, cash_target_result = _coordinate_descent_minimize(
+        scenarios,
+        tickers,
+        weights,
+        cash_weight,
+        config,
+        maximum=maximum,
+        caps=caps,
+        score=lambda result: result.components["cash_budget_deviation"].raw,
+    )
+
+    # risk_only: minimize ONLY cvar, ignoring the cash term entirely.
+    risk_only, risk_only_result = _coordinate_descent_minimize(
+        scenarios,
+        tickers,
+        weights,
+        cash_weight,
+        config,
+        maximum=maximum,
+        caps=caps,
+        score=lambda result: result.components["cvar"].raw,
+    )
+
+    # max_sell: hard upper bound — sell every candidate at the maximum allowed level.
+    max_sell = np.asarray(
+        [min(maximum, caps.get(ticker, maximum)) for ticker in tickers], dtype=float
+    )
+    max_sell_result = financial_objective(
+        max_sell, scenarios, tickers, weights, cash_weight, config
+    )
+
     rows = []
     for name, reductions, result in (
         ("no_action", zero, no_action),
         ("pro_rata", pro_rata, pro_rata_result),
         ("greedy", greedy, greedy_result),
+        ("cash_target_only", cash_target, cash_target_result),
+        ("risk_only", risk_only, risk_only_result),
+        ("max_sell", max_sell, max_sell_result),
     ):
         rows.append(
             {

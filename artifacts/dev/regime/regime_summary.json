@@ -11,7 +11,7 @@
     "liquidity_20d",
     "mean_pairwise_corr_60d"
   ],
-  "data_version": "v1.0.0",
+  "data_version": "v2.0.0",
   "unresolved_decisions": [
     "IN-PO-01 (S=500 vs 2000/5000)",
     "IN-PO-02 (tư cách bằng chứng của fallback)",
@@ -19,7 +19,7 @@
     "IN-RISK-02 (ngày đánh giá t)",
     "IN-RISK-03 (ngưỡng Scenario Validation Gate)",
     "IN-CTR-01 (cột thừa trong regime_daily.parquet)",
-    "IN-PO-04 (duyệt configs/regime.yaml + scenarios.yaml)"
+    "IN-PO-04 (duyệt configs/base.yaml + scenarios.yaml)"
   ],
   "seeds_reported": [
     101,
@@ -34,21 +34,21 @@
     1001
   ],
   "stability": {
-    "n_seeds": 5.0,
-    "mean_agreement": 0.8230647709320695,
-    "min_agreement": 0.5576619273301737,
+    "n_seeds": 6.0,
+    "mean_agreement": 0.8677198525539761,
+    "min_agreement": 0.6066350710900474,
     "max_agreement": 1.0
   },
   "champion": {
-    "seed": 303,
+    "seed": 707,
     "n_states": 3,
     "covariance_type": "diag",
     "converged": true,
-    "log_likelihood_train": -1539.2847833062651,
-    "log_likelihood_validation": -1864.6348672742981,
+    "log_likelihood_train": -1630.2665607983008,
+    "log_likelihood_validation": -1909.8085558809696,
     "n_parameters": 38,
-    "aic": 3154.5695666125303,
-    "bic": 3304.693983610864
+    "aic": 3336.5331215966016,
+    "bic": 3486.6575385949354
   },
   "label_map": {
     "0": "stress",
@@ -59,69 +59,69 @@
     {
       "state_id": 0,
       "label": "stress",
-      "occupancy": 0.35071090047393366,
-      "mean_return": -0.00015977549387912775,
-      "mean_volatility": 0.016344875913420674,
-      "mean_drawdown": -0.25174724405900833,
-      "mean_correlation": 0.4858189474207785,
-      "stress_score": 2.3593315118324623
+      "occupancy": 0.358609794628752,
+      "mean_return": -5.1615473246587866e-05,
+      "mean_volatility": 0.016146732295567272,
+      "mean_drawdown": -0.24844320515816362,
+      "mean_correlation": 0.47634989782903947,
+      "stress_score": 1.9803387828325238
     },
     {
       "state_id": 1,
       "label": "volatile",
-      "occupancy": 0.3791469194312796,
-      "mean_return": -0.0008382364683013222,
-      "mean_volatility": 0.009725797598866258,
-      "mean_drawdown": -0.13128139252378393,
-      "mean_correlation": 0.3350045994618761,
-      "stress_score": 0.5965883495677284
+      "occupancy": 0.24170616113744076,
+      "mean_return": -0.0015246515229552376,
+      "mean_volatility": 0.010325240065150456,
+      "mean_drawdown": -0.16079377595971192,
+      "mean_correlation": 0.35359432387989786,
+      "stress_score": 0.9853726683273842
     },
     {
       "state_id": 2,
       "label": "normal",
-      "occupancy": 0.27014218009478674,
-      "mean_return": 0.00014656866886469185,
-      "mean_volatility": 0.009718190129581484,
-      "mean_drawdown": -0.023364133391166907,
-      "mean_correlation": 0.2627908232333082,
-      "stress_score": -2.955919861400191
+      "occupancy": 0.39968404423380727,
+      "mean_return": 0.00013203448925496226,
+      "mean_volatility": 0.009405116314640059,
+      "mean_drawdown": -0.041077604363472194,
+      "mean_correlation": 0.2844092692694958,
+      "stress_score": -2.9657114511599065
     }
   ],
   "coverage": {
-    "n_rows": 1265,
+    "n_rows": 1266,
     "start": "2021-06-21",
-    "end": "2026-07-30",
+    "end": "2026-07-31",
     "by_split": {
-      "test": 632,
+      "test": 633,
       "train": 384,
       "validation": 249
     }
   },
   "occupancy": {
-    "normal": 0.2798418972332016,
-    "volatile": 0.5193675889328063,
-    "stress": 0.2007905138339921
+    "normal": 0.5434439178515008,
+    "volatile": 0.2575039494470774,
+    "stress": 0.1990521327014218
   },
   "mean_durations": {
-    "normal": 32.18181818181818,
-    "volatile": 43.8,
-    "stress": 63.5
+    "normal": 76.44444444444444,
+    "volatile": 27.166666666666668,
+    "stress": 63.0
   },
   "transition_matrix": {
     "normal": {
-      "normal": 0.9689265536723164,
-      "volatile": 0.01524390243902439,
-      "stress": 0.0
+      "normal": 0.9869186046511628,
+      "volatile": 0.021538461538461538,
+      "stress": 0.003968253968253968
     },
     "volatile": {
-      "normal": 0.031073446327683617,
-      "volatile": 0.9786585365853658,
-      "stress": 0.015748031496062992
+      "normal": 0.01308139534883721,
+      "volatile": 0.9661538461538461,
+      "stress": 0.011904761904761904
     },
     "stress": {
       "normal": 0.0,
-      "volatile": 0.006097560975609756,
-      "stress": 0.984251968503937
+      "volatile": 0.012307692307692308,
+      "stress": 0.9841269841269841
     }
   }
 }

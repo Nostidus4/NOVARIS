@@ -1,4 +1,4 @@
-# Nguyễn Đỗ Minh Anh - eligibility engine (file mới, Structure.md chưa liệt kê — xem plan.md §3.3/§6 câu 2).
+# Nguyễn Đỗ Minh Anh - eligibility engine.
 """Eligibility Engine — port từ `CLEAN.ipynb` (`build_eligibility`, PR-DAT-015/016).
 
 File riêng thay vì gộp vào `features.py`: eligibility là một *gate* point-in-time (điều kiện đủ để
@@ -9,8 +9,8 @@ model. Logic đã fix 2 bug trong lúc debug notebook:
   — ngày `ZERO_VOLUME` (mã ít giao dịch, vẫn có giá tham chiếu) không bị coi là "không có data".
   Vấn đề thanh khoản đã có `LOW_LIQUIDITY` (rolling turnover) lo riêng.
 - BUG FIX 2: coverage tính từ `first_data_date` (ngày dữ liệu thực sự bắt đầu), không phải luôn từ
-  `first_trading_date` khai báo — nếu nguồn chính (DNSE) fail và fallback Yahoo (chỉ có HOSE), mã
-  đó không bị phạt oan vì "thiếu" phần lịch sử mà thực ra chưa từng tải được.
+  `first_trading_date` khai báo — mã có dữ liệu vendor bắt đầu muộn hơn ngày khai báo không bị
+  phạt oan vì "thiếu" phần lịch sử mà nguồn không có.
 """
 
 from __future__ import annotations
@@ -28,9 +28,9 @@ def build_eligibility(
 ) -> pd.DataFrame:
     """Tính eligibility point-in-time cho từng (`date`, `ticker`).
 
-    `all_dates` = union ngày có trong `prices` — an toàn làm trading calendar vì phantom days của
-    Yahoo đã bị loại ở `clean.validate_prices.remove_yahoo_phantom_days` trước khi `prices` được
-    truyền vào đây (không cần đọc riêng VN-Index calendar nữa).
+    `all_dates` = union ngày có trong `prices` — an toàn làm trading calendar vì ngày ngoài lịch
+    VN-Index đã bị loại ở `clean.validate_prices.remove_non_trading_days` trước khi `prices` được
+    truyền vào đây.
 
     Trả về DataFrame `[date, ticker, eligible_flag, reason_code, sessions_available, coverage_pct,
     avg_turnover_20d]`, `reason_code` ∈ {OK, NOT_LISTED_AT_DATE, INSUFFICIENT_HISTORY,

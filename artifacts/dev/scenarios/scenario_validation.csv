@@ -1,19 +1,28 @@
 target_regime,reference_windows,small_sample,metric,scenario_value,reference_value,statistic,threshold_low,threshold_high,verdict,note
-normal,9,True,mean_abs_diff,-0.0039964577170823416,-0.004655890604458723,0.0006594328873763813,,0.001,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,std_ratio,0.018125323783800384,0.019229859440132013,0.942561428502878,0.8,1.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,skew_abs_diff,-0.3261412262892366,-0.35779971669538174,0.03165849040614516,,1.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,kurtosis_abs_diff,1.8866704287570006,1.7636379902298995,0.1230324385271011,,5.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,q05_rel_error,-0.034685557987889984,-0.03789087371139638,0.08459334424221356,,0.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,q95_rel_error,0.02178735418490723,0.025595547188963723,0.14878341830091868,,0.25,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,autocorr_abs_diff,-0.04623374185625044,-0.06820090785861549,0.02196716600236505,,0.1,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,corr_mean_abs_diff,0.3450012413552273,0.3597271946108825,0.014725953255655178,,0.1,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-normal,9,True,tail_coverage_ratio,0.13660514924289646,0.10452973471220711,1.3068544526492856,0.5,2.0,WARN,"mẫu tham chiếu chỉ có 9 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
-volatile,66,False,mean_abs_diff,0.0005288341114144257,0.0006397179891461714,0.00011088387773174567,,0.001,PASS,
-volatile,66,False,std_ratio,0.02166968922530534,0.020387612112077538,1.0628851042574183,0.8,1.25,PASS,
-volatile,66,False,skew_abs_diff,0.3771996511390748,0.5623941184566481,0.18519446731757333,,1.0,PASS,
-volatile,66,False,kurtosis_abs_diff,1.9301438838088214,2.303665827978841,0.3735219441700197,,5.0,PASS,
-volatile,66,False,q05_rel_error,-0.03197430463251408,-0.028737609767356797,0.1126292301746633,,0.25,PASS,
-volatile,66,False,q95_rel_error,0.04074272120043634,0.03904666389690257,0.043436676383211074,,0.25,PASS,
-volatile,66,False,autocorr_abs_diff,-0.05007686311575743,-0.0724645925674897,0.02238772945173227,,0.1,PASS,
-volatile,66,False,corr_mean_abs_diff,0.29301719481082084,0.23069219256364087,0.06232500224717996,,0.1,PASS,
-volatile,66,False,tail_coverage_ratio,0.055601741523525636,0.03301884194351863,1.683939782583437,0.5,2.0,PASS,
+normal,269,False,mean_abs_diff,0.00046866572874529794,0.0007204021920896606,0.0002517364633443626,,0.001,PASS,
+normal,269,False,std_ratio,0.023053474925590924,0.023234071333861128,0.9922270872945542,0.8,1.25,PASS,
+normal,269,False,skew_abs_diff,0.11186017165914944,0.11261637253239906,0.0007562008732496239,,1.0,PASS,
+normal,269,False,kurtosis_abs_diff,1.9300023629784264,1.8511523295898016,0.07885003338862484,,5.0,PASS,
+normal,269,False,q05_rel_error,-0.03550668845690976,-0.03542143448988061,0.0024068468219012257,,0.25,PASS,
+normal,269,False,q95_rel_error,0.04177930715591741,0.04229305027320735,0.012147223100987705,,0.25,PASS,
+normal,269,False,autocorr_abs_diff,0.06379739080241566,0.07196721921421427,0.008169828411798613,,0.1,PASS,
+normal,269,False,corr_mean_abs_diff,0.30719756215174754,0.31307010214888953,0.00587253999714199,,0.1,PASS,
+normal,269,False,tail_coverage_ratio,0.07928945394725821,0.08984494544836655,0.8825143534961071,0.5,2.0,PASS,
+volatile,16,True,mean_abs_diff,0.004048451854035167,0.0026396361487759385,0.0014088157052592285,,0.001,FAIL,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,std_ratio,0.023380991442356967,0.02253889791723584,1.037361787972657,0.8,1.25,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,skew_abs_diff,0.5304937680507972,0.6639744409371815,0.13348067288638432,,1.0,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,kurtosis_abs_diff,1.078857924341969,1.6430649565558206,0.5642070322138517,,5.0,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,q05_rel_error,-0.02761516703297338,-0.027609115614066943,0.0002191819177052549,,0.25,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,q95_rel_error,0.05203485912305414,0.0489608271957017,0.0627855390405313,,0.25,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,autocorr_abs_diff,-0.04048338777255722,-0.0613083051742669,0.020824917401709678,,0.1,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,corr_mean_abs_diff,0.4408662924582335,0.3451386501394842,0.0957276423187493,,0.1,WARN,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+volatile,16,True,tail_coverage_ratio,-0.04190806227745759,-0.0023874693285771686,17.553340591995386,0.5,2.0,FAIL,"mẫu tham chiếu chỉ có 16 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,mean_abs_diff,0.0020468959494194757,0.0001140627635389579,0.001932833185880518,,0.001,FAIL,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,std_ratio,0.020696932509237882,0.0159533457191819,1.2973411893376332,0.8,1.25,FAIL,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,skew_abs_diff,1.2365099065674654,0.8627970164420158,0.3737128901254496,,1.0,WARN,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,kurtosis_abs_diff,2.1748571910653802,5.195704998278256,3.0208478072128755,,5.0,WARN,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,q05_rel_error,-0.023412413378783758,-0.02030526616074557,0.15302174290357104,,0.25,WARN,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,q95_rel_error,0.05244709002297324,0.026519348928223264,0.9776914646330678,,0.25,FAIL,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,autocorr_abs_diff,0.17697370897427572,0.13801789816237858,0.03895581081189714,,0.1,WARN,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,corr_mean_abs_diff,0.36702951433630027,0.24008197071200657,0.1269475436242937,,0.1,FAIL,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"
+stress,2,True,tail_coverage_ratio,-0.043282757752757715,0.002201715897718969,-19.658647965252783,0.5,2.0,FAIL,"mẫu tham chiếu chỉ có 2 cửa sổ (< 30) — PASS bị hạ xuống WARN, FAIL vẫn giữ nguyên"

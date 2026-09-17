@@ -130,6 +130,13 @@ dùng `StatevectorSampler`; để `backends/hardware.py` trống theo kế hoạ
 `ArtifactMode("dev") == ArtifactMode.DEV` đúng, nhưng `"dev" is ArtifactMode.DEV` sai. Luôn ép
 kiểu ở biên (`__post_init__`) rồi mới so sánh. Đã dính lỗi này một lần ở `paths.py`.
 
+### Giá từ FiinPro đã điều chỉnh sẵn — đừng back-adjust thêm
+
+Nguồn giá 30 mã là `data/raw/Full_Prices.xlsx` (FiinPro, gitignored). `adjusted_close` đã điều chỉnh
+mọi corporate action và neo theo **ngày export** ⇒ không áp registry back-adjust nào (điều chỉnh
+hai lần), không dùng `adjusted_close` làm giá hiện tại (dùng `close`). Lỗi trong file Excel vá qua
+`data.raw_price_patches`. Xem `docs/data/2026-09-17-chuyen-nguon-gia-fiinpro.md`.
+
 ### pandas ghim dưới 3.0
 
 Repo ghim `pandas>=2.2,<3` vì pandas 3 bật copy-on-write mặc định, khiến `df[col][idx] = x` im

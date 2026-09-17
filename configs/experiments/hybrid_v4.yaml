@@ -1,0 +1,16 @@
+# Protocol v4 của thí nghiệm QAOA-assisted — experiment_id MỚI, giữ nguyên artifact v3.
+#
+# Thay đổi so với v3 (2026-09-17, TRƯỚC mọi instance v4): CHỈ đổi dữ liệu đầu vào.
+#  - data_version v2.0.0: nguồn giá FiinPro (Full_Prices.xlsx) thay Yahoo/DNSE; hết các bước nhảy
+#    corporate action giả (TCB 2024-06-11, HDB 2025-12-18, VCB 2025-03-03) — xem
+#    docs/data/2026-09-17-chuyen-nguon-gia-fiinpro.md.
+#  - Regime HMM (artifacts/dev/regime) chạy lại trên dữ liệu mới ⇒ ngày/instance được chọn có thể
+#    khác v3. Không trộn kết quả với v3.
+# Protocol, track, ngân sách, seed, ngưỡng thống kê giữ nguyên v3.
+# Quy trình: hybrid-manifest (2 set) → hybrid-run exploratory --full-only → hybrid-transfer →
+#            hybrid-run exploratory --no-resume → hybrid-report → hybrid-run confirmation.
+extends: hybrid_v3.yaml
+
+hybrid_experiment:
+  experiment_id: hybrid_qaoa_assisted_v4
+  protocol_version: 4

@@ -14,10 +14,8 @@ frontend/out
 .env.*
 !.env.example
 artifacts/
-artifacts_bench/
 data/raw/
 data/processed/
-notebooks/
 reports/
 .cursor/
 agent-transcripts/

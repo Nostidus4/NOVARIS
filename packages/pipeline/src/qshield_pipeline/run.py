@@ -2,7 +2,7 @@
 """Orchestrator: chạy MỖI chặng trong MỘT TIẾN TRÌNH CON riêng (subprocess), không import trực
 tiếp module CLI của từng package.
 
-⚠️ Đây KHÔNG phải lựa chọn tối ưu tốc độ (plan.md câu hỏi 6 ban đầu định chọn import trực tiếp cho
+⚠️ Đây KHÔNG phải lựa chọn tối ưu tốc độ (docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md câu hỏi 6 ban đầu định chọn import trực tiếp cho
 nhanh) — mà là bắt buộc, đã verify bằng `faulthandler` (không suy đoán): nếu `qshield_quantum`
 (qiskit + Rust `_accelerate.abi3.so`) và `qshield_ai`/`qshield_data` (ghi `.parquet` qua pyarrow)
 cùng sống trong MỘT tiến trình Python, lệnh ghi parquet SAU ĐÓ sẽ segfault bên trong bộ cấp phát
@@ -19,7 +19,7 @@ chặng bằng subprocess (mỗi tiến trình con chỉ import ĐÚNG MỘT pac
 được để tránh crash này hoàn toàn.
 
 Vì chạy qua subprocess, mỗi package con tự parse `--config` của riêng nó — pipeline chia sẻ
-`run_id` bằng cách tiêm qua config (xem `run_context.py`) thay vì qua tham số hàm (plan.md câu
+`run_id` bằng cách tiêm qua config (xem `run_context.py`) thay vì qua tham số hàm (docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md câu
 hỏi 6).
 
 Fail-fast: một chặng lỗi (subprocess trả exit code khác 0) thì dừng ngay, KHÔNG chạy chặng sau

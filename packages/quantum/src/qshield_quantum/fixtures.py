@@ -4,7 +4,7 @@
 
 TẠM THỜI (theo đúng tiền lệ `qshield_ai/src/qshield_ai/fixtures.py`): `packages/risk/` hiện vẫn
 scaffold (34 dòng, chưa có `action_effects.csv`/`pairwise_effects.csv`/`baseline_risk.json` thật —
-xem `plan.md` §1). File này XÓA khi `packages/risk` implement xong, đổi `cli.py` sang đọc artifact
+xem `docs/decisions/2026-08-31-phan-hoi-bao-cao-15-08.md` §1). File này XÓA khi `packages/risk` implement xong, đổi `cli.py` sang đọc artifact
 thật qua `io.py` — không giữ hai nguồn dữ liệu song song.
 
 Không phải dữ liệu tài chính thật — chỉ đủ hình dạng đúng schema để build/test/chạy

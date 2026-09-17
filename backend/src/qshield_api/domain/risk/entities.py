@@ -1,4 +1,4 @@
-# Đỗ Ngọc Tân - RiskPortfolioInput + BaselineRiskView — riêng cho feature risk, không dùng chung domain/portfolio/.
+# Đỗ Ngọc Tân - RiskPortfolioInput + BaselineRiskView — riêng cho feature risk.
 """Không chứa công thức CVaR (đó là `qshield_risk.metrics`) — chỉ mô tả hình dạng input/output của
 feature `risk` qua API."""
 
@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RiskPortfolioInput:
-    """Riêng cho `risk` — xem ghi chú trong `domain/portfolio/entities.py::PortfolioInput`."""
+    """Riêng cho `risk` — mỗi feature khai entity portfolio riêng để không làm hỏng nhau."""
 
     weights: dict[str, float]
     cash_weight: float
