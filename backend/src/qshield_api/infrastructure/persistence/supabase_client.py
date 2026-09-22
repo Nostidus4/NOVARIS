@@ -1,7 +1,7 @@
 # Đỗ Ngọc Tân - hạ tầng kết nối Supabase.
 #
-# Dùng để LƯU / ĐỌC snapshot artifact (workflow_snapshots) — KHÔNG dùng cho auth/login.
-# Auth/RLS multi-user vẫn ngoài phạm vi MVP (OOS-013, docs/product/mvp_scope.md).
+# Dùng để LƯU / ĐỌC snapshot artifact (workflow_snapshots) và cung cấp settings cho auth adapter.
+# Auth adapter tạo client riêng cho từng thao tác để không chia sẻ session giữa các request.
 #
 # Secret key (`SUPABASE_SECRET_KEY`) bypass Row Level Security — chỉ server-side.
 # Đọc từ `backend/.env` (gitignore), không hard-code (CLAUDE.md NFR-019).

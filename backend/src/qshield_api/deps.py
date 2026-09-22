@@ -7,9 +7,13 @@ infrastructure. Đây là điểm "compose" duy nhất biết cả 2 lớp domai
 
 from __future__ import annotations
 
+import os
+from functools import lru_cache
+
 from qshield_contracts.config import Config
 
 from qshield_api.config import get_config
+from qshield_api.domain.auth.provider import AuthProvider
 from qshield_api.domain.benchmark.repository import BenchmarkRepository
 from qshield_api.domain.optimize.repository import OptimizeJobRepository
 from qshield_api.domain.optimize.runner import OptimizeRunner
@@ -18,6 +22,8 @@ from qshield_api.domain.risk.repository import RiskCalculator
 from qshield_api.domain.runs.repository import RunRepository
 from qshield_api.domain.scenarios.repository import ScenarioRepository
 from qshield_api.domain.workflow.repository import WorkflowRepository
+from qshield_api.infrastructure.auth.local_auth_provider import LocalAuthProvider
+from qshield_api.infrastructure.auth.supabase_auth_provider import SupabaseAuthProvider
 from qshield_api.infrastructure.calculation.qshield_risk_calculator import (
     QshieldRiskCalculator,
 )
@@ -32,6 +38,7 @@ from qshield_api.infrastructure.persistence.run_repository_impl import FileRunRe
 from qshield_api.infrastructure.persistence.scenario_repository_impl import (
     FileScenarioRepository,
 )
+from qshield_api.infrastructure.persistence.supabase_client import get_supabase_settings
 from qshield_api.infrastructure.persistence.workflow_repository_impl import (
     FileWorkflowRepository,
     SupabaseWorkflowRepository,
@@ -39,6 +46,21 @@ from qshield_api.infrastructure.persistence.workflow_repository_impl import (
 from qshield_api.infrastructure.runner.subprocess_optimize_runner import (
     SubprocessOptimizeRunner,
 )
+
+
+@lru_cache
+def _get_local_auth_provider() -> LocalAuthProvider:
+    return LocalAuthProvider()
+
+
+def get_auth_provider() -> AuthProvider:
+    if os.getenv("QSHIELD_AUTH_PROVIDER", "supabase").strip().lower() == "local":
+        return _get_local_auth_provider()
+    auto_confirm = os.getenv("QSHIELD_AUTH_AUTO_CONFIRM", "false").strip().lower()
+    return SupabaseAuthProvider(
+        get_supabase_settings(),
+        auto_confirm_registration=auto_confirm in {"1", "true", "yes", "on"},
+    )
 
 
 def get_app_config() -> Config:

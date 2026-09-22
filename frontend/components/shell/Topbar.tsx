@@ -1,8 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { CalendarDays, Menu, Moon, Sun } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { CalendarDays, LogOut, Menu, Moon, Sun } from "lucide-react";
 import { CRUMB } from "@/lib/nav";
+import { logout } from "@/lib/auth";
 import type { ConsoleShell } from "@/lib/types";
 import { RunMenu } from "./RunMenu";
 import { useShell } from "./ShellProvider";
@@ -14,8 +15,14 @@ type Props = {
 
 export function Topbar({ shell, dateLabel }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const { openSidebar, toggleTheme, theme } = useShell();
   const crumb = CRUMB[pathname] ?? "Overview";
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
 
   return (
     <header className="topbar">
@@ -45,6 +52,15 @@ export function Topbar({ shell, dateLabel }: Props) {
           title={theme === "dark" ? "Switch to light" : "Switch to dark"}
         >
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
+        <button
+          className="control icon-only"
+          type="button"
+          onClick={handleLogout}
+          aria-label="Đăng xuất"
+          title="Đăng xuất"
+        >
+          <LogOut size={15} />
         </button>
       </div>
     </header>

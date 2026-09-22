@@ -34,3 +34,20 @@ Biến môi trường (tùy chọn, trong `backend/.env`):
 ```
 QSHIELD_WORKFLOW_STORE=supabase   # supabase | file  (mặc định: supabase)
 ```
+
+## 4. Email/password authentication
+
+API đăng nhập dùng Supabase Auth, không dùng bảng `workflow_snapshots` và không lưu mật khẩu trong
+Q-SHIELD.
+
+1. Mở Supabase Dashboard → **Authentication → Providers → Email** và bật Email provider.
+   Bật **Allow new users to sign up** để dùng trang `/register`.
+2. Tạo user tại **Authentication → Users → Add user**, hoặc dùng luồng invite của Supabase.
+3. Nếu đang test local, chạy backend ở `http://127.0.0.1:8000` và frontend ở
+   `http://localhost:3000`.
+4. Đăng ký tại `/register`, đăng nhập tại `/login`; API tương ứng là
+   `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, và `POST /auth/logout`.
+5. Nếu **Confirm email** đang bật, người dùng phải mở liên kết Supabase gửi qua email trước khi
+   đăng nhập. Nếu tắt, đăng ký thành công sẽ tạo session và vào console ngay.
+
+Giao diện hiện chỉ hỗ trợ email/password và không hiển thị social login.
