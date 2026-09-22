@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from qshield_api.interfaces.api.routers import (
+    auth,
     benchmark,
     console,
     optimize,
@@ -51,6 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(portfolio.router)
 app.include_router(regime.router)
 app.include_router(scenarios.router)

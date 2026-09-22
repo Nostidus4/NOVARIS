@@ -9,6 +9,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
     ports:
       - "8000:8000"
     volumes:
@@ -17,6 +19,8 @@ services:
       - ./data:/app/data
     environment:
       QSHIELD_CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      QSHIELD_AUTH_PROVIDER: supabase
+      QSHIELD_AUTH_AUTO_CONFIRM: "true"
 
   frontend:
     build:
