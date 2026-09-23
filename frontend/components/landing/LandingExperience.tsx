@@ -181,11 +181,28 @@ export default function LandingExperience() {
         <div className="landing-section-shade" />
         <div className="landing-container">
           <div className="landing-section-heading landing-section-heading-centered"><p className="landing-kicker">WORKFLOW</p><h2>Từ tín hiệu thị trường đến<br /><span>quyết định có thể kiểm chứng.</span></h2></div>
-          <div className="landing-workflow-grid">
+          <div className="landing-workflow-map">
+            <svg
+              className="landing-workflow-path"
+              viewBox="0 0 1200 440"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polyline points="100,229 300,176 500,246 700,180 900,238 1100,189" />
+            </svg>
             {workflow.map(({ icon: Icon, title, text }, index) => (
               <article className="landing-workflow-step" key={title}>
-                <div className="landing-workflow-marker"><span>{String(index + 1).padStart(2, "0")}</span><div><Icon size={22} /></div></div>
-                <h3>{title}</h3><p>{text}</p>
+                <div className="landing-workflow-card">
+                  <div className="landing-workflow-card-head">
+                    <span className="landing-workflow-icon"><Icon size={20} /></span>
+                    <span className="landing-workflow-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </div>
+                <span className="landing-workflow-node" aria-hidden="true"><i /></span>
               </article>
             ))}
           </div>

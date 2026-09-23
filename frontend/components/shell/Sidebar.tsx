@@ -40,7 +40,7 @@ export function Sidebar() {
         aria-hidden={!sidebarOpen}
       />
       <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
-        <Link href="/overview" className="brand" onClick={closeSidebar}>
+        <Link href="/" className="brand" onClick={closeSidebar}>
           <Image
             className="brand-mark"
             src={assetPath("/novaris-mark.png")}
